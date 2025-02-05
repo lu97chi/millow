@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    /* Base Colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    /* Primary Colors */
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary Colors */
+    --secondary: 142 71% 45%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted Colors */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Accent Colors */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    /* Card Colors */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    /* Popover Colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Border Colors */
+    --border: 214.3 31.8% 91.4%;
+
+    /* Input Colors */
+    --input: 214.3 31.8% 91.4%;
+
+    /* Ring Color */
+    --ring: 199 89% 48%;
+
+    /* Success Colors */
+    --success: 142 71% 45%;
+    --success-foreground: 210 40% 98%;
+
+    /* Warning Colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    /* Destructive Colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Layout */
+    --radius: 0.5rem;
+    --navbar-height: 4rem;
+    --page-margin: 2rem;
+
+    /* Fonts */
+    --font-sans: 'Inter';
+    --font-heading: 'CalSans';
+    --font-mono: 'JetBrains Mono';
+  }
+ 
+  .dark {
+    /* Base Colors */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    /* Primary Colors */
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary Colors */
+    --secondary: 142 71% 45%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted Colors */
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    /* Accent Colors */
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Card Colors */
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    /* Popover Colors */
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Border Colors */
+    --border: 217.2 32.6% 17.5%;
+
+    /* Input Colors */
+    --input: 217.2 32.6% 17.5%;
+
+    /* Ring Color */
+    --ring: 199 89% 48%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Typography */
+  h1 {
+    @apply text-4xl font-heading font-bold tracking-tight;
+  }
+  h2 {
+    @apply text-3xl font-heading font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-2xl font-heading font-semibold tracking-tight;
+  }
+  h4 {
+    @apply text-xl font-heading font-semibold tracking-tight;
+  }
+  p {
+    @apply leading-7 [&:not(:first-child)]:mt-6;
+  }
+  blockquote {
+    @apply mt-6 border-l-2 pl-6 italic;
+  }
+  
+  /* Lists */
+  ul {
+    @apply my-6 ml-6 list-disc [&>li]:mt-2;
+  }
+  ol {
+    @apply my-6 ml-6 list-decimal [&>li]:mt-2;
+  }
+
+  /* Code */
+  pre {
+    @apply mb-4 mt-6 overflow-x-auto rounded-lg border bg-black py-4;
+  }
+  code {
+    @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm;
+  }
+}
+
+@layer utilities {
+  .step {
+    counter-increment: step;
+  }
+
+  .step:before {
+    @apply absolute inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-center -indent-px font-mono text-base font-medium;
+    @apply ml-[-41px] mt-[-4px];
+    content: counter(step);
+  }
+}
+
+@layer components {
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    @apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-sm;
+  }
+
+  /* Property card hover effect */
+  .property-card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Chat message styles */
+  .chat-message {
+    @apply rounded-lg p-4 mb-4;
+  }
+  .chat-message-user {
+    @apply bg-primary/10 ml-auto;
+  }
+  .chat-message-assistant {
+    @apply bg-muted mr-auto;
+  }
+
+  /* Input styles */
+  .input-focus {
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+} 

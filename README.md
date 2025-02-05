@@ -1,36 +1,232 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Millow - AI-Powered Real Estate Platform 🏠
 
-## Getting Started
+An intelligent real estate search platform tailored for the Mexican market, combining traditional property search with AI-powered recommendations through natural conversation.
 
-First, run the development server:
+## 🌟 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **AI-Powered Search**: Natural language property matching through chat interface
+- **Intelligent Filtering**: Automatic filter application based on user conversations
+- **Real-Time Chat**: Modern ChatGPT-like interface for property inquiries
+- **Context-Aware**: Chat maintains awareness of user's search context
+- **Dual Interface**: Traditional search + AI-powered recommendations
+- **Mexican Market Focus**: Tailored for Mexican real estate specifics
+- **Responsive Design**: Optimized for both desktop and mobile
+
+## 🛠 Tech Stack
+
+### Core
+- Next.js 15 (App Router)
+- React & React DOM v19
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- Framer Motion
+
+### Database & Caching
+- PlanetScale (MySQL)
+- Prisma ORM
+- Upstash Redis (Caching Layer)
+
+### AI & Integration
+- OpenAI API
+- Zod (Validation)
+- React Hook Form
+
+## 📁 Project Structure
+
+```
+/src
+├── /app
+│   ├── /api
+│   │   ├── /chat
+│   │   └── /properties
+│   ├── /(auth)
+│   ├── /(marketing)
+│   └── /(dashboard)
+├── /components
+│   ├── /ui
+│   ├── /properties
+│   ├── /chat
+│   ├── /filters
+│   └── /layout
+└── /lib
+    ├── /utils
+    ├── /hooks
+    └── /services
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 20.x or later
+- pnpm (recommended) or npm
+- Git
+- MySQL local instance (optional, can use PlanetScale)
 
-## Learn More
+### Environment Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Clone the repository:
+\`\`\`bash
+git clone https://github.com/yourusername/millow.git
+cd millow
+\`\`\`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Install dependencies:
+\`\`\`bash
+pnpm install
+\`\`\`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Set up environment variables:
+\`\`\`bash
+cp .env.example .env.local
+\`\`\`
 
-## Deploy on Vercel
+4. Configure your .env.local with:
+\`\`\`
+# Database
+DATABASE_URL="your-planetscale-connection-string"
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Redis
+UPSTASH_REDIS_URL="your-upstash-redis-url"
+UPSTASH_REDIS_TOKEN="your-upstash-redis-token"
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# OpenAI
+OPENAI_API_KEY="your-openai-api-key"
+
+# Other configs...
+\`\`\`
+
+5. Initialize the database:
+\`\`\`bash
+pnpm prisma generate
+pnpm prisma db push
+\`\`\`
+
+6. Run the development server:
+\`\`\`bash
+pnpm dev
+\`\`\`
+
+Visit \`http://localhost:3000\` to see the application.
+
+## 🏗 Project Phases
+
+### Phase 1: Foundation (2-3 weeks)
+- Project setup and configuration
+- Core UI components
+- Basic routing structure
+- Database schema design
+
+### Phase 2: Property Search (2-3 weeks)
+- Property listing features
+- Advanced filter system
+- Search functionality
+- Property detail pages
+
+### Phase 3: Chat Integration (2-3 weeks)
+- Chat UI implementation
+- OpenAI API integration
+- Context management
+- Response handling
+
+### Phase 4: AI Enhancement (2-3 weeks)
+- Advanced AI features
+- Performance optimization
+- Mexican market specifics
+- Final polish
+
+## 🎨 UI/UX Guidelines
+
+### Layout
+- 80% main content area
+- 20% persistent chat interface
+- Responsive design with mobile-first approach
+
+### Design Principles
+- Modern and minimalistic
+- Mexican market cultural elements
+- Smooth animations and transitions
+- High-performance rendering
+
+### Mobile Considerations
+- Bottom sheet for chat
+- Collapsible filters
+- Touch-friendly interfaces
+- Optimized performance
+
+## 🔧 Development Commands
+
+\`\`\`bash
+# Start development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
+
+# Run tests
+pnpm test
+
+# Run linting
+pnpm lint
+
+# Format code
+pnpm format
+\`\`\`
+
+## 📈 Performance Considerations
+
+- Server-side rendering for main content
+- Client-side chat interface
+- Image optimization
+- Lazy loading for non-critical components
+- Efficient state management
+- Redis caching for frequent queries
+
+## 🔒 Security Measures
+
+- API rate limiting
+- Input sanitization
+- Data encryption
+- Secure chat history storage
+- Authentication flow
+
+## 🌐 SEO Optimization
+
+- Meta tags optimization
+- Structured data for properties
+- Static generation for property pages
+- Sitemap generation
+- Mexican market keywords
+
+## 📱 Mobile-First Approach
+
+The application is designed with a mobile-first approach, ensuring:
+- Responsive design across all devices
+- Touch-friendly interfaces
+- Optimized performance on mobile networks
+- Adaptive chat interface
+- Mobile-optimized images
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (\`git checkout -b feature/AmazingFeature\`)
+3. Commit your changes (\`git commit -m 'Add some AmazingFeature'\`)
+4. Push to the branch (\`git push origin feature/AmazingFeature\`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## 🙏 Acknowledgments
+
+- Next.js team for the amazing framework
+- Shadcn UI for beautiful components
+- OpenAI for AI capabilities
+- PlanetScale for scalable database
+- Upstash for Redis solutions
