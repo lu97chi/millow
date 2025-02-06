@@ -2,7 +2,6 @@
 
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { ChatUI } from "@/components/chat/chat-ui";
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -13,7 +12,6 @@ export function RootLayout({ children }: RootLayoutProps) {
     <div className="relative flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">{children}</main>
-      <ChatUI />
       <Footer />
     </div>
   );

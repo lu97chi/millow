@@ -3,9 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { useSearchStore } from "@/store/use-search-store";
+import { filterProperties, sortProperties } from "@/lib/filter-properties";
 import type { Property } from "@/constants/properties";
-import { formatPrice } from "@/lib/format";
+import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { formatPrice } from "@/lib/format";
+import { create } from "zustand";
+
+interface MapStore {
+  focusedPropertyId: string | null;
+  setFocusedProperty: (id: string | null) => void;
+}
+
+export const useMapStore = create<MapStore>((set) => ({
+  focusedPropertyId: null,
+  setFocusedProperty: (id) => set({ focusedPropertyId: id }),
+}));
 
 // Google Maps types
 declare global {
@@ -28,86 +41,17 @@ interface PropertyMapProps {
 
 export function PropertyMap({ properties }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const { filters } = useSearchStore();
+  const focusedPropertyId = useMapStore((state) => state.focusedPropertyId);
 
-  // Filter properties based on current filters
-  const filteredProperties = properties.filter((property) => {
-    // Text search
-    if (filters.query && !property.title.toLowerCase().includes(filters.query.toLowerCase()) &&
-        !property.description.toLowerCase().includes(filters.query.toLowerCase())) {
-      return false;
-    }
+  // Apply filters and sorting
+  const filteredProperties = filterProperties(properties, filters);
+  const sortedProperties = sortProperties(filteredProperties, filters.sortBy);
 
-    // Property type
-    if (filters.propertyType.length > 0 && !filters.propertyType.includes(property.type)) {
-      return false;
-    }
-
-    // Location
-    if (filters.location.state && property.location.state !== filters.location.state) {
-      return false;
-    }
-    if (filters.location.city && property.location.city !== filters.location.city) {
-      return false;
-    }
-    if (filters.location.area && property.location.area !== filters.location.area) {
-      return false;
-    }
-
-    // Price range
-    if (property.price < filters.priceRange.min || property.price > filters.priceRange.max) {
-      return false;
-    }
-
-    // Features
-    if (filters.features.bedrooms && property.features.bedrooms !== filters.features.bedrooms) {
-      return false;
-    }
-    if (filters.features.bathrooms && property.features.bathrooms !== filters.features.bathrooms) {
-      return false;
-    }
-    if (filters.features.constructionSize?.min && 
-        property.features.constructionSize < filters.features.constructionSize.min) {
-      return false;
-    }
-    if (filters.features.constructionSize?.max && 
-        property.features.constructionSize > filters.features.constructionSize.max) {
-      return false;
-    }
-    if (filters.features.lotSize?.min && 
-        (!property.features.lotSize || property.features.lotSize < filters.features.lotSize.min)) {
-      return false;
-    }
-    if (filters.features.lotSize?.max && 
-        (!property.features.lotSize || property.features.lotSize > filters.features.lotSize.max)) {
-      return false;
-    }
-
-    // Amenities
-    if (filters.amenities.length > 0 && 
-        !filters.amenities.every(amenity => property.amenities.includes(amenity))) {
-      return false;
-    }
-
-    // Property age
-    if (filters.propertyAge !== undefined && property.propertyAge > filters.propertyAge) {
-      return false;
-    }
-
-    // Maintenance fee
-    if (filters.maintenanceFee?.min && 
-        (!property.maintenanceFee || property.maintenanceFee < filters.maintenanceFee.min)) {
-      return false;
-    }
-    if (filters.maintenanceFee?.max && 
-        (!property.maintenanceFee || property.maintenanceFee > filters.maintenanceFee.max)) {
-      return false;
-    }
-
-    return true;
-  });
-
+  // Initialize and update map
   useEffect(() => {
     if (!mapRef.current || !isLoaded || !window.google) return;
 
@@ -124,9 +68,11 @@ export function PropertyMap({ properties }: PropertyMapProps) {
       ],
     });
 
+    mapInstanceRef.current = map;
+
     // Add markers for filtered properties
     const bounds = new window.google.maps.LatLngBounds();
-    const markers = filteredProperties
+    const markers = sortedProperties
       .filter((property) => property.location.coordinates)
       .map((property) => {
         const marker = new window.google.maps.Marker({
@@ -136,6 +82,7 @@ export function PropertyMap({ properties }: PropertyMapProps) {
           },
           map,
           title: property.title,
+          animation: property.id === focusedPropertyId ? google.maps.Animation.BOUNCE : undefined,
         });
 
         // Create info window
@@ -158,6 +105,8 @@ export function PropertyMap({ properties }: PropertyMapProps) {
         return marker;
       });
 
+    markersRef.current = markers;
+
     // Fit map to markers
     if (markers.length > 0) {
       map.fitBounds(bounds);
@@ -169,27 +118,77 @@ export function PropertyMap({ properties }: PropertyMapProps) {
     return () => {
       markers.forEach((marker) => marker.setMap(null));
     };
-  }, [filteredProperties, isLoaded]);
+  }, [sortedProperties, isLoaded, focusedPropertyId]);
+
+  // Handle focused property changes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded || !focusedPropertyId) return;
+
+    const focusedProperty = sortedProperties.find(p => p.id === focusedPropertyId);
+    if (!focusedProperty?.location.coordinates) return;
+
+    const map = mapInstanceRef.current;
+    const position = {
+      lat: focusedProperty.location.coordinates.lat,
+      lng: focusedProperty.location.coordinates.lng,
+    };
+
+    // Smoothly pan and zoom to the focused property
+    map.panTo(position);
+    map.setZoom(17); // Increased zoom level for better detail
+
+    // Find and animate the marker
+    const marker = markersRef.current.find(
+      m => m.getPosition()?.lat() === position.lat && m.getPosition()?.lng() === position.lng
+    );
+    
+    if (marker) {
+      // Ensure marker is visible
+      marker.setAnimation(google.maps.Animation.BOUNCE);
+      
+      // Stop animation after 2 seconds
+      setTimeout(() => {
+        marker.setAnimation(null);
+      }, 2000);
+    }
+
+    return () => {
+      markersRef.current.forEach(m => m.setAnimation(null));
+    };
+  }, [focusedPropertyId, sortedProperties, isLoaded]);
+
+  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+    return (
+      <Card className="relative h-[400px] overflow-hidden bg-muted">
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            <p>Google Maps API key not configured</p>
+            <p className="text-sm">Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <div className="relative h-[400px] w-full rounded-lg border bg-muted">
+    <Card className="relative h-[400px] overflow-hidden">
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
         onLoad={() => setIsLoaded(true)}
       />
-      <div ref={mapRef} className="h-full w-full rounded-lg" />
+      <div ref={mapRef} className="h-full w-full" />
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       )}
-      {isLoaded && filteredProperties.length === 0 && (
+      {isLoaded && sortedProperties.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <p className="text-center text-muted-foreground">
             No hay propiedades que mostrar en el mapa
           </p>
         </div>
       )}
-    </div>
+    </Card>
   );
 } 

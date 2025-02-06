@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Heart, Share } from "lucide-react";
+import { Heart, Share, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
 import type { Property } from "@/constants/properties";
+import { useMapStore } from "./property-map";
 
 interface PropertyCardProps {
   property: Property;
@@ -28,6 +29,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
     maintenanceFee,
     createdAt,
   } = property;
+
+  const setFocusedProperty = useMapStore((state) => state.setFocusedProperty);
+
+  const handleLocateInMap = () => {
+    if (location.coordinates) {
+      setFocusedProperty(id);
+      // Scroll to map if it's out of view
+      const mapElement = document.querySelector('[data-map-container]');
+      if (mapElement) {
+        mapElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
 
   return (
     <Card className="group overflow-hidden">
@@ -96,8 +110,17 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
         <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full">
+      <CardFooter className="grid grid-cols-2 gap-2 p-4 pt-0">
+        <Button 
+          variant="outline"
+          className="gap-2"
+          onClick={handleLocateInMap}
+          disabled={!location.coordinates}
+        >
+          <MapPin className="h-4 w-4" />
+          Ver en mapa
+        </Button>
+        <Button asChild>
           <Link href={`/properties/${id}`}>Ver detalles</Link>
         </Button>
       </CardFooter>

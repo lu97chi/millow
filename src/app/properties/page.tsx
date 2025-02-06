@@ -1,204 +1,89 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { PropertyCard } from "@/components/properties/property-card";
-import { Button } from "@/components/ui/button";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  ArrowUpDown, 
-  ListFilter,
-  Search,
-  X,
-} from "lucide-react";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSearchStore } from "@/store/use-search-store";
-import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 import { PropertyGrid } from "@/components/properties/property-grid";
-import { PropertyFilters } from "@/components/properties/property-filters";
 import { PropertySort } from "@/components/properties/property-sort";
 import { PropertyStats } from "@/components/properties/property-stats";
 import { PropertyMap } from "@/components/properties/property-map";
-import { SAMPLE_PROPERTIES } from "@/constants/properties";
+import { SAMPLE_PROPERTIES, MexicanState } from "@/constants/properties";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Sample data - this would typically come from your API/database
-const properties = [
-  {
-    id: "1",
-    title: "Casa Moderna en Polanco",
-    description: "Hermosa casa moderna con acabados de lujo, amplios espacios y vista panorámica.",
-    price: 8500000,
-    location: {
-      state: "Ciudad de México",
-      city: "Miguel Hidalgo",
-      area: "Polanco",
-    },
-    features: {
-      bedrooms: 4,
-      bathrooms: 3.5,
-      constructionSize: 280,
-      lotSize: 350,
-    },
-    amenities: ["Estacionamiento", "Jardín", "Seguridad 24/7", "Área común"],
-    images: [
-      "https://placekitten.com/800/600",
-      "https://placekitten.com/801/600",
-      "https://placekitten.com/802/600",
-    ],
-    propertyType: "Casa",
-    isNew: true,
-  },
-  {
-    id: "2",
-    title: "Penthouse de Lujo en Santa Fe",
-    description: "Espectacular penthouse con las mejores vistas de la ciudad y amenidades de primer nivel.",
-    price: 12500000,
-    location: {
-      state: "Ciudad de México",
-      city: "Cuajimalpa",
-      area: "Santa Fe",
-    },
-    features: {
-      bedrooms: 3,
-      bathrooms: 3,
-      constructionSize: 320,
-      lotSize: 320,
-    },
-    amenities: ["Alberca", "Gimnasio", "Seguridad 24/7", "Estacionamiento"],
-    images: [
-      "https://placekitten.com/803/600",
-      "https://placekitten.com/804/600",
-      "https://placekitten.com/805/600",
-    ],
-    propertyType: "Penthouse",
-    isNew: false,
-  },
-  {
-    id: "3",
-    title: "Departamento en Condesa",
-    description: "Acogedor departamento en el corazón de la Condesa, cerca de parques y restaurantes.",
-    price: 4500000,
-    location: {
-      state: "Ciudad de México",
-      city: "Cuauhtémoc",
-      area: "Condesa",
-    },
-    features: {
-      bedrooms: 2,
-      bathrooms: 2,
-      constructionSize: 120,
-      lotSize: 120,
-    },
-    amenities: ["Estacionamiento", "Roof Garden", "Seguridad", "Elevador"],
-    images: [
-      "https://placekitten.com/806/600",
-      "https://placekitten.com/807/600",
-      "https://placekitten.com/808/600",
-    ],
-    propertyType: "Departamento",
-    isNew: true,
-  },
-];
-
-// Property types with counts
-const propertyTypes = [
-  { value: "casa", label: "Casas", count: 156 },
-  { value: "departamento", label: "Departamentos", count: 243 },
-  { value: "terreno", label: "Terrenos", count: 134 },
-  { value: "local", label: "Locales", count: 67 },
-  { value: "oficina", label: "Oficinas", count: 92 },
-  { value: "bodega", label: "Bodegas", count: 34 },
-];
+import { ChatUI } from "@/components/chat/chat-ui";
 
 export default function PropertiesPage() {
-  const {
-    filters,
-    setQuery,
-    setPropertyTypes,
-    setSortBy,
-  } = useSearchStore();
+  const searchParams = useSearchParams();
+  const { setFilters } = useSearchStore();
 
-  // Filter properties based on search criteria
-  const filteredProperties = useMemo(() => {
-    return properties.filter((property) => {
-      // Text search
-      if (filters.query) {
-        const searchText = filters.query.toLowerCase();
-        const matchesQuery = 
-          property.title.toLowerCase().includes(searchText) ||
-          property.description.toLowerCase().includes(searchText) ||
-          property.location.area.toLowerCase().includes(searchText) ||
-          property.location.city.toLowerCase().includes(searchText);
-        
-        if (!matchesQuery) return false;
-      }
-
-      // Property type filter
-      if (filters.propertyType.length > 0) {
-        if (!filters.propertyType.includes(property.propertyType.toLowerCase())) {
-          return false;
-        }
-      }
-
-      // Price range filter
-      if (
-        property.price < filters.priceRange.min ||
-        property.price > filters.priceRange.max
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [filters]);
-
-  // Sort properties
-  const sortedProperties = useMemo(() => {
-    return [...filteredProperties].sort((a, b) => {
-      switch (filters.sortBy) {
-        case "price-asc":
-          return a.price - b.price;
-        case "price-desc":
-          return b.price - a.price;
-        case "recent":
-        default:
-          return b.id.localeCompare(a.id); // Assuming newer properties have higher IDs
-      }
-    });
-  }, [filteredProperties, filters.sortBy]);
-
-  // Reset scroll position when filters change
+  // Initialize filters from URL on mount
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [filters]);
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Parse URL parameters
+    const urlFilters = {
+      query: params.get("query") || "",
+      propertyType: params.get("type")?.split(",") || [],
+      location: {
+        state: params.get("state") as MexicanState | undefined,
+        city: params.get("city") || undefined,
+        area: params.get("area") || undefined,
+      },
+      priceRange: {
+        min: Number(params.get("minPrice")) || 0,
+        max: Number(params.get("maxPrice")) || 100000000,
+      },
+      features: {
+        bedrooms: params.get("beds") ? Number(params.get("beds")) : undefined,
+        bathrooms: params.get("baths") ? Number(params.get("baths")) : undefined,
+        constructionSize: {
+          min: Number(params.get("minConstSize")) || 0,
+          max: Number(params.get("maxConstSize")) || 1000,
+        },
+        lotSize: {
+          min: Number(params.get("minLotSize")) || 0,
+          max: Number(params.get("maxLotSize")) || 2000,
+        },
+      },
+      amenities: params.get("amenities")?.split(",") || [],
+      propertyAge: params.get("age") ? Number(params.get("age")) : undefined,
+      maintenanceFee: params.get("minMaint") || params.get("maxMaint") ? {
+        min: Number(params.get("minMaint")) || 0,
+        max: Number(params.get("maxMaint")) || 10000,
+      } : undefined,
+      sortBy: (params.get("sort") as "recent" | "price-asc" | "price-desc") || "recent",
+    };
+
+    setFilters(urlFilters);
+  }, [searchParams, setFilters]);
 
   return (
-    <main className="flex min-h-screen flex-col gap-6 p-4 md:p-6 pb-20">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <Suspense fallback={<Skeleton className="h-8 w-[200px]" />}>
-            <PropertyStats properties={SAMPLE_PROPERTIES} />
-          </Suspense>
-          <div className="flex items-center gap-4">
-            <PropertySort />
+    <div className="flex h-screen flex-col">
+      <header className="flex-none h-16 border-b bg-background">
+        {/* Header content */}
+      </header>
+
+      <main className="flex-1 flex overflow-hidden">
+        <aside className="w-[350px] border-r flex-none">
+          <ChatUI />
+        </aside>
+
+        <div className="flex-1 overflow-auto">
+          <div className="sticky top-0 bg-background border-b py-4 px-6">
+            <div className="flex items-center justify-between">
+              <Suspense fallback={<Skeleton className="h-8 w-[200px]" />}>
+                <PropertyStats properties={SAMPLE_PROPERTIES} />
+              </Suspense>
+              <PropertySort />
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-          <aside className="hidden lg:block">
-            <PropertyFilters />
-          </aside>
-
-          <div className="flex flex-col gap-6">
-            <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-              <PropertyMap properties={SAMPLE_PROPERTIES} />
-            </Suspense>
+          <div className="p-6 space-y-6">
+            <div data-map-container>
+              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                <PropertyMap properties={SAMPLE_PROPERTIES} />
+              </Suspense>
+            </div>
 
             <Suspense 
               fallback={
@@ -213,7 +98,11 @@ export default function PropertiesPage() {
             </Suspense>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+
+      <footer className="flex-none h-16 border-t bg-background">
+        {/* Footer content */}
+      </footer>
+    </div>
   );
 } 
