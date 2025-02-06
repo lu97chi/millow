@@ -22,11 +22,6 @@ interface ChatMessage {
   content: string;
 }
 
-interface AIResponse {
-  message: string;
-  filters?: Partial<import("@/store/use-search-store").PropertyFilters>;
-}
-
 const EXAMPLE_PROMPTS = [
   "Busco una casa en Polanco con 3 recámaras y jardín",
   "¿Qué departamentos hay disponibles en la Roma Norte?",
@@ -71,25 +66,6 @@ export function ChatUI() {
     }
   }, [messages]);
 
-  // Mock AI response function - Replace with actual implementation
-  const mockAIResponse = async (input: string): Promise<AIResponse> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (input.toLowerCase().includes("casa")) {
-      return {
-        message: "He encontrado algunas casas que podrían interesarte. ¿Buscas algo específico en cuanto a ubicación o presupuesto?",
-        filters: {
-          propertyType: ["casa"],
-          priceRange: { min: 1000000, max: 10000000 },
-        },
-      };
-    }
-
-    return {
-      message: "¿Podrías especificar la ubicación, presupuesto o características que buscas?",
-    };
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -104,15 +80,29 @@ export function ChatUI() {
     setIsLoading(true);
 
     try {
-      const response = await mockAIResponse(input);
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
       
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: response.message },
+        { role: "assistant", content: data.message },
       ]);
 
-      if (response.filters) {
-        syncWithUrl(response.filters);
+      if (data.filters) {
+        syncWithUrl(data.filters);
         router.push("/properties");
       }
     } catch (error) {

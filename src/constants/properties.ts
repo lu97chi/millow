@@ -70,18 +70,6 @@ const CITY_COORDINATES: Record<MexicanState, {
   }
 };
 
-// Helper function to get random coordinates near a location
-function getRandomCoordinates(state: MexicanState, area: string) {
-  const cityData = CITY_COORDINATES[state];
-  const areaCoords = cityData.areas[area];
-  
-  // Add some random variation (roughly within 1km)
-  const lat = areaCoords.lat + (Math.random() - 0.5) * 0.01;
-  const lng = areaCoords.lng + (Math.random() - 0.5) * 0.01;
-  
-  return { lat, lng };
-}
-
 export interface PropertyType {
   name: string;
   value: string;
@@ -252,54 +240,128 @@ function generatePlaceholderImages(id: number, count: number = 5): string[] {
   });
 }
 
-// Generate 50 sample properties
-export const SAMPLE_PROPERTIES: Property[] = Array.from({ length: 50 }, (_, index) => {
-  // Randomly select property type
-  const type = PROPERTY_TYPES[Math.floor(Math.random() * PROPERTY_TYPES.length)];
+// Helper function to generate fixed dates
+function generateFixedDate(index: number): string {
+  // Start from a fixed date and add days based on index
+  const baseDate = new Date('2024-01-01T00:00:00.000Z');
+  const days = index % 30; // Last 30 days
+  const timestamp = baseDate.getTime() + (days * 24 * 60 * 60 * 1000);
+  return new Date(timestamp).toISOString();
+}
+
+// Generate 100 sample properties with more realistic variations
+export const SAMPLE_PROPERTIES: Property[] = Array.from({ length: 100 }, (_, index) => {
+  // More varied property type selection with weighted distribution
+  const typeDistribution = [
+    ...Array(30).fill(PROPERTY_TYPES[0]), // 30% houses
+    ...Array(35).fill(PROPERTY_TYPES[1]), // 35% apartments
+    ...Array(10).fill(PROPERTY_TYPES[2]), // 10% penthouses
+    ...Array(10).fill(PROPERTY_TYPES[3]), // 10% offices
+    ...Array(5).fill(PROPERTY_TYPES[4]),  // 5% retail
+    ...Array(5).fill(PROPERTY_TYPES[5]),  // 5% land
+    ...Array(5).fill(PROPERTY_TYPES[6]),  // 5% warehouse
+  ];
+  const type = typeDistribution[index % typeDistribution.length];
   
-  // Randomly select state and area
-  const state = Object.keys(CITY_COORDINATES)[Math.floor(Math.random() * Object.keys(CITY_COORDINATES).length)] as MexicanState;
+  // Weighted location distribution
+  const stateDistribution = [
+    ...Array(40).fill("Ciudad de México"),    // 40% CDMX
+    ...Array(15).fill("Guadalajara"),         // 15% Guadalajara
+    ...Array(15).fill("Monterrey"),           // 15% Monterrey
+    ...Array(10).fill("Querétaro"),           // 10% Querétaro
+    ...Array(10).fill("Cancún"),              // 10% Cancún
+    ...Array(10).fill("Los Cabos"),           // 10% Los Cabos
+  ];
+  const state = stateDistribution[index % stateDistribution.length] as MexicanState;
   const cityData = CITY_COORDINATES[state];
+  
+  // More varied area selection
   const areas = Object.keys(cityData.areas);
-  const area = areas[Math.floor(Math.random() * areas.length)];
+  const area = areas[Math.floor(Math.pow(index % areas.length, 2) % areas.length)];
+  const coordinates = cityData.areas[area];
   
-  // Generate random coordinates near the selected area
-  const coordinates = getRandomCoordinates(state, area);
-  
-  // Generate random features based on property type
+  // More realistic features based on property type
   const isResidential = ["house", "apartment", "penthouse"].includes(type.value);
-  const bedrooms = isResidential ? Math.floor(Math.random() * 5) + 1 : null;
-  const bathrooms = isResidential ? Math.floor(Math.random() * 4) + 1 : null;
-  const constructionSize = Math.floor(Math.random() * 400) + 50;
-  const lotSize = type.value === "house" || type.value === "land" ? constructionSize * (1 + Math.random()) : null;
+  const isLuxury = type.value === "penthouse" || (type.value === "house" && Math.random() > 0.7);
   
-  // Generate random price based on size and location
-  const basePrice = constructionSize * 25000;
-  const locationMultiplier = state === "Ciudad de México" ? 1.5 : 1;
-  const price = Math.round(basePrice * locationMultiplier * (0.8 + Math.random() * 0.4));
+  // More varied bedroom and bathroom counts
+  const bedroomDistribution = isLuxury ? [3, 4, 5, 6] : [1, 2, 2, 3, 3, 3, 4];
+  const bathroomDistribution = isLuxury ? [2.5, 3, 3.5, 4, 4.5] : [1, 1.5, 2, 2, 2.5, 3];
   
-  // Random amenities
-  const numAmenities = Math.floor(Math.random() * 5) + 1;
-  const amenities = AMENITIES
+  const bedrooms = isResidential ? bedroomDistribution[index % bedroomDistribution.length] : null;
+  const bathrooms = isResidential ? bathroomDistribution[index % bathroomDistribution.length] : null;
+  
+  // More varied sizes based on property type and location
+  const baseSize = isLuxury ? 200 : 100;
+  const sizeMultiplier = isLuxury ? 2 : 1;
+  const constructionSize = Math.round((baseSize + (index % 8) * 50) * sizeMultiplier);
+  const lotSize = (type.value === "house" || type.value === "land") ? constructionSize * (1.5 + Math.random()) : null;
+  
+  // More realistic price calculation based on multiple factors
+  const basePrice = constructionSize * (isLuxury ? 35000 : 25000);
+  const locationMultiplier = {
+    "Ciudad de México": 1.5,
+    "Monterrey": 1.3,
+    "Guadalajara": 1.2,
+    "Querétaro": 1.0,
+    "Cancún": 1.4,
+    "Los Cabos": 1.6
+  }[state];
+  const luxuryMultiplier = isLuxury ? 1.5 : 1;
+  const randomVariation = 0.9 + (Math.random() * 0.2); // ±10% random variation
+  const price = Math.round(basePrice * locationMultiplier * luxuryMultiplier * randomVariation);
+  
+  // More varied amenities based on property type and luxury status
+  const possibleAmenities = AMENITIES.map(a => a.value);
+  const amenityCount = isLuxury ? 
+    Math.floor(Math.random() * 3) + 4 : // 4-6 amenities for luxury
+    Math.floor(Math.random() * 3) + 1;  // 1-3 amenities for standard
+  
+  const amenities = possibleAmenities
     .sort(() => Math.random() - 0.5)
-    .slice(0, numAmenities)
-    .map(a => a.value);
+    .slice(0, amenityCount);
+
+  // More varied property ages
+  const ageDistribution = isLuxury ?
+    [0, 0, 1, 2, 3] : // Newer properties for luxury
+    [0, 2, 5, 8, 10, 15]; // More varied ages for standard
+  const propertyAge = ageDistribution[index % ageDistribution.length];
+
+  // More realistic maintenance fees
+  const hasMaintenanceFee = ["apartment", "penthouse", "office"].includes(type.value) || Math.random() > 0.7;
+  const maintenanceFee = hasMaintenanceFee ? 
+    Math.round((price * (0.0008 + Math.random() * 0.0004)) / 100) * 100 : // 0.08% - 0.12% of price
+    null;
+
+  // Generate creation dates over the last 60 days for more variety
+  const createdAt = generateFixedDate(index % 60);
   
-  // Generate creation date within the last month
-  const createdAt = new Date();
-  createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 30));
+  // More descriptive titles and descriptions
+  const condition = propertyAge === 0 ? "Nueva" : propertyAge <= 5 ? "Moderna" : "Clásica";
+  const luxuryLabel = isLuxury ? "de lujo" : "";
+  const title = `${condition} ${type.name} ${luxuryLabel} en ${area}`;
   
+  const features = [
+    bedrooms ? `${bedrooms} recámaras` : "",
+    bathrooms ? `${bathrooms} baños` : "",
+    `${constructionSize}m² de construcción`,
+    lotSize ? `${lotSize}m² de terreno` : "",
+    ...amenities.map(a => AMENITIES.find(am => am.value === a)?.label || ""),
+  ].filter(Boolean);
+
+  const description = `Hermosa ${type.name.toLowerCase()} ${luxuryLabel} ubicada en ${area}, ${state}. ${features.join(", ")}. Excelente ubicación con todos los servicios.`;
+
   return {
     id: `prop-${index + 1}`,
-    title: `${type.name} en ${area}`,
-    description: `Hermoso${type.value === "house" ? "a" : ""} ${type.name.toLowerCase()} con excelente ubicación en ${area}, ${state}. Acabados de primera calidad y todos los servicios.`,
+    title,
+    description,
     type: type.value,
     price,
     location: {
       state,
       city: state,
       area,
-      address: `Calle ${Math.floor(Math.random() * 100) + 1}`,
+      address: `Calle ${(index % 100) + 1}`,
       coordinates
     },
     features: {
@@ -307,16 +369,16 @@ export const SAMPLE_PROPERTIES: Property[] = Array.from({ length: 50 }, (_, inde
       bathrooms,
       constructionSize,
       lotSize,
-      parking: Math.floor(Math.random() * 3) + 1,
-      floors: type.value === "house" ? Math.floor(Math.random() * 2) + 1 : 1
+      parking: isLuxury ? 3 : ((index % 2) + 1),
+      floors: type.value === "house" ? (isLuxury ? 2 : 1) : 1
     },
     amenities,
     images: generatePlaceholderImages(index + 1),
-    propertyAge: Math.floor(Math.random() * 20),
-    maintenanceFee: Math.random() > 0.3 ? Math.round((price * 0.001) / 100) * 100 : null,
+    propertyAge,
+    maintenanceFee,
     status: "available",
-    createdAt: createdAt.toISOString(),
-    updatedAt: createdAt.toISOString()
+    createdAt,
+    updatedAt: createdAt
   };
 });
 

@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { z } from 'zod';
 import { MexicanState } from '@/constants/properties';
-import { PRICE_RANGE, CONSTRUCTION_SIZE_RANGE, LOT_SIZE_RANGE } from '@/constants/property';
 
 export interface Location {
   state?: MexicanState;

@@ -31,35 +31,44 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     if (filters.location.city) params.set("city", filters.location.city);
     if (filters.location.area) params.set("area", filters.location.area);
     
-    if (filters.priceRange.min !== initialFilters.priceRange.min) {
+    // Add validation for price range
+    if (filters.priceRange?.min !== undefined && filters.priceRange.min !== initialFilters.priceRange.min) {
       params.set("minPrice", filters.priceRange.min.toString());
     }
-    if (filters.priceRange.max !== initialFilters.priceRange.max) {
+    if (filters.priceRange?.max !== undefined && filters.priceRange.max !== initialFilters.priceRange.max) {
       params.set("maxPrice", filters.priceRange.max.toString());
     }
     
-    if (filters.features.bedrooms) params.set("beds", filters.features.bedrooms.toString());
-    if (filters.features.bathrooms) params.set("baths", filters.features.bathrooms.toString());
+    if (filters.features?.bedrooms) params.set("beds", filters.features.bedrooms.toString());
+    if (filters.features?.bathrooms) params.set("baths", filters.features.bathrooms.toString());
     
-    if (filters.features.constructionSize?.min !== initialFilters.features.constructionSize?.min) {
-      params.set("minConstSize", filters.features.constructionSize!.min.toString());
+    if (filters.features?.constructionSize?.min !== undefined && 
+        filters.features.constructionSize.min !== initialFilters.features.constructionSize?.min) {
+      params.set("minConstSize", filters.features.constructionSize.min.toString());
     }
-    if (filters.features.constructionSize?.max !== initialFilters.features.constructionSize?.max) {
-      params.set("maxConstSize", filters.features.constructionSize!.max.toString());
-    }
-    
-    if (filters.features.lotSize?.min !== initialFilters.features.lotSize?.min) {
-      params.set("minLotSize", filters.features.lotSize!.min.toString());
-    }
-    if (filters.features.lotSize?.max !== initialFilters.features.lotSize?.max) {
-      params.set("maxLotSize", filters.features.lotSize!.max.toString());
+    if (filters.features?.constructionSize?.max !== undefined && 
+        filters.features.constructionSize.max !== initialFilters.features.constructionSize?.max) {
+      params.set("maxConstSize", filters.features.constructionSize.max.toString());
     }
     
-    if (filters.amenities.length > 0) params.set("amenities", filters.amenities.join(","));
+    if (filters.features?.lotSize?.min !== undefined && 
+        filters.features.lotSize.min !== initialFilters.features.lotSize?.min) {
+      params.set("minLotSize", filters.features.lotSize.min.toString());
+    }
+    if (filters.features?.lotSize?.max !== undefined && 
+        filters.features.lotSize.max !== initialFilters.features.lotSize?.max) {
+      params.set("maxLotSize", filters.features.lotSize.max.toString());
+    }
+    
+    if (filters.amenities?.length > 0) params.set("amenities", filters.amenities.join(","));
     if (filters.propertyAge !== undefined) params.set("age", filters.propertyAge.toString());
     if (filters.maintenanceFee) {
-      params.set("minMaint", filters.maintenanceFee.min.toString());
-      params.set("maxMaint", filters.maintenanceFee.max.toString());
+      if (filters.maintenanceFee.min !== undefined) {
+        params.set("minMaint", filters.maintenanceFee.min.toString());
+      }
+      if (filters.maintenanceFee.max !== undefined) {
+        params.set("maxMaint", filters.maintenanceFee.max.toString());
+      }
     }
     if (filters.sortBy !== "recent") params.set("sort", filters.sortBy);
 
