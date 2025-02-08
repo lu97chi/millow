@@ -7,10 +7,8 @@ import { Suspense } from "react";
 import { PropertyGrid } from "@/components/properties/property-grid";
 import { PropertySort } from "@/components/properties/property-sort";
 import { PropertyStats } from "@/components/properties/property-stats";
-import { PropertyMap } from "@/components/properties/property-map";
 import { SAMPLE_PROPERTIES, MexicanState } from "@/constants/properties";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChatUI } from "@/components/chat/chat-ui";
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams();
@@ -60,49 +58,29 @@ export default function PropertiesPage() {
   return (
     <div className="flex h-screen flex-col">
       <header className="flex-none h-16 border-b bg-background">
-        {/* Header content */}
+        <div className="container flex h-full items-center justify-between">
+          <Suspense fallback={<Skeleton className="h-8 w-[200px]" />}>
+            <PropertyStats properties={SAMPLE_PROPERTIES} />
+          </Suspense>
+          <PropertySort />
+        </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
-        <aside className="w-[350px] border-r flex-none">
-          <ChatUI />
-        </aside>
-
-        <div className="flex-1 overflow-auto">
-          <div className="sticky top-0 bg-background border-b py-4 px-6">
-            <div className="flex items-center justify-between">
-              <Suspense fallback={<Skeleton className="h-8 w-[200px]" />}>
-                <PropertyStats properties={SAMPLE_PROPERTIES} />
-              </Suspense>
-              <PropertySort />
-            </div>
-          </div>
-
-          <div className="p-6 space-y-6">
-            <div data-map-container>
-              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <PropertyMap properties={SAMPLE_PROPERTIES} />
-              </Suspense>
-            </div>
-
-            <Suspense 
-              fallback={
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {Array(6).fill(0).map((_, i) => (
-                    <Skeleton key={i} className="h-[400px] w-full" />
-                  ))}
-                </div>
-              }
-            >
-              <PropertyGrid properties={SAMPLE_PROPERTIES} />
-            </Suspense>
-          </div>
+      <main className="flex-1 overflow-auto">
+        <div className="container py-6">
+          <Suspense 
+            fallback={
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {Array(6).fill(0).map((_, i) => (
+                  <Skeleton key={i} className="h-[400px] w-full" />
+                ))}
+              </div>
+            }
+          >
+            <PropertyGrid properties={SAMPLE_PROPERTIES} />
+          </Suspense>
         </div>
       </main>
-
-      <footer className="flex-none h-16 border-t bg-background">
-        {/* Footer content */}
-      </footer>
     </div>
   );
 } 

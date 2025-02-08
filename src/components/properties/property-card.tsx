@@ -4,13 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Heart, Share, MapPin } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
 import type { Property } from "@/constants/properties";
-import { useMapStore } from "./property-map";
+import { useFavoritesStore } from "@/store/use-favorites-store";
+import { cn } from "@/lib/utils";
+import { ShareButton } from "@/components/properties/share-button";
 
 interface PropertyCardProps {
   property: Property;
@@ -30,16 +32,16 @@ export function PropertyCard({ property }: PropertyCardProps) {
     createdAt,
   } = property;
 
-  const setFocusedProperty = useMapStore((state) => state.setFocusedProperty);
+  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
+  const isPropertyFavorite = isFavorite(id);
 
-  const handleLocateInMap = () => {
-    if (location.coordinates) {
-      setFocusedProperty(id);
-      // Scroll to map if it's out of view
-      const mapElement = document.querySelector('[data-map-container]');
-      if (mapElement) {
-        mapElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation(); // Stop event bubbling
+    if (isPropertyFavorite) {
+      removeFavorite(id);
+    } else {
+      addFavorite(property);
     }
   };
 
@@ -65,13 +67,22 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 {location.area}, {location.city}
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button size="icon" variant="secondary">
-                <Heart className="h-4 w-4" />
+            <div className="flex gap-2" onClick={(e) => e.preventDefault()}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className={cn(
+                  "h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm",
+                  isPropertyFavorite && "text-red-500 hover:text-red-600"
+                )}
+                onClick={handleFavoriteClick}
+              >
+                <Heart className={cn("h-5 w-5", isPropertyFavorite && "fill-current")} />
               </Button>
-              <Button size="icon" variant="secondary">
-                <Share className="h-4 w-4" />
-              </Button>
+              <ShareButton 
+                title={title}
+                url={typeof window !== 'undefined' ? `${window.location.origin}/properties/${id}` : ''}
+              />
             </div>
           </div>
         </Link>
@@ -110,17 +121,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
         <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
       </CardContent>
-      <CardFooter className="grid grid-cols-2 gap-2 p-4 pt-0">
-        <Button 
-          variant="outline"
-          className="gap-2"
-          onClick={handleLocateInMap}
-          disabled={!location.coordinates}
-        >
-          <MapPin className="h-4 w-4" />
-          Ver en mapa
-        </Button>
-        <Button asChild>
+      <CardFooter className="p-4 pt-0">
+        <Button className="w-full" asChild>
           <Link href={`/properties/${id}`}>Ver detalles</Link>
         </Button>
       </CardFooter>

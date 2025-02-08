@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
 import { useSearchStore } from "@/store/use-search-store";
 import { filterProperties, sortProperties } from "@/lib/filter-properties";
@@ -51,9 +51,10 @@ export function PropertyMap({ properties }: PropertyMapProps) {
   const filteredProperties = filterProperties(properties, filters);
   const sortedProperties = sortProperties(filteredProperties, filters.sortBy);
 
-  // Initialize and update map
-  useEffect(() => {
-    if (!mapRef.current || !isLoaded || !window.google) return;
+  // Handle script load
+  const handleScriptLoad = useCallback(() => {
+    if (!mapRef.current || !window.google) return;
+    setIsLoaded(true);
 
     // Initialize map
     const map = new window.google.maps.Map(mapRef.current, {
@@ -114,11 +115,20 @@ export function PropertyMap({ properties }: PropertyMapProps) {
         map.setZoom(15);
       }
     }
+  }, [sortedProperties, focusedPropertyId]);
+
+  // Update markers when properties change
+  useEffect(() => {
+    if (!isLoaded || !mapInstanceRef.current) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    handleScriptLoad();
 
     return () => {
-      markers.forEach((marker) => marker.setMap(null));
+      markersRef.current.forEach((marker) => marker.setMap(null));
     };
-  }, [sortedProperties, isLoaded, focusedPropertyId]);
+  }, [isLoaded, sortedProperties, handleScriptLoad]);
 
   // Handle focused property changes
   useEffect(() => {
@@ -133,20 +143,15 @@ export function PropertyMap({ properties }: PropertyMapProps) {
       lng: focusedProperty.location.coordinates.lng,
     };
 
-    // Smoothly pan and zoom to the focused property
     map.panTo(position);
-    map.setZoom(17); // Increased zoom level for better detail
+    map.setZoom(17);
 
-    // Find and animate the marker
     const marker = markersRef.current.find(
       m => m.getPosition()?.lat() === position.lat && m.getPosition()?.lng() === position.lng
     );
     
     if (marker) {
-      // Ensure marker is visible
       marker.setAnimation(google.maps.Animation.BOUNCE);
-      
-      // Stop animation after 2 seconds
       setTimeout(() => {
         marker.setAnimation(null);
       }, 2000);
@@ -174,7 +179,7 @@ export function PropertyMap({ properties }: PropertyMapProps) {
     <Card className="relative h-[400px] overflow-hidden">
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
-        onLoad={() => setIsLoaded(true)}
+        onLoad={handleScriptLoad}
       />
       <div ref={mapRef} className="h-full w-full" />
       {!isLoaded && (

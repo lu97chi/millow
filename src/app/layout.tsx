@@ -6,6 +6,7 @@ import { RootLayout } from "@/components/layout/root-layout";
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
 import { SearchProvider } from "@/providers/search-provider";
+import { Toaster } from "@/components/providers/toaster";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -58,7 +59,10 @@ export default function Layout({ children }: LayoutProps) {
       >
         <SearchProvider>
           <Providers>
-            <RootLayout>{children}</RootLayout>
+            <RootLayout>
+              {children}
+              <Toaster />
+            </RootLayout>
           </Providers>
         </SearchProvider>
       </body>

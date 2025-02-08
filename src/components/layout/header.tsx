@@ -63,23 +63,23 @@ export function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between gap-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2 shrink-0">
           <span className="font-heading text-xl">Millow</span>
         </Link>
 
         {/* Search */}
-        <div className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-1 items-center gap-2 min-w-0">
+          <div className="relative flex-1 min-w-0">
             <Button
               variant="outline"
-              className="relative w-full max-w-2xl justify-start text-sm text-muted-foreground"
+              className="relative w-full max-w-2xl justify-start text-sm text-muted-foreground truncate"
               onClick={() => setIsSearchOpen(true)}
             >
-              <Search className="mr-2 h-4 w-4" />
-              Buscar propiedades...
+              <Search className="mr-2 h-4 w-4 shrink-0" />
+              <span className="truncate">Buscar propiedades...</span>
               <kbd className="pointer-events-none absolute right-3 top-[50%] hidden h-5 -translate-y-1/2 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
                 <span className="text-xs">⌘</span>K
               </kbd>
@@ -101,7 +101,7 @@ export function Header() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-2 shrink-0">
           {navigation.map((item) => (
             <Link
               key={item.name}

@@ -12,7 +12,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { messages } = body;
+    const { messages, propertyContext } = body;
+
+    // If there's a property context and the last message is from the user,
+    // append the context to the message
+    if (propertyContext && messages.length > 0 && messages[messages.length - 1].role === 'user') {
+      const lastMessage = messages[messages.length - 1];
+      lastMessage.content = `${lastMessage.content}\nContexto de la propiedad: ${JSON.stringify(propertyContext)}`;
+    }
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -48,7 +55,7 @@ export async function POST(request: Request) {
     
     // Provide more specific error messages
     let errorMessage = 'Internal server error';
-    let statusCode = 500;
+    const statusCode = 500;
 
     if (error instanceof Error) {
       console.error('Error details:', error.message);

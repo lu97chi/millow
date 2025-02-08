@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useSearch } from "@/providers/search-provider";
 import { cn } from "@/lib/utils";
 import { PropertyFilters } from "@/components/properties/property-filters";
+import { useChatContextStore } from "@/store/use-chat-context-store";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,11 @@ const EXAMPLE_PROMPTS = [
   "Busco casa en venta en San Ángel con alberca",
 ];
 
+// Helper function to get display content
+function getDisplayContent(content: string | { message: string; context?: Record<string, unknown> }): string {
+  return typeof content === "string" ? content : content.message;
+}
+
 export function ChatUI() {
   const router = useRouter();
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
@@ -36,10 +42,39 @@ export function ChatUI() {
   const [isLoading, setIsLoading] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const { syncWithUrl } = useSearch();
+  const { syncWithUrl, filters } = useSearch();
+  const propertyContext = useChatContextStore((state) => state.propertyContext);
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
   const [isInfoOpen, setIsInfoOpen] = React.useState(false);
   const [showPrompts, setShowPrompts] = React.useState(false);
+
+  // Listen for filter changes
+  React.useEffect(() => {
+    // Only redirect if we have active filters and we're not on a property detail page
+    const hasActiveFilters = 
+      (filters?.propertyType?.length ?? 0) > 0 ||
+      filters?.location?.state ||
+      filters?.location?.city ||
+      filters?.location?.area ||
+      filters?.features?.bedrooms ||
+      filters?.features?.bathrooms ||
+      filters?.propertyAge !== undefined ||
+      (filters?.priceRange?.min ?? 0) !== 0 ||
+      (filters?.priceRange?.max ?? 100000000) !== 100000000 ||
+      (filters?.features?.constructionSize?.min ?? 0) !== 0 ||
+      (filters?.features?.constructionSize?.max ?? 1000) !== 1000 ||
+      (filters?.features?.lotSize?.min ?? 0) !== 0 ||
+      (filters?.features?.lotSize?.max ?? 2000) !== 2000 ||
+      (filters?.amenities?.length ?? 0) > 0 ||
+      filters?.maintenanceFee !== undefined ||
+      (filters?.sortBy ?? "recent") !== "recent" ||
+      (filters?.query ?? "") !== "";
+
+    if (hasActiveFilters && !propertyContext && filters) {
+      syncWithUrl(filters);
+      router.push("/properties");
+    }
+  }, [filters, router, syncWithUrl, propertyContext]);
 
   // Improved scroll behavior
   const scrollToBottom = () => {
@@ -66,13 +101,58 @@ export function ChatUI() {
     }
   }, [messages]);
 
+  // Property context change effect
+  React.useEffect(() => {
+    if (propertyContext) {
+      const sendPropertyContextMessage = async () => {
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messages: [
+                {
+                  role: "user",
+                  content: `Contexto de la propiedad: ${JSON.stringify(propertyContext)}`
+                }
+              ],
+              propertyContext
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const data = await response.json();
+          
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: data.message
+          }]);
+        } catch (error) {
+          console.error("Error sending property context:", error);
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: "Lo siento, hubo un error al cargar la información de la propiedad."
+          }]);
+        }
+      };
+
+      sendPropertyContextMessage();
+    }
+  }, [propertyContext?.id]); // Only trigger when property ID changes
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    // Create user message with context if available
     const userMessage: ChatMessage = {
       role: "user",
-      content: input,
+      content: input
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -87,6 +167,7 @@ export function ChatUI() {
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
+          propertyContext
         }),
       });
 
@@ -101,7 +182,8 @@ export function ChatUI() {
         { role: "assistant", content: data.message },
       ]);
 
-      if (data.filters) {
+      // Only apply filters if we're not on a property detail page
+      if (data.filters && !propertyContext) {
         syncWithUrl(data.filters);
         router.push("/properties");
       }
@@ -214,7 +296,7 @@ export function ChatUI() {
                     message.role === "assistant" ? "rounded-tl-sm" : "rounded-tr-sm"
                   )}>
                     <span className="inline-block whitespace-pre-wrap break-words">
-                      {message.content}
+                      {getDisplayContent(message.content)}
                     </span>
                   </div>
                 </div>
@@ -282,6 +364,7 @@ export function ChatUI() {
                   value={input}
                   onChange={handleInput}
                   placeholder="Escribe tu mensaje..."
+                  maxLength={200}
                   className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 overflow-y-auto"
                   rows={1}
                   style={{ 
@@ -297,7 +380,14 @@ export function ChatUI() {
                     }
                   }}
                 />
-                <div className="absolute bottom-2 right-2 flex items-center">
+                <div className="absolute bottom-2 right-2 flex items-center gap-2">
+                  <span className={cn(
+                    "text-[10px] tabular-nums",
+                    input.length > 180 ? "text-yellow-500" : "text-muted-foreground/70",
+                    input.length >= 200 && "text-red-500"
+                  )}>
+                    {input.length}/200
+                  </span>
                   <kbd className="rounded bg-muted px-1.5 text-[10px] font-medium text-muted-foreground/70">⏎</kbd>
                 </div>
               </div>
