@@ -10,13 +10,13 @@ export interface Location {
 }
 
 export interface PriceRange {
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
 }
 
 export interface SizeRange {
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
 }
 
 export interface Features {
@@ -57,19 +57,19 @@ export const initialFilters: PropertyFilters = {
   location: {},
   propertyType: [],
   priceRange: {
-    min: 0,
-    max: 100000000,
+    min: undefined,
+    max: undefined,
   },
   features: {
     bedrooms: undefined,
     bathrooms: undefined,
     constructionSize: {
-      min: 0,
-      max: 1000,
+      min: undefined,
+      max: undefined,
     },
     lotSize: {
-      min: 0,
-      max: 2000,
+      min: undefined,
+      max: undefined,
     },
   },
   amenities: [],
@@ -215,7 +215,7 @@ export const useSearchStore = create<SearchState>()(
           if (data.state || data.city) {
             newFilters.location = {
               ...initialFilters.location,
-              ...(data.state && { state: data.state }),
+              ...(data.state && { state: data.state as MexicanState }),
               ...(data.city && { city: data.city }),
             };
           }

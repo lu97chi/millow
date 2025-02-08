@@ -1,9 +1,19 @@
 "use client";
 
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { Search, MapPin, Building2, ArrowRight, Bot, Shield, Home } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  Building2,
+  ArrowRight,
+  Bot,
+  Shield,
+  Home,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SearchCommand } from "@/components/layout/search-command";
@@ -11,31 +21,62 @@ import { SAMPLE_PROPERTIES, PROPERTY_TYPES } from "@/constants/properties";
 import { formatPrice } from "@/lib/format";
 import { useState, useRef } from "react";
 
+export default function HomePage() {
+  return (
+    <Suspense fallback={<HomeLoading />}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeLoading() {
+  return (
+    <div className="flex flex-col">
+      <div className="relative h-[85vh] overflow-hidden">
+        <div className="container relative flex h-full flex-col justify-center">
+          <div className="max-w-2xl space-y-4">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-12 w-3/4" />
+            <div className="flex flex-col gap-4 pt-4 sm:flex-row">
+              <Skeleton className="h-12 w-40" />
+              <Skeleton className="h-12 w-40" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
+  transition: { duration: 0.5 },
 };
 
 const stagger = {
   animate: {
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
-export default function HomePage() {
+function HomeContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const statsRef = useRef(null);
   const isStatsInView = useInView(statsRef, { once: true });
-  
-  const featuredProperties = SAMPLE_PROPERTIES
-    .filter(p => p.price > 5000000)
-    .slice(0, 3);
+
+  const featuredProperties = SAMPLE_PROPERTIES.filter(
+    (p) => p.price > 5000000
+  ).slice(0, 3);
 
   // Calculate total properties value
-  const totalValue = SAMPLE_PROPERTIES.reduce((sum, prop) => sum + prop.price, 0);
+  const totalValue = SAMPLE_PROPERTIES.reduce(
+    (sum, prop) => sum + prop.price,
+    0
+  );
   const averagePrice = totalValue / SAMPLE_PROPERTIES.length;
 
   return (
@@ -58,7 +99,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-background/95 to-background/30" />
         </motion.div>
         <div className="container relative flex h-full flex-col justify-center">
-          <motion.div 
+          <motion.div
             className="max-w-2xl space-y-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -69,7 +110,8 @@ export default function HomePage() {
               Encuentra tu hogar ideal en México
             </h1>
             <p className="text-lg text-muted-foreground">
-              Descubre las mejores propiedades con nuestra plataforma inteligente que entiende exactamente lo que buscas.
+              Descubre las mejores propiedades con nuestra plataforma
+              inteligente que entiende exactamente lo que buscas.
             </p>
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
               <Button
@@ -100,7 +142,7 @@ export default function HomePage() {
       {/* Stats Section */}
       <section className="border-y bg-muted/30">
         <div className="container py-12">
-          <motion.div 
+          <motion.div
             ref={statsRef}
             className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
             variants={stagger}
@@ -111,23 +153,23 @@ export default function HomePage() {
               {
                 label: "Propiedades",
                 value: SAMPLE_PROPERTIES.length,
-                suffix: "+"
+                suffix: "+",
               },
               {
                 label: "Valor total",
                 value: formatPrice(totalValue),
-                prefix: "$"
+                prefix: "$",
               },
               {
                 label: "Precio promedio",
                 value: formatPrice(averagePrice),
-                prefix: "$"
+                prefix: "$",
               },
               {
                 label: "Ciudades",
                 value: "8",
-                suffix: "+"
-              }
+                suffix: "+",
+              },
             ].map((stat) => (
               <motion.div
                 key={stat.label}
@@ -138,7 +180,9 @@ export default function HomePage() {
                 <div className="relative space-y-1 rounded-lg border bg-background p-4">
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className="text-2xl font-bold tracking-tight">
-                    {stat.prefix}{stat.value}{stat.suffix}
+                    {stat.prefix}
+                    {stat.value}
+                    {stat.suffix}
                   </p>
                 </div>
               </motion.div>
@@ -149,19 +193,21 @@ export default function HomePage() {
 
       {/* Property Types Grid */}
       <section className="container py-20">
-        <motion.div 
+        <motion.div
           className="text-center space-y-4 mb-12"
           variants={fadeInUp}
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
         >
-          <h2 className="font-heading text-3xl">Explora por tipo de propiedad</h2>
+          <h2 className="font-heading text-3xl">
+            Explora por tipo de propiedad
+          </h2>
           <p className="text-muted-foreground">
             Encuentra la propiedad perfecta para tu estilo de vida
           </p>
         </motion.div>
-        <motion.div 
+        <motion.div
           className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
           variants={stagger}
           initial="initial"
@@ -174,7 +220,7 @@ export default function HomePage() {
               variants={fadeInUp}
               className="group relative overflow-hidden rounded-xl bg-muted"
             >
-              <Link 
+              <Link
                 href={`/properties?type=${type.value}`}
                 className="flex flex-col items-center gap-4 p-6"
               >
@@ -183,7 +229,9 @@ export default function HomePage() {
                 </div>
                 <div className="text-center">
                   <h3 className="font-semibold">{type.name}</h3>
-                  <p className="text-sm text-muted-foreground">{type.count} propiedades</p>
+                  <p className="text-sm text-muted-foreground">
+                    {type.count} propiedades
+                  </p>
                 </div>
               </Link>
             </motion.div>
@@ -194,7 +242,7 @@ export default function HomePage() {
       {/* Featured Properties */}
       <section className="border-t bg-muted/30">
         <div className="container py-20">
-          <motion.div 
+          <motion.div
             className="text-center space-y-4 mb-12"
             variants={fadeInUp}
             initial="initial"
@@ -206,7 +254,7 @@ export default function HomePage() {
               Las mejores propiedades seleccionadas para ti
             </p>
           </motion.div>
-          <motion.div 
+          <motion.div
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
             variants={stagger}
             initial="initial"
@@ -219,7 +267,7 @@ export default function HomePage() {
                 variants={fadeInUp}
                 className="group relative"
               >
-                <Link 
+                <Link
                   href={`/properties/${property.id}`}
                   className="block overflow-hidden rounded-xl bg-background shadow-md transition-all hover:shadow-xl"
                 >
@@ -245,9 +293,7 @@ export default function HomePage() {
                       <p className="text-lg font-semibold">
                         {formatPrice(property.price)}
                       </p>
-                      <Badge variant="secondary">
-                        {property.type}
-                      </Badge>
+                      <Badge variant="secondary">{property.type}</Badge>
                     </div>
                     <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
                       {property.features.bedrooms && (
@@ -279,7 +325,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="container py-20">
-        <motion.div 
+        <motion.div
           className="text-center space-y-4 mb-12"
           variants={fadeInUp}
           initial="initial"
@@ -291,7 +337,7 @@ export default function HomePage() {
             La plataforma más inteligente para encontrar tu próxima propiedad
           </p>
         </motion.div>
-        <motion.div 
+        <motion.div
           className="grid gap-8 md:grid-cols-3"
           variants={stagger}
           initial="initial"
@@ -302,18 +348,21 @@ export default function HomePage() {
             {
               icon: Bot,
               title: "Búsqueda Inteligente",
-              description: "Nuestro asistente AI entiende tus necesidades y te muestra las propiedades más relevantes."
+              description:
+                "Nuestro asistente AI entiende tus necesidades y te muestra las propiedades más relevantes.",
             },
             {
               icon: Shield,
               title: "Propiedades Verificadas",
-              description: "Todas nuestras propiedades son verificadas para garantizar la mejor calidad y seguridad."
+              description:
+                "Todas nuestras propiedades son verificadas para garantizar la mejor calidad y seguridad.",
             },
             {
               icon: Home,
               title: "Amplio Catálogo",
-              description: "Miles de propiedades en las mejores ubicaciones de México, actualizadas diariamente."
-            }
+              description:
+                "Miles de propiedades en las mejores ubicaciones de México, actualizadas diariamente.",
+            },
           ].map((feature, index) => (
             <motion.div
               key={index}
@@ -335,7 +384,7 @@ export default function HomePage() {
       {/* Enhanced CTA Section with background pattern */}
       <section className="border-t">
         <div className="container py-20">
-          <motion.div 
+          <motion.div
             className="relative rounded-2xl bg-primary px-6 py-12 md:p-16 text-primary-foreground text-center overflow-hidden"
             variants={fadeInUp}
             initial="initial"
@@ -348,10 +397,11 @@ export default function HomePage() {
                 Encuentra tu próxima propiedad hoy
               </h2>
               <p className="text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-                Únete a miles de personas que ya encontraron su hogar ideal a través de nuestra plataforma
+                Únete a miles de personas que ya encontraron su hogar ideal a
+                través de nuestra plataforma
               </p>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="secondary"
                 className="gap-2 group"
                 onClick={() => setIsSearchOpen(true)}
@@ -365,9 +415,9 @@ export default function HomePage() {
       </section>
 
       {/* Search Command */}
-      <SearchCommand 
-        open={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
+      <SearchCommand
+        open={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
       />
     </div>
   );

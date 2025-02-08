@@ -48,7 +48,7 @@ export function ChatUI() {
   const [isLoading, setIsLoading] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const { syncWithUrl, filters } = useSearch();
+  const { syncWithUrl, filters, setFilters } = useSearch();
   const propertyContext = useChatContextStore((state) => state.propertyContext);
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
   const [isInfoOpen, setIsInfoOpen] = React.useState(false);
@@ -66,12 +66,12 @@ export function ChatUI() {
       filters?.features?.bedrooms ||
       filters?.features?.bathrooms ||
       filters?.propertyAge !== undefined ||
-      (filters?.priceRange?.min ?? 0) !== 0 ||
-      (filters?.priceRange?.max ?? 100000000) !== 100000000 ||
-      (filters?.features?.constructionSize?.min ?? 0) !== 0 ||
-      (filters?.features?.constructionSize?.max ?? 1000) !== 1000 ||
-      (filters?.features?.lotSize?.min ?? 0) !== 0 ||
-      (filters?.features?.lotSize?.max ?? 2000) !== 2000 ||
+      (filters?.priceRange?.min ?? undefined) !== undefined ||
+      (filters?.priceRange?.max ?? undefined) !== undefined ||
+      (filters?.features?.constructionSize?.min ?? undefined) !== undefined ||
+      (filters?.features?.constructionSize?.max ?? undefined) !== undefined ||
+      (filters?.features?.lotSize?.min ?? undefined) !== undefined ||
+      (filters?.features?.lotSize?.max ?? undefined) !== undefined ||
       (filters?.amenities?.length ?? 0) > 0 ||
       filters?.maintenanceFee !== undefined ||
       (filters?.sortBy ?? "recent") !== "recent" ||
@@ -155,6 +155,7 @@ export function ChatUI() {
 
   // Handle chat response and set redirect flag
   const handleChatResponse = async (data: ChatResponseData) => {
+    debugger;
     setMessages((prev) => [
       ...prev,
       { role: "assistant", content: data.message },
@@ -162,8 +163,8 @@ export function ChatUI() {
 
     // Only apply filters if we're not on a property detail page
     if (data.filters && !propertyContext) {
-      syncWithUrl(data.filters);
-      router.push('/properties');
+      setFilters(current => ({ ...current, ...data.filters }));
+      setShowSuggested(true);
     }
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useCallback, useEffect, useRef } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSearchStore, type PropertyFilters, initialFilters } from "@/store/use-search-store";
 import type { MexicanState } from "@/constants/properties";
 
@@ -9,6 +9,7 @@ interface SearchContextType {
   syncWithUrl: (filters: Partial<PropertyFilters>) => void;
   parseUrlToFilters: () => Partial<PropertyFilters>;
   filters: PropertyFilters;
+  setFilters: (filters: PropertyFilters | ((prev: PropertyFilters) => PropertyFilters)) => void;
 }
 
 const SearchContext = createContext<SearchContextType | null>(null);
@@ -16,69 +17,82 @@ const SearchContext = createContext<SearchContextType | null>(null);
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { filters, setFilters } = useSearchStore();
   const isFirstMount = useRef(true);
   const lastUrlUpdate = useRef<string>("");
-
+  console.log("filters", filters);
   // Convert filters to URL search params
   const filtersToSearchParams = useCallback((filters: PropertyFilters): URLSearchParams => {
     const params = new URLSearchParams();
 
-    // Only add non-default values
+    // Only add defined values
     if (filters.query) params.set("query", filters.query);
     if (filters.propertyType.length > 0) params.set("type", filters.propertyType.join(","));
     if (filters.location.state) params.set("state", filters.location.state);
     if (filters.location.city) params.set("city", filters.location.city);
     if (filters.location.area) params.set("area", filters.location.area);
     
-    // Add validation for price range
-    if (filters.priceRange?.min !== undefined && filters.priceRange.min !== initialFilters.priceRange.min) {
-      params.set("minPrice", filters.priceRange.min.toString());
+    // Price range - only add if defined
+    if (typeof filters.priceRange?.min === 'number') {
+      params.set("minPrice", String(filters.priceRange.min));
     }
-    if (filters.priceRange?.max !== undefined && filters.priceRange.max !== initialFilters.priceRange.max) {
-      params.set("maxPrice", filters.priceRange.max.toString());
-    }
-    
-    if (filters.features?.bedrooms) params.set("beds", filters.features.bedrooms.toString());
-    if (filters.features?.bathrooms) params.set("baths", filters.features.bathrooms.toString());
-    
-    if (filters.features?.constructionSize?.min !== undefined && 
-        filters.features.constructionSize.min !== initialFilters.features.constructionSize?.min) {
-      params.set("minConstSize", filters.features.constructionSize.min.toString());
-    }
-    if (filters.features?.constructionSize?.max !== undefined && 
-        filters.features.constructionSize.max !== initialFilters.features.constructionSize?.max) {
-      params.set("maxConstSize", filters.features.constructionSize.max.toString());
+    if (typeof filters.priceRange?.max === 'number') {
+      params.set("maxPrice", String(filters.priceRange.max));
     }
     
-    if (filters.features?.lotSize?.min !== undefined && 
-        filters.features.lotSize.min !== initialFilters.features.lotSize?.min) {
-      params.set("minLotSize", filters.features.lotSize.min.toString());
+    // Features - only add if defined
+    if (typeof filters.features?.bedrooms === 'number') {
+      params.set("beds", String(filters.features.bedrooms));
     }
-    if (filters.features?.lotSize?.max !== undefined && 
-        filters.features.lotSize.max !== initialFilters.features.lotSize?.max) {
-      params.set("maxLotSize", filters.features.lotSize.max.toString());
+    if (typeof filters.features?.bathrooms === 'number') {
+      params.set("baths", String(filters.features.bathrooms));
     }
     
-    if (filters.amenities?.length > 0) params.set("amenities", filters.amenities.join(","));
-    if (filters.propertyAge !== undefined) params.set("age", filters.propertyAge.toString());
-    if (filters.maintenanceFee) {
-      if (filters.maintenanceFee.min !== undefined) {
-        params.set("minMaint", filters.maintenanceFee.min.toString());
-      }
-      if (filters.maintenanceFee.max !== undefined) {
-        params.set("maxMaint", filters.maintenanceFee.max.toString());
-      }
+    // Construction size - only add if defined
+    if (typeof filters.features?.constructionSize?.min === 'number') {
+      params.set("minConstSize", String(filters.features.constructionSize.min));
     }
-    if (filters.sortBy !== "recent") params.set("sort", filters.sortBy);
+    if (typeof filters.features?.constructionSize?.max === 'number') {
+      params.set("maxConstSize", String(filters.features.constructionSize.max));
+    }
+    
+    // Lot size - only add if defined
+    if (typeof filters.features?.lotSize?.min === 'number') {
+      params.set("minLotSize", String(filters.features.lotSize.min));
+    }
+    if (typeof filters.features?.lotSize?.max === 'number') {
+      params.set("maxLotSize", String(filters.features.lotSize.max));
+    }
+    
+    // Other filters - only add if defined
+    if (filters.amenities?.length > 0) {
+      params.set("amenities", filters.amenities.join(","));
+    }
+    if (typeof filters.propertyAge === 'number') {
+      params.set("age", String(filters.propertyAge));
+    }
+    
+    // Maintenance fee - only add if defined
+    if (typeof filters.maintenanceFee?.min === 'number') {
+      params.set("minMaint", String(filters.maintenanceFee.min));
+    }
+    if (typeof filters.maintenanceFee?.max === 'number') {
+      params.set("maxMaint", String(filters.maintenanceFee.max));
+    }
+    
+    // Sort - only add if not default
+    if (filters.sortBy && filters.sortBy !== "recent") {
+      params.set("sort", filters.sortBy);
+    }
 
     return params;
   }, []);
 
   // Parse URL search params to filters
   const parseUrlToFilters = useCallback((): Partial<PropertyFilters> => {
-    const params = new URLSearchParams(searchParams.toString());
+    if (typeof window === 'undefined') return {};
+    
+    const params = new URLSearchParams(window.location.search);
     const newFilters: Partial<PropertyFilters> = {};
 
     // Basic filters
@@ -166,17 +180,17 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     }
 
     return newFilters;
-  }, [searchParams]);
+  }, []);
 
   // Initialize from URL on mount
   useEffect(() => {
-    if (isFirstMount.current) {
+    if (isFirstMount.current && typeof window !== 'undefined') {
       const urlFilters = parseUrlToFilters();
       setFilters(current => ({ ...current, ...urlFilters }));
       isFirstMount.current = false;
-      lastUrlUpdate.current = searchParams.toString();
+      lastUrlUpdate.current = window.location.search;
     }
-  }, [parseUrlToFilters, setFilters, searchParams]);
+  }, [parseUrlToFilters, setFilters]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -205,7 +219,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   }, [filtersToSearchParams, filters, pathname, router]);
 
   return (
-    <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters, filters }}>
+    <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters, filters, setFilters }}>
       {children}
     </SearchContext.Provider>
   );
