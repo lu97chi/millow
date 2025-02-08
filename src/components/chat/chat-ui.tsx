@@ -8,7 +8,7 @@ import { Bot, User, Send, Sparkles, SlidersHorizontal, X, Info, Lightbulb } from
 import { Button } from "@/components/ui/button";
 import { useSearch } from "@/providers/search-provider";
 import { cn } from "@/lib/utils";
-import { PropertyFilters } from "@/components/properties/property-filters";
+import { PropertyFilters as PropertyFiltersComponent } from "@/components/properties/property-filters";
 import { useChatContextStore } from "@/store/use-chat-context-store";
 import {
   Dialog,
@@ -17,10 +17,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import type { PropertyFilters } from "@/store/use-search-store";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+interface ChatResponseData {
+  message: string;
+  filters?: PropertyFilters;
 }
 
 const EXAMPLE_PROMPTS = [
@@ -47,6 +53,7 @@ export function ChatUI() {
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
   const [isInfoOpen, setIsInfoOpen] = React.useState(false);
   const [showPrompts, setShowPrompts] = React.useState(false);
+  const [showSuggested, setShowSuggested] = React.useState(false);
 
   // Listen for filter changes
   React.useEffect(() => {
@@ -70,11 +77,12 @@ export function ChatUI() {
       (filters?.sortBy ?? "recent") !== "recent" ||
       (filters?.query ?? "") !== "";
 
-    if (hasActiveFilters && !propertyContext && filters) {
+    if (hasActiveFilters && !propertyContext && filters && showSuggested) {
       syncWithUrl(filters);
       router.push("/properties");
+      setShowSuggested(false);
     }
-  }, [filters, router, syncWithUrl, propertyContext]);
+  }, [filters, router, syncWithUrl, propertyContext, showSuggested]);
 
   // Improved scroll behavior
   const scrollToBottom = () => {
@@ -143,7 +151,21 @@ export function ChatUI() {
 
       sendPropertyContextMessage();
     }
-  }, [propertyContext?.id]); // Only trigger when property ID changes
+  }, [propertyContext, propertyContext?.id]); // Only trigger when property ID changes
+
+  // Handle chat response and set redirect flag
+  const handleChatResponse = async (data: ChatResponseData) => {
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: data.message },
+    ]);
+
+    // Only apply filters if we're not on a property detail page
+    if (data.filters && !propertyContext) {
+      syncWithUrl(data.filters);
+      router.push('/properties');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,17 +198,7 @@ export function ChatUI() {
       }
 
       const data = await response.json();
-      
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.message },
-      ]);
-
-      // Only apply filters if we're not on a property detail page
-      if (data.filters && !propertyContext) {
-        syncWithUrl(data.filters);
-        router.push("/properties");
-      }
+      await handleChatResponse(data);
     } catch (error) {
       console.error("Error in chat:", error);
       setMessages((prev) => [
@@ -496,9 +508,12 @@ export function ChatUI() {
             </div>
             <div className="flex-1 overflow-y-auto">
               <div className="px-6 py-6">
-                <PropertyFilters 
+                <PropertyFiltersComponent 
                   hideToggle 
-                  onClose={() => setIsFiltersOpen(false)}
+                  onClose={() => {
+                    setIsFiltersOpen(false);
+                    setShowSuggested(true);
+                  }}
                 />
               </div>
             </div>

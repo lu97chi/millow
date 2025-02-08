@@ -36,12 +36,10 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSearchStore, type PropertyFilters } from "@/store/use-search-store";
+import { useSearchStore } from "@/store/use-search-store";
 import { useSearch } from "@/providers/search-provider";
 import { useRouter } from "next/navigation";
-import { Property, SAMPLE_PROPERTIES, MexicanState } from "@/constants/properties";
-import { useMemo, useEffect } from "react";
-import { PropertyCard } from "@/components/properties/property-card";
+import { MexicanState } from "@/constants/properties";
 
 interface SearchCommandProps {
   open: boolean;
@@ -201,8 +199,6 @@ export function SearchCommand({ open, onClose }: SearchCommandProps) {
   const [cityPopoverOpen, setCityPopoverOpen] = React.useState(false);
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
-  const [showHighlighted, setShowHighlighted] = React.useState(false);
-  const [showSuggested, setShowSuggested] = React.useState(false);
 
   // Sync changes with the store and URL
   const handleSearch = React.useCallback(() => {
@@ -215,7 +211,8 @@ export function SearchCommand({ open, onClose }: SearchCommandProps) {
       },
       location: selectedState ? {
         state: selectedState,
-        city: selectedCity
+        city: selectedCity,
+        area: undefined
       } : {},
       features: {
         bedrooms,
@@ -402,54 +399,12 @@ export function SearchCommand({ open, onClose }: SearchCommandProps) {
     }, 100);
   };
 
-  // Replace random selection with deterministic selection based on index
-  const getHighlightedProperties = (properties: Property[]): Property[] => {
-    return properties
-      .filter((_, index) => index % 3 === 0) // Select every third property
-      .slice(0, 5); // Take first 5 highlighted properties
-  };
-
-  const getRandomProperties = (properties: Property[], count: number): Property[] => {
-    // Use deterministic selection based on property index
-    return properties
-      .filter((_, index) => index % 2 === 0) // Select every other property
-      .slice(0, count);
-  };
-
-  // Use the functions in the component
-  const highlightedProperties = useMemo(() => 
-    getHighlightedProperties(SAMPLE_PROPERTIES), []);
-    
-  const suggestedProperties = useMemo(() => 
-    getRandomProperties(SAMPLE_PROPERTIES, 3), []);
-
-  // Show highlighted properties on initial load
-  useEffect(() => {
-    setShowHighlighted(true);
-  }, []);
-  
-  // Show suggested properties when user interacts with search
-  useEffect(() => {
-    if (showSuggestions) {
-      setShowSuggested(true);
-    }
-  }, [showSuggestions]);
-
   // Update the handleLocationSelect function
   const handleLocationSelect = (state: MexicanState, city?: string) => {
-    const newFilters: PropertyFilters = {
-      ...filters,
-      location: {
-        state,
-        city: city || undefined,
-        area: undefined
-      }
-    };
-
-    setFilters(newFilters);
-    syncWithUrl(newFilters);
-    router.push('/properties');
-    onClose();
+    setSelectedState(state);
+    if (city) {
+      setSelectedCity(city);
+    }
   };
 
   return (
@@ -627,7 +582,6 @@ export function SearchCommand({ open, onClose }: SearchCommandProps) {
                               setSelectedState(state as MexicanState);
                               setSelectedCity(undefined);
                               setStatePopoverOpen(false);
-                              handleLocationSelect(state as MexicanState);
                             }}
                           >
                             <span>{state}</span>
@@ -993,24 +947,6 @@ export function SearchCommand({ open, onClose }: SearchCommandProps) {
                 Buscar
               </Button>
             </motion.div>
-
-            {/* Display highlighted properties */}
-            {showHighlighted && (
-              <div>
-                {highlightedProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
-                ))}
-              </div>
-            )}
-            
-            {/* Display suggested properties */}
-            {showSuggested && (
-              <div>
-                {suggestedProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </motion.div>

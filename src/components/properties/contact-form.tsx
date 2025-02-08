@@ -50,6 +50,7 @@ export function ContactForm({ propertyTitle, propertyId }: ContactFormProps) {
       toast.success("Mensaje enviado correctamente");
       form.reset();
     } catch (error) {
+      console.error("Error al enviar el mensaje:", error);
       toast.error("Error al enviar el mensaje");
     } finally {
       setIsSubmitting(false);

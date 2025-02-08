@@ -315,11 +315,6 @@ const propertyTypeMultiplier: Record<PropertyTypeValue, number> = {
   luxury: 1.6
 };
 
-// Helper function to get a deterministic value based on index
-function getValueFromIndex(index: number, min: number, max: number): number {
-  return min + (index % (max - min + 1));
-}
-
 // Generate 150 sample properties with deterministic variations
 export const SAMPLE_PROPERTIES: Property[] = Array.from({ length: 150 }, (_, index) => {
   // More varied property type selection with weighted distribution

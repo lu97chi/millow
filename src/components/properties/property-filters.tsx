@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSearchStore } from "@/store/use-search-store";
+import { useSearchStore, type PropertyFilters, type Location, type Features, type PriceRange, initialFilters } from "@/store/use-search-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SlidersHorizontal, X } from "lucide-react";
+import { MexicanState } from "@/constants/properties";
 import {
   PROPERTY_TYPES,
   AMENITIES,
@@ -21,6 +22,7 @@ import {
 } from "@/constants/properties";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 interface PropertyFiltersProps {
   className?: string;
@@ -29,6 +31,7 @@ interface PropertyFiltersProps {
 }
 
 export function PropertyFilters({ className, hideToggle, onClose }: PropertyFiltersProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
   const {
     filters,
@@ -39,10 +42,88 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
     setAmenities,
     setPropertyAge,
     setMaintenanceFee,
-    resetFilters,
   } = useSearchStore();
 
   const showFilters = hideToggle || isOpen;
+
+  const handleSearch = () => {
+    onClose?.();
+    router.push('/properties');
+  };
+
+  // Create local state for filters
+  const [localFilters, setLocalFilters] = React.useState(filters);
+
+  // Update local filters when store changes
+  React.useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
+  // Update handlers to modify local state instead of store
+  const handlePropertyTypesChange = (types: string[]) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      propertyType: types
+    }));
+  };
+
+  const handlePriceRangeChange = (range: PriceRange) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      priceRange: range
+    }));
+  };
+
+  const handleLocationChange = (location: Partial<Location>) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      location: { ...prev.location, ...location }
+    }));
+  };
+
+  const handleFeaturesChange = (features: Partial<Features>) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      features: { ...prev.features, ...features }
+    }));
+  };
+
+  const handleAmenitiesChange = (amenities: string[]) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      amenities
+    }));
+  };
+
+  const handlePropertyAgeChange = (age: number | undefined) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      propertyAge: age
+    }));
+  };
+
+  const handleMaintenanceFeeChange = (fee: PriceRange | undefined) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      maintenanceFee: fee
+    }));
+  };
+
+  const handleReset = () => {
+    setLocalFilters(initialFilters);
+  };
+
+  const handleApplyFilters = () => {
+    // Apply all filters at once when search is clicked
+    setPropertyTypes(localFilters.propertyType);
+    setPriceRange(localFilters.priceRange);
+    setLocation(localFilters.location);
+    setFeatures(localFilters.features);
+    setAmenities(localFilters.amenities);
+    setPropertyAge(localFilters.propertyAge);
+    setMaintenanceFee(localFilters.maintenanceFee);
+    handleSearch();
+  };
 
   return (
     <div className={cn("relative", className)}>
@@ -87,7 +168,7 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                   <p className="text-xs text-muted-foreground">Personaliza tu búsqueda</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  <Button variant="ghost" size="sm" onClick={handleReset}>
                     Limpiar
                   </Button>
                   {onClose && (
@@ -112,13 +193,13 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                       {PROPERTY_TYPES.map((type) => (
                         <Badge
                           key={type.value}
-                          variant={filters.propertyType.includes(type.value) ? "default" : "outline"}
+                          variant={localFilters.propertyType.includes(type.value) ? "default" : "outline"}
                           className="cursor-pointer hover:bg-muted/80 transition-colors"
                           onClick={() => {
-                            if (filters.propertyType.includes(type.value)) {
-                              setPropertyTypes(filters.propertyType.filter((t) => t !== type.value));
+                            if (localFilters.propertyType.includes(type.value)) {
+                              handlePropertyTypesChange(localFilters.propertyType.filter((t) => t !== type.value));
                             } else {
-                              setPropertyTypes([...filters.propertyType, type.value]);
+                              handlePropertyTypesChange([...localFilters.propertyType, type.value]);
                             }
                           }}
                         >
@@ -137,8 +218,11 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                     <div className="space-y-3">
                       <select
                         className="w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={filters.location.state || ""}
-                        onChange={(e) => setLocation({ state: e.target.value || undefined, city: undefined })}
+                        value={localFilters.location.state || ""}
+                        onChange={(e) => handleLocationChange({ 
+                          state: (e.target.value || undefined) as MexicanState | undefined, 
+                          city: undefined 
+                        })}
                       >
                         <option value="">Todos los estados</option>
                         {Object.keys(LOCATIONS).map((state) => (
@@ -147,14 +231,14 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                           </option>
                         ))}
                       </select>
-                      {filters.location.state && (
+                      {localFilters.location.state && (
                         <select
                           className="w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                          value={filters.location.city || ""}
-                          onChange={(e) => setLocation({ ...filters.location, city: e.target.value || undefined })}
+                          value={localFilters.location.city || ""}
+                          onChange={(e) => handleLocationChange({ ...localFilters.location, city: e.target.value || undefined })}
                         >
                           <option value="">Todas las ciudades</option>
-                          {LOCATIONS[filters.location.state].map((city) => (
+                          {LOCATIONS[localFilters.location.state].map((city) => (
                             <option key={city} value={city}>
                               {city}
                             </option>
@@ -174,13 +258,13 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                         min={PRICE_RANGE.min}
                         max={PRICE_RANGE.max}
                         step={PRICE_RANGE.step}
-                        value={[filters.priceRange.min, filters.priceRange.max]}
-                        onValueChange={([min, max]) => setPriceRange({ min, max })}
+                        value={[localFilters.priceRange.min, localFilters.priceRange.max]}
+                        onValueChange={([min, max]) => handlePriceRangeChange({ min, max })}
                         className="py-4"
                       />
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>${(filters.priceRange.min / 1000000).toFixed(1)}M</span>
-                        <span>${(filters.priceRange.max / 1000000).toFixed(1)}M</span>
+                        <span>${(localFilters.priceRange.min / 1000000).toFixed(1)}M</span>
+                        <span>${(localFilters.priceRange.max / 1000000).toFixed(1)}M</span>
                       </div>
                     </div>
                   </div>
@@ -193,8 +277,8 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                     <div className="grid grid-cols-2 gap-3">
                       <select
                         className="rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={filters.features.bedrooms || ""}
-                        onChange={(e) => setFeatures({ ...filters.features, bedrooms: e.target.value ? parseInt(e.target.value) : undefined })}
+                        value={localFilters.features.bedrooms || ""}
+                        onChange={(e) => handleFeaturesChange({ ...localFilters.features, bedrooms: e.target.value ? parseInt(e.target.value) : undefined })}
                       >
                         <option value="">Recámaras</option>
                         {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -203,8 +287,8 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                       </select>
                       <select
                         className="rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={filters.features.bathrooms || ""}
-                        onChange={(e) => setFeatures({ ...filters.features, bathrooms: e.target.value ? parseInt(e.target.value) : undefined })}
+                        value={localFilters.features.bathrooms || ""}
+                        onChange={(e) => handleFeaturesChange({ ...localFilters.features, bathrooms: e.target.value ? parseInt(e.target.value) : undefined })}
                       >
                         <option value="">Baños</option>
                         {[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((n) => (
@@ -225,20 +309,20 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                         max={CONSTRUCTION_SIZE_RANGE.max}
                         step={CONSTRUCTION_SIZE_RANGE.step}
                         value={[
-                          filters.features.constructionSize?.min || CONSTRUCTION_SIZE_RANGE.min,
-                          filters.features.constructionSize?.max || CONSTRUCTION_SIZE_RANGE.max,
+                          localFilters.features.constructionSize?.min || CONSTRUCTION_SIZE_RANGE.min,
+                          localFilters.features.constructionSize?.max || CONSTRUCTION_SIZE_RANGE.max,
                         ]}
                         onValueChange={([min, max]) =>
-                          setFeatures({
-                            ...filters.features,
+                          handleFeaturesChange({
+                            ...localFilters.features,
                             constructionSize: { min, max },
                           })
                         }
                         className="py-4"
                       />
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>{filters.features.constructionSize?.min || 0}m²</span>
-                        <span>{filters.features.constructionSize?.max || 1000}m²</span>
+                        <span>{localFilters.features.constructionSize?.min || 0}m²</span>
+                        <span>{localFilters.features.constructionSize?.max || 1000}m²</span>
                       </div>
                     </div>
                   </div>
@@ -254,19 +338,19 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                         max={LOT_SIZE_RANGE.max}
                         step={LOT_SIZE_RANGE.step}
                         value={[
-                          filters.features.lotSize?.min || LOT_SIZE_RANGE.min,
-                          filters.features.lotSize?.max || LOT_SIZE_RANGE.max,
+                          localFilters.features.lotSize?.min || LOT_SIZE_RANGE.min,
+                          localFilters.features.lotSize?.max || LOT_SIZE_RANGE.max,
                         ]}
                         onValueChange={([min, max]) =>
-                          setFeatures({
-                            ...filters.features,
+                          handleFeaturesChange({
+                            ...localFilters.features,
                             lotSize: { min, max },
                           })
                         }
                       />
                       <div className="flex items-center justify-between text-sm">
-                        <span>Min: {filters.features.lotSize?.min || 0}m²</span>
-                        <span>Max: {filters.features.lotSize?.max || 2000}m²</span>
+                        <span>Min: {localFilters.features.lotSize?.min || 0}m²</span>
+                        <span>Max: {localFilters.features.lotSize?.max || 2000}m²</span>
                       </div>
                     </div>
                   </div>
@@ -280,13 +364,13 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                       {AMENITIES.map((amenity) => (
                         <Badge
                           key={amenity.value}
-                          variant={filters.amenities.includes(amenity.value) ? "default" : "outline"}
+                          variant={localFilters.amenities.includes(amenity.value) ? "default" : "outline"}
                           className="cursor-pointer hover:bg-muted/80 transition-colors"
                           onClick={() => {
-                            if (filters.amenities.includes(amenity.value)) {
-                              setAmenities(filters.amenities.filter((a) => a !== amenity.value));
+                            if (localFilters.amenities.includes(amenity.value)) {
+                              handleAmenitiesChange(localFilters.amenities.filter((a) => a !== amenity.value));
                             } else {
-                              setAmenities([...filters.amenities, amenity.value]);
+                              handleAmenitiesChange([...localFilters.amenities, amenity.value]);
                             }
                           }}
                         >
@@ -306,13 +390,13 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                       {PROPERTY_AGE_OPTIONS.map((option) => (
                         <Badge
                           key={option.value}
-                          variant={filters.propertyAge === option.value ? "default" : "outline"}
+                          variant={localFilters.propertyAge === option.value ? "default" : "outline"}
                           className="cursor-pointer hover:bg-muted/80 transition-colors"
                           onClick={() => {
-                            if (filters.propertyAge === option.value) {
-                              setPropertyAge(undefined);
+                            if (localFilters.propertyAge === option.value) {
+                              handlePropertyAgeChange(undefined);
                             } else {
-                              setPropertyAge(option.value);
+                              handlePropertyAgeChange(option.value);
                             }
                           }}
                         >
@@ -333,19 +417,27 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                         max={MAINTENANCE_FEE_RANGE.max}
                         step={MAINTENANCE_FEE_RANGE.step}
                         value={[
-                          filters.maintenanceFee?.min || MAINTENANCE_FEE_RANGE.min,
-                          filters.maintenanceFee?.max || MAINTENANCE_FEE_RANGE.max,
+                          localFilters.maintenanceFee?.min || MAINTENANCE_FEE_RANGE.min,
+                          localFilters.maintenanceFee?.max || MAINTENANCE_FEE_RANGE.max,
                         ]}
-                        onValueChange={([min, max]) => setMaintenanceFee({ min, max })}
+                        onValueChange={([min, max]) => handleMaintenanceFeeChange({ min, max })}
                       />
                       <div className="flex items-center justify-between text-sm">
-                        <span>Min: ${filters.maintenanceFee?.min || 0}</span>
-                        <span>Max: ${filters.maintenanceFee?.max || 10000}</span>
+                        <span>Min: ${localFilters.maintenanceFee?.min || 0}</span>
+                        <span>Max: ${localFilters.maintenanceFee?.max || 10000}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </ScrollArea>
+              <div className="p-4 border-t bg-background/95">
+                <Button 
+                  className="w-full"
+                  onClick={handleApplyFilters}
+                >
+                  Buscar
+                </Button>
+              </div>
             </Card>
           </motion.div>
         </>

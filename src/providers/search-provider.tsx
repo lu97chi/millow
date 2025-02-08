@@ -8,6 +8,7 @@ import type { MexicanState } from "@/constants/properties";
 interface SearchContextType {
   syncWithUrl: (filters: Partial<PropertyFilters>) => void;
   parseUrlToFilters: () => Partial<PropertyFilters>;
+  filters: PropertyFilters;
 }
 
 const SearchContext = createContext<SearchContextType | null>(null);
@@ -191,15 +192,20 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     }
   }, [filters, pathname, router, filtersToSearchParams]);
 
+  // Sync filters with URL
   const syncWithUrl = useCallback((newFilters: Partial<PropertyFilters>) => {
-    setFilters(current => ({
-      ...current,
-      ...newFilters
-    }));
-  }, [setFilters]);
+    const params = filtersToSearchParams({ ...filters, ...newFilters });
+    const newUrl = `${pathname}?${params.toString()}`;
+    
+    // Only update if URL has changed
+    if (newUrl !== lastUrlUpdate.current) {
+      lastUrlUpdate.current = newUrl;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [filtersToSearchParams, filters, pathname, router]);
 
   return (
-    <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters }}>
+    <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters, filters }}>
       {children}
     </SearchContext.Provider>
   );
