@@ -1,0 +1,44 @@
+---
+description: Determining which codestyle to follow
+globs: 
+---
+# Code Style and Structure
+## Concise & Technical Code:
+
+### Brevity with Clarity:
+- Write code that is succinct yet expressive, ensuring that each line serves a clear purpose.
+- Provide accurate, real-world examples within comments and documentation to illustrate usage.
+
+### Consistent Documentation:
+- Include inline documentation (e.g., JSDoc or TSDoc) to clarify complex logic and annotate functions, parameters, and return types.
+
+## Functional and Declarative Programming:
+
+### Favor Functions over Classes:
+- Emphasize pure functions, immutability, and side-effect isolation.
+- Avoid object-oriented patterns unless absolutely necessary for state management or legacy compatibility.
+
+### Declarative Patterns:
+- Write code that clearly describes the “what” rather than the “how,” leveraging frameworks and libraries that support declarative patterns.
+
+## Modularization and DRY Principles:
+
+### Iterative Constructs:
+Use loops, array methods (like .map, .filter, .reduce), and recursion to manage repetitive tasks.
+
+### Componentization:
+-Break down large functions into smaller, reusable modules.
+- Extract shared logic into utilities and helper modules to reduce code duplication.
+
+### File Organization:
+- Each file should have a single responsibility, whether that’s a component, helper function, or type declaration.
+- Keep the project structure intuitive and self-documenting.
+
+## Descriptive Naming Conventions:
+
+### Variables & Functions:
+- Use descriptive names with auxiliary verbs where applicable (e.g., isLoading, hasError, shouldRender).
+- Follow established naming conventions (camelCase for variables/functions, PascalCase for components and classes).
+
+### File Organization:
+- Group related files (components, helpers, types) together to reinforce separation of concerns.

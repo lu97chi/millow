@@ -1,0 +1,20 @@
+---
+description: Determinates how to name files, directories and variables
+globs: 
+---
+# Naming Conventions
+
+## Component Files:
+
+- Place all components in src/components and use kebab-case for filenames (e.g., new-component.tsx).
+- Ensure filenames clearly reflect the component’s purpose and functionality.
+
+## Directory Structure:
+
+- Use lowercase names with dashes for directories (e.g., components/auth-wizard).
+- Maintain a consistent, predictable directory structure that scales as new features are added.
+
+## Exports and Imports:
+
+- Favor named exports to enable clear, auto-complete-friendly imports.
+- Standardize import paths with aliases (if supported) to simplify navigation and refactoring.

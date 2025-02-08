@@ -1,0 +1,16 @@
+---
+description: Determinate which tools and dependency managment to use
+globs: 
+---
+# Dependency Management & Tools
+
+## Package Manager:
+
+- Use pnpm consistently for installing and managing dependencies to leverage performance benefits and reliable package resolution.
+
+## Tooling:
+
+- Integrate ESLint with TypeScript and React plugins to enforce coding standards.
+- Use Prettier for automated code formatting.
+- Set up CI/CD pipelines to run automated tests, linters, and performance checks.
+- Ensure version control best practices are followed (e.g., commit messages, branching strategies).

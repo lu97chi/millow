@@ -1,0 +1,25 @@
+---
+description: Determinates which syntax to follow for code guideliness
+globs: 
+---
+# Syntax and Formatting
+
+## Function Declarations:
+
+- Use the function keyword for defining pure functions to maintain clarity.
+- Prefer arrow functions when they add clarity or are used as callbacks, but maintain consistency across the codebase.
+
+## Conciseness in Conditionals:
+
+- Avoid unnecessary curly braces for single-line conditionals; opt for clear, concise syntax.
+- Leverage ternary operators judiciously for simple conditions, but avoid nesting them for readability.
+
+## Declarative JSX:
+
+- Write JSX in a declarative style, emphasizing what the UI should render.
+- Keep component trees shallow by breaking down large components into smaller, focused pieces.
+
+## Consistent Formatting:
+
+- Use tools like Prettier to enforce a consistent code format.
+- Establish team-wide formatting rules to reduce code review overhead and improve readability.

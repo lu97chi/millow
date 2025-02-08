@@ -1,0 +1,43 @@
+---
+description: Determinates the structure to follow for organization
+globs: 
+---
+# Components Organization
+
+## Folder Structure Strategy:
+
+### Organize components either by type or by feature:
+- By Type:
+Group components into folders such as /ui, /forms, /layout, etc.
+- By Feature:
+
+- For complex applications, group all components, hooks, and utilities related to a specific feature or domain in its own folder.
+Example Structure:
+
+/src/components
+├── /ui
+│   ├── /Button
+│   ├── /Modal
+│   └── /Card
+├── /forms
+│   ├── /TextField
+│   └── /Select
+└── /layout
+    ├── /Navbar
+    └── /Footer
+
+## Component Usage & Best Practices:
+
+### Private Components:
+
+- For components used exclusively on specific pages, create a _components folder within the corresponding /app subdirectory.
+
+## Shared Components:
+- Place globally reusable components in /src/components for ease of maintenance and reusability.
+
+## Modular Structure:
+- Adopt a modular approach by organizing features into self-contained folders that include components, hooks, and related utilities.
+
+## Simplicity:
+- Keep components small, focused, and free of unnecessary abstraction.
+- Avoid overly “fancy” functions; prioritize readability and maintainability.

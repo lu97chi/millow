@@ -1,0 +1,22 @@
+---
+description: Tells how to handle performance and optimization
+globs: 
+---
+# Performance Optimization
+## React Component Strategies:
+
+### Client vs. Server:
+- Minimize the use of use client by favoring React Server Components (RSC) and server-side rendering (SSR) where feasible.
+- Limit the use of useEffect and setState to avoid unnecessary re-renders; use memoization (e.g., React.memo, useMemo, useCallback) when necessary.
+
+### Suspense & Lazy Loading:
+- Wrap client components in Suspense with appropriate fallback components.
+- Implement dynamic imports for non-critical components to reduce initial bundle size.
+
+### Image Optimization:
+- Use the Next.js Image component to automatically optimize images.
+- Serve images in WebP format where possible, specify dimensions, and implement lazy loading for offscreen images.
+
+### Web Vitals & SEO:
+- Monitor and optimize for key performance metrics: Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS), and First Input Delay (FID).
+- Continuously profile and improve performance through code splitting, caching strategies, and minimizing third-party scripts.

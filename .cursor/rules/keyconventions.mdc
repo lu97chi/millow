@@ -1,0 +1,24 @@
+---
+description: Determinate keypoints to follow for NextJS, State managment and documentation
+globs: 
+---
+# Key Conventions
+## URL & State Management:
+
+- Use 'nuqs' for URL search parameter state management to ensure URL state remains consistent and manageable.
+
+## Component and Data Fetching Strategies:
+
+### Limit use client:
+- Use use client sparingly and only for small components requiring direct Web API access.
+- Favor server-side components and Next.js SSR for data fetching and state management.
+
+## Follow Documentation:
+- Adhere to Next.js best practices for data fetching, rendering, and routing by following official documentation and community guidelines.
+
+## Project Directory Structure:
+
+- Place both /app and /components directories under a /src folder for:
+- Clean Organization: A clear separation between application logic and UI components.
+- Scalability: Easier navigation, maintenance, and modularity as the project grows.
+- Separation of Concerns: Distinct areas for business logic (/src/app) and presentation logic (/src/components).

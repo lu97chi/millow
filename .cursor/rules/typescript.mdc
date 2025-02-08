@@ -1,0 +1,33 @@
+---
+description: Contains the instructions for typescript files
+globs: 
+---
+# TypeScript Usage
+
+## Universal Adoption:
+
+- Write all code in TypeScript to leverage static type checking, reduce runtime errors, and improve developer productivity.
+
+## Interfaces vs. Types:
+
+- Prefer interfaces over type aliases for defining object shapes to allow declaration merging and extension.
+- Use types for complex unions or utility types where interfaces are not as effective.
+
+## Enums and Maps:
+
+- Avoid enums in favor of maps or constant objects to provide greater flexibility and easier refactoring.
+
+## Component Typing:
+
+- Use functional components defined with explicit TypeScript interfaces for props.
+- Ensure all components, functions, and hooks have clearly defined types, including generics when needed.
+
+## Validation and Form Handling:
+
+- Utilize zod for runtime schema validation to ensure data integrity.
+- Implement react-hook-form for efficient, type-safe form state management.
+
+## Comprehensive Typing:
+
+- Type all props, state variables, function parameters, and return values.
+- Enable strict mode in your tsconfig.json (e.g., "strict": true, "noImplicitAny": true, "strictNullChecks": true) to enforce rigorous type safety.

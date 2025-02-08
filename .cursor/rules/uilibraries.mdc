@@ -1,0 +1,20 @@
+---
+description: Determinates which libraries will be used on the project
+globs: 
+---
+# UI and Styling
+
+## UI Libraries:
+- Adopt Shadcn UI as the primary UI library for component consistency.
+- Utilize Tailwind CSS for utility-first styling, ensuring rapid development and consistent design.
+
+## Responsive Design:
+
+- Implement a mobile-first design approach using Tailwind’s responsive utilities.
+- Test components across multiple devices and screen sizes to ensure responsiveness.
+- Apply consistent spacing, typography, and color schemes to maintain a unified visual identity.
+
+## Component Customization:
+
+- Leverage Framer Motion for interactive animations, ensuring smooth transitions and a polished user experience.
+- Create reusable style components or themes to reduce duplication and enforce design consistency.
