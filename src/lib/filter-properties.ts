@@ -3,109 +3,98 @@ import type { PropertyFilters } from "@/store/use-search-store";
 
 export function filterProperties(properties: Property[], filters: PropertyFilters): Property[] {
   return properties.filter(property => {
-    // Query text search - more flexible with OR conditions
+    // Query text search - must match ALL terms (AND condition)
     if (filters.query) {
       const searchTerms = filters.query.toLowerCase().split(' ');
       const propertyText = `${property.title} ${property.description} ${property.location.state} ${property.location.city} ${property.location.area}`.toLowerCase();
       
-      // If any search term matches, include the property
-      if (!searchTerms.some(term => propertyText.includes(term))) {
+      // All search terms must match
+      if (!searchTerms.every(term => propertyText.includes(term))) {
         return false;
       }
     }
 
-    // Property type - OR condition if multiple types selected
+    // Property type - exact match required
     if (filters.propertyType.length > 0 && !filters.propertyType.includes(property.type)) {
       return false;
     }
 
-    // Location - Hierarchical filtering
+    // Location - exact matching for all fields
     if (filters.location.state && property.location.state !== filters.location.state) {
       return false;
     }
-    // Only check city if state matches or no state specified
     if (filters.location.city && 
         (!property.location.city || 
-         !property.location.city.toLowerCase().includes(filters.location.city.toLowerCase()))) {
+         property.location.city.toLowerCase() !== filters.location.city.toLowerCase())) {
       return false;
     }
-    // Only check area if city matches or no city specified
     if (filters.location.area && 
         (!property.location.area || 
-         !property.location.area.toLowerCase().includes(filters.location.area.toLowerCase()))) {
+         property.location.area.toLowerCase() !== filters.location.area.toLowerCase())) {
       return false;
     }
 
-    // Price range - with 10% flexibility
-    const minPrice = filters.priceRange.min * 0.9; // 10% below minimum
-    const maxPrice = filters.priceRange.max * 1.1; // 10% above maximum
-    if (property.price < minPrice || property.price > maxPrice) {
-      return false;
-    }
-
-    // Features - More flexible matching
-    if (filters.features.bedrooms && property.features.bedrooms) {
-      // Allow properties with more bedrooms than requested
-      if (property.features.bedrooms < filters.features.bedrooms) {
+    // Price range - keep 5% flexibility for negotiation
+    if (typeof filters.priceRange?.min === 'number' || typeof filters.priceRange?.max === 'number') {
+      const minPrice = typeof filters.priceRange?.min === 'number' ? filters.priceRange.min * 0.95 : 0; // 5% below minimum
+      const maxPrice = typeof filters.priceRange?.max === 'number' ? filters.priceRange.max * 1.05 : Infinity; // 5% above maximum
+      if (property.price < minPrice || property.price > maxPrice) {
         return false;
       }
     }
 
-    if (filters.features.bathrooms && property.features.bathrooms) {
-      // Allow properties with more bathrooms than requested
-      if (property.features.bathrooms < filters.features.bathrooms) {
+    // Features - Exact matching for all features
+    if (filters.features) {
+      if (typeof filters.features.bedrooms === 'number' && 
+          (!property.features.bedrooms || property.features.bedrooms !== filters.features.bedrooms)) {
+        return false;
+      }
+      if (typeof filters.features.bathrooms === 'number' && 
+          (!property.features.bathrooms || property.features.bathrooms !== filters.features.bathrooms)) {
         return false;
       }
     }
 
-    // Construction size - with 10% flexibility
-    if (filters.features.constructionSize) {
-      const minSize = filters.features.constructionSize.min * 0.9;
-      const maxSize = filters.features.constructionSize.max * 1.1;
+    // Construction size - keep 5% flexibility for measurement variations
+    if (filters.features.constructionSize && property.features.constructionSize) {
+      const minSize = typeof filters.features.constructionSize.min === 'number' ? filters.features.constructionSize.min * 0.95 : 0;
+      const maxSize = typeof filters.features.constructionSize.max === 'number' ? filters.features.constructionSize.max * 1.05 : Infinity;
       
-      if (property.features.constructionSize < minSize || 
-          property.features.constructionSize > maxSize) {
+      if (property.features.constructionSize < minSize || property.features.constructionSize > maxSize) {
         return false;
       }
     }
 
-    // Lot size - with 10% flexibility
+    // Lot size - keep 5% flexibility for measurement variations
     if (filters.features.lotSize && property.features.lotSize) {
-      const minLotSize = filters.features.lotSize.min * 0.9;
-      const maxLotSize = filters.features.lotSize.max * 1.1;
+      const minLotSize = typeof filters.features.lotSize.min === 'number' ? filters.features.lotSize.min * 0.95 : 0;
+      const maxLotSize = typeof filters.features.lotSize.max === 'number' ? filters.features.lotSize.max * 1.05 : Infinity;
       
-      if (property.features.lotSize < minLotSize || 
-          property.features.lotSize > maxLotSize) {
+      if (property.features.lotSize < minLotSize || property.features.lotSize > maxLotSize) {
         return false;
       }
     }
 
-    // Amenities - More flexible matching
-    if (filters.amenities.length > 0) {
-      // Match if property has ANY of the requested amenities (OR condition)
-      const hasAnyAmenity = filters.amenities.some(amenity => 
-        property.amenities.includes(amenity)
-      );
-      if (!hasAnyAmenity) {
+    // Amenities - exact matching (all requested amenities must be present)
+    if (filters.amenities && filters.amenities.length > 0) {
+      if (!property.amenities || !filters.amenities.every(amenity => property.amenities.includes(amenity))) {
         return false;
       }
     }
 
-    // Property age - with flexibility
-    if (filters.propertyAge !== undefined) {
-      // Allow properties that are newer than the filter
-      if (property.propertyAge > filters.propertyAge * 1.2) { // 20% flexibility
+    // Property age - exact matching
+    if (typeof filters.propertyAge === 'number') {
+      if (property.propertyAge !== filters.propertyAge) {
         return false;
       }
     }
 
-    // Maintenance fee - with 15% flexibility
+    // Maintenance fee - keep 5% flexibility for variations
     if (filters.maintenanceFee && property.maintenanceFee) {
-      const minFee = filters.maintenanceFee.min * 0.85; // 15% below minimum
-      const maxFee = filters.maintenanceFee.max * 1.15; // 15% above maximum
+      const minFee = typeof filters.maintenanceFee.min === 'number' ? filters.maintenanceFee.min * 0.95 : 0;
+      const maxFee = typeof filters.maintenanceFee.max === 'number' ? filters.maintenanceFee.max * 1.05 : Infinity;
       
-      if (property.maintenanceFee < minFee || 
-          property.maintenanceFee > maxFee) {
+      if (property.maintenanceFee < minFee || property.maintenanceFee > maxFee) {
         return false;
       }
     }

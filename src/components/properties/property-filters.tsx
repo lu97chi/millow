@@ -258,13 +258,13 @@ export function PropertyFilters({ className, hideToggle, onClose }: PropertyFilt
                         min={PRICE_RANGE.min}
                         max={PRICE_RANGE.max}
                         step={PRICE_RANGE.step}
-                        value={[localFilters.priceRange.min, localFilters.priceRange.max]}
+                        value={[localFilters.priceRange?.min || PRICE_RANGE.min, localFilters.priceRange?.max || PRICE_RANGE.max]}
                         onValueChange={([min, max]) => handlePriceRangeChange({ min, max })}
                         className="py-4"
                       />
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>${(localFilters.priceRange.min / 1000000).toFixed(1)}M</span>
-                        <span>${(localFilters.priceRange.max / 1000000).toFixed(1)}M</span>
+                        <span>${(localFilters.priceRange?.min || PRICE_RANGE.min / 1000000).toFixed(1)}M</span>
+                        <span>${(localFilters.priceRange?.max || PRICE_RANGE.max / 1000000).toFixed(1)}M</span>
                       </div>
                     </div>
                   </div>

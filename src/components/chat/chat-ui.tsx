@@ -155,7 +155,6 @@ export function ChatUI() {
 
   // Handle chat response and set redirect flag
   const handleChatResponse = async (data: ChatResponseData) => {
-    debugger;
     setMessages((prev) => [
       ...prev,
       { role: "assistant", content: data.message },

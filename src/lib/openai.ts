@@ -23,7 +23,6 @@ DEBERES:
 {
   "message": "Texto en español con un saludo divertido y una despedida que invite a detallar o confirmar los filtros...",
   "filters":  {
-  "query": <string>,
   "propertyType": <string[]>,
   "location": {
     "state": <string>,
