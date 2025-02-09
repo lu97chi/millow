@@ -278,19 +278,23 @@ export interface Property {
 // Helper function to generate unique placeholder images
 function generatePlaceholderImages(id: number, count: number = 5): string[] {
   const photoIds = [
-    "1545324418-cc1a3fa10c00",
-    "1512917774080-9991f1c4c750",
-    "1600585154340-be6161a56a0c",
-    "1600596542815-ffad4c1539a9",
-    "1600607687939-ce8a6c25118c",
-    "1600607687920-4e4ff3989f92",
-    "1600585154526-d3ca6c4c4e1e",
-    "1512918728675-ed5a9ecdebfd"
+    "1600047509807-ba8f99d2cdde", // Modern house exterior valid
+    "1600585154340-be6161a56a0c", // Luxury living room valid
+    "1600585152220-90363fe7e115", // Modern kitchen valid
+    "1600210492493-0946911123ea", // Beautiful bathroom valid
+    "1600607687939-ce8a6c25118c", // Pool view valid
+    "1613977257363-707ba9348227", // Modern bedroom valid
+    "1512917774080-9991f1c4c750", // Luxury exterior valid
+    "1560448204-e02f11c3d0e2",    // Modern interior valid
+    "1512917774080-9991f1c4c750", // Living space valid
+    "1680382578857-c331ead9ed51", // Kitchen and dining valid
+    "1661962340349-6ea59fff7e7b", // Master bedroom valid
+    "1505691938895-1758d7feb511"  // Outdoor space valid
   ];
 
   return Array.from({ length: count }, (_, i) => {
     const photoId = photoIds[(id + i) % photoIds.length];
-    return `https://images.unsplash.com/photo-${photoId}?auto=format&fit=crop&q=80`;
+    return `https://images.unsplash.com/photo-${photoId}?auto=format&fit=crop&q=80&w=1200`;
   });
 }
 
