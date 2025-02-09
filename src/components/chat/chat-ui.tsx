@@ -4,7 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bot, User, Send, Sparkles, SlidersHorizontal, X, Info, Lightbulb } from "lucide-react";
+import { Bot, User, Send, Home, Loader2, X, Info, SlidersHorizontal, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearch } from "@/providers/search-provider";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import type { PropertyFilters } from "@/store/use-search-store";
+import { useState, useRef } from "react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -43,17 +45,17 @@ function getDisplayContent(content: string | { message: string; context?: Record
 
 export function ChatUI() {
   const router = useRouter();
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
-  const [input, setInput] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
-  const inputRef = React.useRef<HTMLTextAreaElement>(null);
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { syncWithUrl, filters, setFilters } = useSearch();
   const propertyContext = useChatContextStore((state) => state.propertyContext);
-  const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
-  const [isInfoOpen, setIsInfoOpen] = React.useState(false);
-  const [showPrompts, setShowPrompts] = React.useState(false);
-  const [showSuggested, setShowSuggested] = React.useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [showSuggested, setShowSuggested] = useState(false);
+  const [showPrompts, setShowPrompts] = useState(false);
 
   // Listen for filter changes
   React.useEffect(() => {
@@ -236,13 +238,13 @@ export function ChatUI() {
   }, [isFiltersOpen]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background">
+    <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b bg-background/95 px-4">
         <div className="flex items-center gap-3">
           <div className="relative flex h-8 w-8 items-center justify-center">
             <div className="absolute inset-0 animate-pulse rounded-full bg-primary/10" />
-            <Sparkles className="relative h-4 w-4 text-primary" />
+            <Bot className="relative h-4 w-4 text-primary" />
           </div>
           <div className="flex flex-col justify-center">
             <div className="flex items-center gap-2">
@@ -274,159 +276,142 @@ export function ChatUI() {
       </div>
 
       {/* Messages Container */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-muted/5">
-        {/* Messages Scroll Area */}
-        <div className="flex-1 overflow-y-auto px-4 pt-4" style={{ scrollbarWidth: 'thin' }}>
-          <div className="flex flex-col space-y-4 pb-4">
-            {messages.map((message, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 text-muted-foreground">
+            <Bot className="h-12 w-12" />
+            <div className="space-y-2">
+              <h3 className="font-semibold text-foreground">¡Hola! Soy Luna 👋</h3>
+              <p className="text-sm">
+                Puedo ayudarte a encontrar la propiedad perfecta. ¿Qué tipo de propiedad estás buscando?
+              </p>
+            </div>
+          </div>
+        ) : (
+          messages.map((message, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className={cn(
+                "flex w-full gap-2 sm:gap-4",
+                message.role === "assistant" ? "flex-row" : "flex-row-reverse"
+              )}
+            >
+              {/* Avatar */}
+              <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full border bg-background shadow">
+                {message.role === "assistant" ? (
+                  <Bot className="h-4 w-4" />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
+              </div>
+
+              {/* Message Bubble */}
+              <div
                 className={cn(
-                  "flex w-full items-start gap-2",
-                  message.role === "user" && "flex-row-reverse"
+                  "rounded-lg px-4 py-2 max-w-[85%] sm:max-w-[75%]",
+                  message.role === "assistant"
+                    ? "bg-muted"
+                    : "bg-primary text-primary-foreground"
                 )}
               >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/25">
-                  {message.role === "assistant" ? (
-                    <Bot className="h-3.5 w-3.5 text-primary" />
-                  ) : (
-                    <User className="h-3.5 w-3.5 text-primary" />
-                  )}
-                </div>
-                <div className={cn(
-                  "flex max-w-[75%] flex-col gap-1",
-                  message.role === "user" && "items-end"
-                )}>
-                  <div className={cn(
-                    "inline-block rounded-2xl px-3 py-2 text-sm",
-                    message.role === "user" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted/50 ring-1 ring-border/50",
-                    message.role === "assistant" ? "rounded-tl-sm" : "rounded-tr-sm"
-                  )}>
-                    <span className="inline-block whitespace-pre-wrap break-words">
-                      {getDisplayContent(message.content)}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-start gap-2"
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/25">
-                  <Bot className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="inline-block rounded-2xl rounded-tl-sm bg-muted/50 px-3 py-2 ring-1 ring-border/50">
-                    <div className="flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/40 [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/40 [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/40" />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Example Prompts */}
-        {showPrompts && (
-          <div className="border-t bg-muted/5 px-4 py-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-              <Lightbulb className="h-3.5 w-3.5" />
-              <span>Ejemplos de preguntas:</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {EXAMPLE_PROMPTS.map((prompt, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="h-auto whitespace-normal text-left justify-start text-xs py-2 px-3"
-                  onClick={() => {
-                    setInput(prompt);
-                    setShowPrompts(false);
-                    if (inputRef.current) {
-                      inputRef.current.focus();
-                    }
-                  }}
-                >
-                  {prompt}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div className="border-t bg-background p-4">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="flex items-end gap-2">
-              <div className="relative flex-1">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={handleInput}
-                  placeholder="Escribe tu mensaje..."
-                  maxLength={200}
-                  className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 overflow-y-auto"
-                  rows={1}
-                  style={{ 
-                    minHeight: "40px",
-                    maxHeight: "120px",
-                    scrollbarWidth: 'thin',
-                    scrollbarGutter: 'stable'
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                />
-                <div className="absolute bottom-2 right-2 flex items-center gap-2">
-                  <span className={cn(
-                    "text-[10px] tabular-nums",
-                    input.length > 180 ? "text-yellow-500" : "text-muted-foreground/70",
-                    input.length >= 200 && "text-red-500"
-                  )}>
-                    {input.length}/200
-                  </span>
-                  <kbd className="rounded bg-muted px-1.5 text-[10px] font-medium text-muted-foreground/70">⏎</kbd>
-                </div>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {getDisplayContent(message.content)}
+                </p>
               </div>
-              <Button
-                type="submit"
-                size="icon"
-                disabled={isLoading || !input.trim()}
-                className="h-10 w-10 shrink-0 rounded-lg bg-primary transition-all hover:bg-primary/90 disabled:opacity-50"
-              >
-                <Send className="h-4 w-4 text-primary-foreground" />
-              </Button>
-            </div>
-            {!input.trim() && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 w-full text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setShowPrompts(!showPrompts)}
-              >
-                <Lightbulb className="mr-2 h-3.5 w-3.5" />
-                Ver ejemplos de preguntas
-              </Button>
-            )}
-          </form>
-        </div>
+            </motion.div>
+          ))
+        )}
+        <div ref={messagesEndRef} />
       </div>
+
+      {/* Input Container */}
+      <div className="border-t bg-background p-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Escribe tu mensaje..."
+              className="min-h-[80px] w-full resize-none bg-background pr-12"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isLoading || !input.trim()}
+              className="absolute bottom-2 right-2"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Context Badge */}
+          {propertyContext && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Home className="h-3 w-3" />
+              <span className="truncate">
+                Contexto: {propertyContext.title}
+              </span>
+            </div>
+          )}
+
+          {/* Example Prompts */}
+          {!input.trim() && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-full text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setShowPrompts(!showPrompts)}
+            >
+              <Lightbulb className="mr-2 h-3.5 w-3.5" />
+              Ver ejemplos de preguntas
+            </Button>
+          )}
+        </form>
+      </div>
+
+      {/* Example Prompts Panel */}
+      {showPrompts && (
+        <div className="border-t bg-muted/5 px-4 py-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <Lightbulb className="h-3.5 w-3.5" />
+            <span>Ejemplos de preguntas:</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {EXAMPLE_PROMPTS.map((prompt, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className="h-auto whitespace-normal text-left justify-start text-xs py-2 px-3"
+                onClick={() => {
+                  setInput(prompt);
+                  setShowPrompts(false);
+                  if (textareaRef.current) {
+                    textareaRef.current.focus();
+                  }
+                }}
+              >
+                {prompt}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Info Modal */}
       <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
@@ -463,7 +448,7 @@ export function ChatUI() {
         </DialogContent>
       </Dialog>
 
-      {/* Filters Panel Portal */}
+      {/* Filters Panel */}
       {isFiltersOpen && typeof document !== 'undefined' && createPortal(
         <>
           <motion.div

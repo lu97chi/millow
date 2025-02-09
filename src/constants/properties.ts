@@ -286,7 +286,7 @@ function generatePlaceholderImages(id: number, count: number = 5): string[] {
     "1613977257363-707ba9348227", // Modern bedroom valid
     "1512917774080-9991f1c4c750", // Luxury exterior valid
     "1560448204-e02f11c3d0e2",    // Modern interior valid
-    "1512917774080-9991f1c4c750", // Living space valid
+    "1618220924273-338d82d6b886", // Living space valid
     "1680382578857-c331ead9ed51", // Kitchen and dining valid
     "1661962340349-6ea59fff7e7b", // Master bedroom valid
     "1505691938895-1758d7feb511"  // Outdoor space valid
