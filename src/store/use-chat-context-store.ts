@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Property } from "@/constants/properties";
+import { Property } from "@/server/models/property";
 
 interface ChatContextStore {
   propertyContext: Property | null;

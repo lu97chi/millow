@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SearchCommand } from "@/components/layout/search-command";
 import { useFavoritesStore } from "@/store/use-favorites-store";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,9 +23,6 @@ export function Navbar() {
               )}
             </Link>
           </nav>
-        </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <SearchCommand open={false} onClose={() => {}} />
         </div>
       </div>
     </header>

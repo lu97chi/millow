@@ -3,18 +3,17 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Phone, Mail, Building2 } from "lucide-react";
+import { Phone, Mail, Building2, UserRound } from "lucide-react";
 
 interface AgentCardProps {
   name: string;
-  title: string;
+  title?: string;
   company: string;
   image: string;
-  phone: string;
-  email: string;
-  experience: number;
-  activeListings: number;
+  phone?: string;
+  email?: string;
+  experience?: number;
+  activeListings?: number;
 }
 
 export function AgentCard({
@@ -27,50 +26,77 @@ export function AgentCard({
   experience,
   activeListings,
 }: AgentCardProps) {
+  // Only show stats section if we have valid non-zero values
+  const hasValidExperience = experience !== undefined && experience > 0;
+  const hasValidListings = activeListings !== undefined && activeListings > 0;
+  const showStats = hasValidExperience || hasValidListings;
+
   return (
     <Card>
       <CardContent className="p-6">
+        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+          <UserRound className="h-4 w-4" />
+          <span>Agente Inmobiliario</span>
+        </div>
+
         <div className="flex items-start gap-4">
-          <div className="relative h-16 w-16 flex-none">
-            <Image
-              src={image}
-              alt={name}
-              fill
-              className="rounded-full object-cover"
-            />
-          </div>
+          {image && (
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
+              <Image
+                src={image}
+                alt={name}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
+            </div>
+          )}
           <div className="flex-1 space-y-1">
             <h3 className="font-semibold">{name}</h3>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <div className="flex items-center gap-2 text-sm">
+            {title && title.length > 0 && (
+              <p className="text-sm text-muted-foreground">{title}</p>
+            )}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Building2 className="h-4 w-4" />
-              <span>{company}</span>
+              {company}
             </div>
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2">
-          <Badge variant="secondary" className="text-xs">
-            {experience} años de experiencia
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            {activeListings} propiedades activas
-          </Badge>
-        </div>
+        {showStats && (
+          <div className="mt-4 grid grid-cols-2 gap-4 rounded-lg border p-4">
+            {hasValidExperience && (
+              <div>
+                <p className="text-sm font-medium">{experience}</p>
+                <p className="text-xs text-muted-foreground">Años de experiencia</p>
+              </div>
+            )}
+            {hasValidListings && (
+              <div>
+                <p className="text-sm font-medium">{activeListings}</p>
+                <p className="text-xs text-muted-foreground">Propiedades activas</p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 space-y-2">
-          <Button variant="outline" className="w-full justify-start gap-2" asChild>
-            <a href={`tel:${phone}`}>
-              <Phone className="h-4 w-4" />
-              {phone}
-            </a>
-          </Button>
-          <Button variant="outline" className="w-full justify-start gap-2" asChild>
-            <a href={`mailto:${email}`}>
-              <Mail className="h-4 w-4" />
-              {email}
-            </a>
-          </Button>
+          {phone && phone.length > 0 && (
+            <Button variant="outline" className="w-full justify-start gap-2" asChild>
+              <a href={`tel:${phone}`}>
+                <Phone className="h-4 w-4" />
+                {phone}
+              </a>
+            </Button>
+          )}
+          {email && email.length > 0 && (
+            <Button variant="outline" className="w-full justify-start gap-2" asChild>
+              <a href={`mailto:${email}`}>
+                <Mail className="h-4 w-4" />
+                {email}
+              </a>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

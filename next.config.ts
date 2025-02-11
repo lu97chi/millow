@@ -4,7 +4,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
-    domains: ["placekitten.com", "source.unsplash.com", "images.unsplash.com"],
+    domains: [
+      "placekitten.com",
+      "source.unsplash.com",
+      "images.unsplash.com",
+      "i.pravatar.cc",
+      "img10.naventcdn.com"
+    ],
   },
   experimental: {
     serverActions: {

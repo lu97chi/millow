@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
 import { useSearchStore } from "@/store/use-search-store";
 import { filterProperties, sortProperties } from "@/lib/filter-properties";
-import type { Property } from "@/constants/properties";
+import type { Property } from "@/server/models/property";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/format";

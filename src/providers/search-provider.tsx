@@ -3,7 +3,6 @@
 import { createContext, useContext, useCallback, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSearchStore, type PropertyFilters, initialFilters } from "@/store/use-search-store";
-import type { MexicanState } from "@/constants/properties";
 
 interface SearchContextType {
   syncWithUrl: (filters: Partial<PropertyFilters>) => void;
@@ -98,7 +97,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     // Basic filters
     const query = params.get("query");
     const type = params.get("type");
-    const state = params.get("state") as MexicanState | null;
+    const state = params.get("state") as string | null;
     const city = params.get("city");
     const area = params.get("area");
 

@@ -6,19 +6,28 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
-import type { Property } from "@/constants/properties";
+import type { Property } from "@/server/models/property";
 import { useFavoritesStore } from "@/store/use-favorites-store";
 import { cn } from "@/lib/utils";
 import { ShareButton } from "@/components/properties/share-button";
+import { BedDouble, Bath, Ruler, Trees } from "lucide-react";
+
+const VIEW_MODES = {
+  GRID: 'grid',
+  LIST: 'list',
+} as const;
+
+type ViewMode = typeof VIEW_MODES[keyof typeof VIEW_MODES];
 
 interface PropertyCardProps {
   property: Property;
+  view?: ViewMode;
 }
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property, view = VIEW_MODES.GRID }: PropertyCardProps) {
   const {
     id,
     title,
@@ -28,7 +37,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
     features,
     images,
     propertyAge,
-    maintenanceFee,
+    operationType,
+    propertyType,
     createdAt,
   } = property;
 
@@ -36,8 +46,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const isPropertyFavorite = isFavorite(id);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
-    e.stopPropagation(); // Stop event bubbling
+    e.preventDefault();
+    e.stopPropagation();
     if (isPropertyFavorite) {
       removeFavorite(id);
     } else {
@@ -45,87 +55,192 @@ export function PropertyCard({ property }: PropertyCardProps) {
     }
   };
 
-  return (
-    <Card className="group overflow-hidden">
-      <CardHeader className="p-0">
-        <Link href={`/properties/${id}`} className="relative block aspect-[4/3]">
-          <Image
-            src={images[0]}
-            alt={title}
-            fill
-            className="object-cover transition-transform group-hover:scale-105"
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-            <div>
-              <Badge variant="secondary" className="mb-2">
-                {propertyAge === 0 ? "Nueva" : `${propertyAge} años`}
-              </Badge>
-              <h3 className="text-lg font-semibold text-white line-clamp-1">{title}</h3>
-              <p className="text-sm text-white/90 line-clamp-1">
-                {location.area}, {location.city}
+  if (view === VIEW_MODES.LIST) {
+    return (
+      <Card className="group overflow-hidden">
+        <Link href={`/properties/${id}`} className="flex">
+          {/* Image Section */}
+          <div className="relative w-[240px] flex-none">
+            <Image
+              src={images[0]}
+              alt={title}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="240px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            <Badge variant="secondary" className="absolute left-2 top-2 px-2.5 py-0.5 text-xs font-medium">
+              {propertyAge === 0 ? "Nueva" : `${propertyAge} años`}
+            </Badge>
+          </div>
+
+          {/* Content Section */}
+          <div className="flex flex-1 flex-col p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {operationType}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {propertyType}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-muted/50">
+                    {propertyAge === 0 ? "Nueva" : `${propertyAge} años`}
+                  </Badge>
+                </div>
+                <h3 className="text-lg font-semibold line-clamp-1">{title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {location.area}, {location.city}
+                </p>
+              </div>
+              <div className="flex gap-2" onClick={(e) => e.preventDefault()}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className={cn(
+                    "h-8 w-8 rounded-full",
+                    isPropertyFavorite && "text-red-500 hover:text-red-600"
+                  )}
+                  onClick={handleFavoriteClick}
+                >
+                  <Heart className={cn("h-5 w-5", isPropertyFavorite && "fill-current")} />
+                </Button>
+                <ShareButton
+                  title={title}
+                  url={typeof window !== 'undefined' ? `${window.location.origin}/properties/${id}` : ''}
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-baseline justify-between">
+              <div className="space-y-1">
+                <p className="text-2xl font-bold">{formatPrice(price)}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {createdAt ? format(new Date(createdAt), "d MMM", { locale: es }) : ''}
               </p>
             </div>
-            <div className="flex gap-2" onClick={(e) => e.preventDefault()}>
-              <Button
-                size="icon"
-                variant="ghost"
-                className={cn(
-                  "h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm",
-                  isPropertyFavorite && "text-red-500 hover:text-red-600"
-                )}
-                onClick={handleFavoriteClick}
-              >
-                <Heart className={cn("h-5 w-5", isPropertyFavorite && "fill-current")} />
-              </Button>
-              <ShareButton 
-                title={title}
-                url={typeof window !== 'undefined' ? `${window.location.origin}/properties/${id}` : ''}
-              />
+
+            <div className="mt-4 flex flex-wrap gap-2 text-sm">
+              {features.bedrooms !== null && features.bedrooms !== 0 && (
+                <Badge variant="outline">
+                  {features.bedrooms} {features.bedrooms === 1 ? "Recámara" : "Recámaras"}
+                </Badge>
+              )}
+              {features.bathrooms !== null && features.bathrooms !== 0 && (
+                <Badge variant="outline">
+                  {features.bathrooms} {features.bathrooms === 1 ? "Baño" : "Baños"}
+                </Badge>
+              )}
+              {features.constructionSize !== null && features.constructionSize !== 0 && (
+                <Badge variant="outline">{features.constructionSize}m² construcción</Badge>
+              )}
+              {features.lotSize !== null && features.lotSize !== 0 && (
+                <Badge variant="outline">{features.lotSize}m² terreno</Badge>
+              )}
             </div>
+
+            <p className="mt-4 text-sm text-muted-foreground line-clamp-2">{description}</p>
           </div>
         </Link>
-      </CardHeader>
-      <CardContent className="grid gap-2 p-4">
-        <div className="flex items-baseline justify-between">
-          <div className="space-y-1">
-            <p className="text-2xl font-bold">{formatPrice(price)}</p>
-            {maintenanceFee && (
-              <p className="text-sm text-muted-foreground">
-                Mantenimiento: {formatPrice(maintenanceFee)}/mes
-              </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={cn(
+      "group overflow-hidden transition-colors hover:border-primary/50",
+      view === VIEW_MODES.LIST ? "flex flex-col md:flex-row" : ""
+    )}>
+      <div className={cn(
+        "relative overflow-hidden",
+        view === VIEW_MODES.GRID ? "aspect-[4/3]" : "md:w-[300px] aspect-[4/3] md:aspect-auto"
+      )}>
+        <Image
+          src={images[0]}
+          alt={title}
+          fill
+          className="object-cover transition-transform group-hover:scale-105"
+          sizes={view === VIEW_MODES.GRID 
+            ? "(min-width: 1280px) 400px, (min-width: 780px) 320px, 100vw"
+            : "300px"
+          }
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/0" />
+        <Button
+          variant="outline"
+          size="icon"
+          className={cn(
+            "absolute right-4 top-4 h-8 w-8 shrink-0 rounded-full bg-background/50 backdrop-blur-sm",
+            isPropertyFavorite && "text-red-500 hover:text-red-600"
+          )}
+          onClick={handleFavoriteClick}
+        >
+          <Heart className={cn("h-4 w-4", isPropertyFavorite && "fill-current")} />
+        </Button>
+      </div>
+      <CardContent className={cn(
+        "relative flex-1",
+        view === VIEW_MODES.GRID ? "-mt-12 p-4" : "p-6"
+      )}>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="text-xs">
+            {operationType}
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            {propertyType}
+          </Badge>
+          <Badge variant="outline" className="text-xs bg-muted/50">
+            {propertyAge === 0 ? "Nueva" : `${propertyAge} años`}
+          </Badge>
+        </div>
+        <h3 className="mb-2 line-clamp-1 text-lg font-semibold">
+          <Link href={`/properties/${id}`}>{title}</Link>
+        </h3>
+        <p className="mb-6 line-clamp-2 text-sm text-muted-foreground">
+          {description}
+        </p>
+        <div className="mt-auto space-y-4">
+          <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground sm:grid-cols-4">
+            {features.bedrooms !== null && features.bedrooms !== 0 && (
+              <div className="flex items-center gap-1">
+                <BedDouble className="h-4 w-4" />
+                <span>{features.bedrooms}</span>
+              </div>
+            )}
+            {features.bathrooms !== null && features.bathrooms !== 0 && (
+              <div className="flex items-center gap-1">
+                <Bath className="h-4 w-4" />
+                <span>{features.bathrooms}</span>
+              </div>
+            )}
+            {features.constructionSize !== null && features.constructionSize !== 0 && (
+              <div className="flex items-center gap-1">
+                <Ruler className="h-4 w-4" />
+                <span>{features.constructionSize}m²</span>
+              </div>
+            )}
+            {features.lotSize !== null && features.lotSize !== 0 && (
+              <div className="flex items-center gap-1">
+                <Trees className="h-4 w-4" />
+                <span>{features.lotSize}m²</span>
+              </div>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(createdAt), "d MMM", { locale: es })}
-          </p>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">
+                {location.area}, {location.city}
+              </p>
+              <p className="text-lg font-semibold">{formatPrice(price)}</p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/properties/${id}`}>Ver detalles</Link>
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2 text-sm">
-          {features.bedrooms && (
-            <Badge variant="outline">
-              {features.bedrooms} {features.bedrooms === 1 ? "Recámara" : "Recámaras"}
-            </Badge>
-          )}
-          {features.bathrooms && (
-            <Badge variant="outline">
-              {features.bathrooms} {features.bathrooms === 1 ? "Baño" : "Baños"}
-            </Badge>
-          )}
-          {features.constructionSize && (
-            <Badge variant="outline">{features.constructionSize}m² construcción</Badge>
-          )}
-          {features.lotSize && (
-            <Badge variant="outline">{features.lotSize}m² terreno</Badge>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button className="w-full" asChild>
-          <Link href={`/properties/${id}`}>Ver detalles</Link>
-        </Button>
-      </CardFooter>
     </Card>
   );
 } 

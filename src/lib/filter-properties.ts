@@ -1,5 +1,15 @@
-import type { Property } from "@/constants/properties";
+import type { Property } from "@/server/models/property";
 import type { PropertyFilters } from "@/store/use-search-store";
+import { PROPERTY_TYPES } from "@/server/data/constants";
+
+// Helper function to find property type value from name
+function getPropertyTypeValue(typeName: string): string | undefined {
+  const type = PROPERTY_TYPES.find(
+    t => t.name.toLowerCase() === typeName.toLowerCase() ||
+         t.value.toLowerCase() === typeName.toLowerCase()
+  );
+  return type?.value;
+}
 
 export function filterProperties(properties: Property[], filters: PropertyFilters): Property[] {
   return properties.filter(property => {
@@ -15,8 +25,14 @@ export function filterProperties(properties: Property[], filters: PropertyFilter
     }
 
     // Property type - exact match required
-    if (filters.propertyType.length > 0 && !filters.propertyType.includes(property.type)) {
-      return false;
+    if (filters.propertyType.length > 0) {
+      const propertyTypeValues = filters.propertyType
+        .map(type => getPropertyTypeValue(type))
+        .filter((type): type is string => type !== undefined);
+
+      if (propertyTypeValues.length > 0 && !propertyTypeValues.includes(property.propertyType.toLowerCase())) {
+        return false;
+      }
     }
 
     // Location - exact matching for all fields

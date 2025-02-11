@@ -99,22 +99,10 @@ export function ChatUI() {
     scrollToBottom();
   }, [messages]);
 
-  // Welcome message
-  React.useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([
-        {
-          role: "assistant",
-          content: "👋 ¡Hola! Soy Luna, tu asistente inmobiliaria. ¿Qué tipo de propiedad estás buscando?",
-        },
-      ]);
-    }
-  }, [messages]);
-
   // Property context change effect
   React.useEffect(() => {
     if (propertyContext) {
-      const sendPropertyContextMessage = async () => {
+      const timer = setTimeout(async () => {
         try {
           const response = await fetch('/api/chat', {
             method: 'POST',
@@ -149,11 +137,12 @@ export function ChatUI() {
             content: "Lo siento, hubo un error al cargar la información de la propiedad."
           }]);
         }
-      };
+      }, 10000); // 10 seconds delay
 
-      sendPropertyContextMessage();
+      // Cleanup the timer if the component unmounts or propertyContext changes
+      return () => clearTimeout(timer);
     }
-  }, [propertyContext, propertyContext?.id]); // Only trigger when property ID changes
+  }, [propertyContext, propertyContext?.id]);
 
   // Handle chat response and set redirect flag
   const handleChatResponse = async (data: ChatResponseData) => {

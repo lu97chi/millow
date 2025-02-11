@@ -1,10 +1,9 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { z } from 'zod';
-import { MexicanState } from '@/constants/properties';
 
 export interface Location {
-  state?: MexicanState;
+  state?: string;
   city?: string;
   area?: string;
 }
@@ -215,7 +214,7 @@ export const useSearchStore = create<SearchState>()(
           if (data.state || data.city) {
             newFilters.location = {
               ...initialFilters.location,
-              ...(data.state && { state: data.state as MexicanState }),
+              ...(data.state && { state: data.state as string }),
               ...(data.city && { city: data.city }),
             };
           }
