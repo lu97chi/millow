@@ -28,13 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { ChatMessage, ChatResponseData, LocalFilters, Property } from "@/types";
-import type { 
-  PropertyTypeName, 
-  OperationType, 
-  PropertyFeatures, 
-  Amenity 
-} from "@/types";
+import { ChatMessage, ChatResponseData, Property, PropertyFilters } from "@/types";
 
 const EXAMPLE_PROMPTS = [
   "Busco una casa en Polanco con 3 recámaras y jardín",
@@ -70,7 +64,7 @@ export function ChatUI({ initialPropertyContext }: ChatUIProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { syncWithUrl, filters, setFilters, parseUrlToFilters, filtersToSearchParams } = useSearch();
+  const { parseUrlToFilters, filtersToSearchParams, setFilters, filters } = useSearch();
   const [propertyContext] = useState<Property | null>(initialPropertyContext || null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -83,11 +77,11 @@ export function ChatUI({ initialPropertyContext }: ChatUIProps) {
     // Only redirect if we have active filters and we're not on a property detail page
     const hasActiveFilters =
       filters?.propertyType?.length ||
-      filters?.priceRange?.min ||
-      filters?.priceRange?.max ||
-      filters?.location?.state ||
-      filters?.location?.city ||
-      filters?.location?.area ||
+      filters?.minPrice !== undefined ||
+      filters?.maxPrice !== undefined ||
+      filters?.location?.state?.length ||
+      filters?.location?.city?.length ||
+      filters?.location?.area?.length ||
       filters?.features?.bedrooms ||
       filters?.features?.bathrooms ||
       filters?.features?.constructionSize?.min ||
@@ -99,12 +93,11 @@ export function ChatUI({ initialPropertyContext }: ChatUIProps) {
       filters?.maintenanceFee?.min !== undefined ||
       filters?.maintenanceFee?.max !== undefined;
 
-    if (hasActiveFilters && !propertyContext && filters && showSuggested) {
-      syncWithUrl(filters);
-      router.push("/properties");
-      setShowSuggested(false);
+    if (hasActiveFilters && !propertyContext && showSuggested) {
+      const params = filtersToSearchParams(filters);
+      router.push(`/properties?${params.toString()}`);
     }
-  }, [filters, router, syncWithUrl, propertyContext, showSuggested]);
+  }, [filters, router, filtersToSearchParams, propertyContext, showSuggested]);
 
   // Improved scroll behavior
   const scrollToBottom = () => {
@@ -165,48 +158,104 @@ export function ChatUI({ initialPropertyContext }: ChatUIProps) {
   // Handle chat response
   const handleChatResponse = (data: ChatResponseData) => {
     if (data.filters) {
+      const currentFilters = parseUrlToFilters();
+      const newFilters: Partial<PropertyFilters> = { ...currentFilters };
+
       // Apply filters based on the response type
-      switch (data.type) {
-        case 'propertyType':
-          if (data.filters.propertyType) {
-            handlePropertyTypeSelect(data.filters.propertyType);
-          }
-          break;
-        case 'operationType':
-          if (data.filters.operationType) {
-            handleOperationTypeSelect(data.filters.operationType);
-          }
-          break;
-        case 'location':
-          if (data.filters.location) {
-            handleLocationSelect(data.filters.location);
-          }
-          break;
-        case 'priceRange':
-          if (data.filters.priceRange) {
-            handlePriceRangeSelect(data.filters.priceRange);
-          }
-          break;
-        case 'features':
-          if (data.filters.features) {
-            handleFeaturesSelect(data.filters.features);
-          }
-          break;
-        case 'amenities':
-          if (data.filters.amenities) {
-            handleAmenitiesSelect(data.filters.amenities);
-          }
-          break;
-        default:
-          // For other filter types, sync with URL directly
-          const filters = parseUrlToFilters();
-          const newFilters = {
-            ...filters,
-            ...data.filters
-          };
-          const params = filtersToSearchParams(newFilters);
-          router.push(`/properties?${params.toString()}`);
+      if (data.filters.propertyType) {
+        newFilters.propertyType = [...(currentFilters.propertyType || []), data.filters.propertyType];
       }
+      
+      if (data.filters.operationType) {
+        newFilters.operationType = [...(currentFilters.operationType || []), data.filters.operationType];
+      }
+      
+      if (data.filters.location) {
+        newFilters.location = {
+          state: data.filters.location.state 
+            ? [...(currentFilters.location?.state || []), data.filters.location.state]
+            : currentFilters.location?.state,
+          city: data.filters.location.city 
+            ? [...(currentFilters.location?.city || []), data.filters.location.city]
+            : currentFilters.location?.city,
+          area: data.filters.location.area 
+            ? [...(currentFilters.location?.area || []), data.filters.location.area]
+            : currentFilters.location?.area,
+          address: currentFilters.location?.address,
+          coordinates: currentFilters.location?.coordinates
+        };
+      }
+      
+      if (data.filters.priceRange) {
+        if (typeof data.filters.priceRange.min === 'number') {
+          newFilters.minPrice = data.filters.priceRange.min;
+        }
+        if (typeof data.filters.priceRange.max === 'number') {
+          newFilters.maxPrice = data.filters.priceRange.max;
+        }
+      }
+      
+      if (data.filters.features) {
+        const features: PropertyFilters['features'] = {
+          ...currentFilters.features,
+          bedrooms: data.filters.features.bedrooms ?? currentFilters.features?.bedrooms,
+          bathrooms: data.filters.features.bathrooms ?? currentFilters.features?.bathrooms,
+          parking: data.filters.features.parking ?? currentFilters.features?.parking,
+          floors: data.filters.features.floors ?? currentFilters.features?.floors,
+          constructionSize: currentFilters.features?.constructionSize,
+          lotSize: currentFilters.features?.lotSize
+        };
+
+        if (data.filters.features.constructionSize !== undefined) {
+          features.constructionSize = {
+            min: typeof data.filters.features.constructionSize === 'number' ? 
+              data.filters.features.constructionSize : undefined,
+            max: typeof data.filters.features.constructionSize === 'number' ? 
+              data.filters.features.constructionSize : undefined
+          };
+        }
+
+        if (data.filters.features.lotSize !== undefined) {
+          features.lotSize = {
+            min: typeof data.filters.features.lotSize === 'number' ? 
+              data.filters.features.lotSize : undefined,
+            max: typeof data.filters.features.lotSize === 'number' ? 
+              data.filters.features.lotSize : undefined
+          };
+        }
+
+        newFilters.features = features;
+      }
+      
+      if (data.filters.amenities) {
+        newFilters.amenities = [...(currentFilters.amenities || []), ...data.filters.amenities];
+      }
+
+      // Remove duplicates from arrays
+      if (newFilters.propertyType) {
+        newFilters.propertyType = Array.from(new Set(newFilters.propertyType));
+      }
+      if (newFilters.operationType) {
+        newFilters.operationType = Array.from(new Set(newFilters.operationType));
+      }
+      if (newFilters.location?.state) {
+        newFilters.location.state = Array.from(new Set(newFilters.location.state));
+      }
+      if (newFilters.location?.city) {
+        newFilters.location.city = Array.from(new Set(newFilters.location.city));
+      }
+      if (newFilters.location?.area) {
+        newFilters.location.area = Array.from(new Set(newFilters.location.area));
+      }
+      if (newFilters.amenities) {
+        newFilters.amenities = Array.from(new Set(newFilters.amenities));
+      }
+
+      // Update filters in context
+      setFilters(newFilters);
+      
+      // Set showSuggested to true to trigger URL update
+      setShowSuggested(true);
     }
     
     // Add the response to messages
@@ -275,97 +324,6 @@ export function ChatUI({ initialPropertyContext }: ChatUIProps) {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isFiltersOpen]);
-
-  // Handle property type selection
-  const handlePropertyTypeSelect = (propertyType: PropertyTypeName) => {
-    const filters = parseUrlToFilters();
-    
-    const newFilters = {
-      ...filters,
-      propertyType: [propertyType]
-    };
-    
-    const params = filtersToSearchParams(newFilters);
-    router.push(`/properties?${params.toString()}`);
-    setInput("");
-  };
-
-  // Handle operation type selection
-  const handleOperationTypeSelect = (type: string) => {
-    const filters = parseUrlToFilters();
-    const operationType = type as OperationType;
-    
-    const newFilters = {
-      ...filters,
-      operationType
-    };
-    
-    const params = filtersToSearchParams(newFilters);
-    router.push(`/properties?${params.toString()}`);
-    setInput("");
-  };
-
-  // Handle location selection
-  const handleLocationSelect = (location: { state?: string; city?: string; area?: string }) => {
-    const filters = parseUrlToFilters();
-    
-    const newFilters = {
-      ...filters,
-      location: {
-        ...filters.location,
-        ...location
-      }
-    };
-    
-    const params = filtersToSearchParams(newFilters);
-    router.push(`/properties?${params.toString()}`);
-    setInput("");
-  };
-
-  // Handle price range selection
-  const handlePriceRangeSelect = (range: { min?: number; max?: number }) => {
-    const filters = parseUrlToFilters();
-    
-    const newFilters = {
-      ...filters,
-      priceRange: range
-    };
-    
-    const params = filtersToSearchParams(newFilters);
-    router.push(`/properties?${params.toString()}`);
-    setInput("");
-  };
-
-  // Handle features selection
-  const handleFeaturesSelect = (features: Partial<PropertyFeatures>) => {
-    const filters = parseUrlToFilters();
-    
-    const newFilters = {
-      ...filters,
-      features: {
-        ...filters.features,
-        ...features
-      }
-    };
-    
-    const params = filtersToSearchParams(newFilters);
-    router.push(`/properties?${params.toString()}`);
-    setInput("");
-  };
-
-  // Handle amenities selection
-  const handleAmenitiesSelect = (amenities: Amenity[]) => {
-    const filters = parseUrlToFilters();
-    
-    const newFilters = {
-      ...filters,
-      amenities
-    };
-    
-    const params = filtersToSearchParams(newFilters);
-    router.push(`/properties?${params.toString()}`);
-    setInput("");
-  };
 
   return (
     <div className="flex h-full flex-col">
