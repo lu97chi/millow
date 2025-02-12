@@ -20,8 +20,8 @@ import { PropertyService } from "@/server/services/property-service";
 import { StatsService } from "@/server/services/stats-service";
 import { PropertyCard } from "@/components/properties/property-card";
 import { formatCurrency } from "@/lib/utils";
-import type { Property } from "@/server/models/property";
 import { Input } from "@/components/ui/input";
+import { Property } from "@/types";
 
 export default async function HomePage() {
   const propertyService = PropertyService.getInstance();

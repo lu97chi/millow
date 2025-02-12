@@ -7,11 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-interface ShareButtonProps {
-  title: string;
-  url: string;
-}
+import { ShareButtonProps } from "@/types";
 
 export function ShareButton({ title, url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
@@ -28,7 +24,9 @@ export function ShareButton({ title, url }: ShareButtonProps) {
 
   const handleWhatsAppShare = (e: React.MouseEvent) => {
     e.preventDefault();
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+      `${title}\n${url}`
+    )}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -84,4 +82,4 @@ export function ShareButton({ title, url }: ShareButtonProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

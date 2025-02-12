@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { Bot } from "lucide-react";
+import type { Property } from "@/types";
 
 interface RootLayoutProps {
   children: React.ReactNode;
+  propertyContext?: Property;
 }
 
-export function RootLayout({ children }: RootLayoutProps) {
+export function RootLayout({ children, propertyContext }: RootLayoutProps) {
   const pathname = usePathname();
   const showChat = pathname !== "/";
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -32,7 +34,7 @@ export function RootLayout({ children }: RootLayoutProps) {
           <>
             {/* Desktop Chat Sidebar */}
             <div className="fixed right-0 top-[64px] bottom-0 w-[350px] border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden lg:block">
-              <ChatUI />
+              <ChatUI initialPropertyContext={propertyContext} />
             </div>
 
             {/* Mobile Chat */}
@@ -71,7 +73,7 @@ export function RootLayout({ children }: RootLayoutProps) {
                 </div>
                 {/* Chat Content */}
                 <div className="absolute top-14 left-0 right-0 bottom-0 rounded-b-lg overflow-hidden">
-                  <ChatUI />
+                  <ChatUI initialPropertyContext={propertyContext} />
                 </div>
               </div>
             </div>

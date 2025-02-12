@@ -21,243 +21,393 @@ import {
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { HTMLMotionProps } from "framer-motion";
+import type {
+  Amenity,
+  OperationType,
+  PropertyFilters,
+  PropertyTypeName,
+  PropertyEntityType,
+  PropertyStatus,
+  CityData,
+  StateType,
+} from "@/types";
 
+// Define view mode type
+type ViewMode = "grid" | "list";
+
+// Update PropertyFiltersProps interface
 interface PropertyFiltersProps {
   className?: string;
   hideToggle?: boolean;
   onClose?: () => void;
+  onFiltersChange?: (filters: PropertyFilters) => void;
+  onViewChange?: (view: ViewMode) => void;
+  view?: ViewMode;
 }
 
-interface LocalFilters {
-  propertyType: string[];
-  priceRange: {
-    min?: number;
-    max?: number;
-  };
-  location: {
-    state?: string;
-    city?: string;
-    area?: string;
-  };
-  features: {
-    bedrooms?: number;
-    bathrooms?: number;
-    constructionSize?: {
-      min?: number;
-      max?: number;
-    };
-    lotSize?: {
-      min?: number;
-      max?: number;
-    };
-  };
-  amenities: string[];
-  propertyAge?: number;
-  maintenanceFee?: {
-    min?: number;
-    max?: number;
-  };
-}
-
-const initialFilters: LocalFilters = {
+// Initial filters state
+const initialFilters: Partial<PropertyFilters> = {
   propertyType: [],
-  priceRange: {},
-  location: {},
-  features: {},
+  operationType: [],
+  type: [],
+  location: {
+    state: [],
+    city: [],
+    area: [],
+    address: "",
+    coordinates: { lat: 0, lng: 0 },
+  },
+  features: {
+    bedrooms: undefined,
+    bathrooms: undefined,
+    constructionSize: {
+      min: undefined,
+      max: undefined,
+    },
+    lotSize: {
+      min: undefined,
+      max: undefined,
+    },
+    parking: undefined,
+    floors: undefined,
+  },
   amenities: [],
+  propertyAge: undefined,
+  maintenanceFee: {
+    min: undefined,
+    max: undefined,
+  },
+  status: [],
+  viewMode: "grid",
 };
-
-// Add type for locations
-type LocationsType = typeof LOCATIONS;
-type StateType = keyof LocationsType;
-
-interface CityData {
-  city: string;
-  areas: string[];
-}
 
 export function PropertyFilters({
   className,
-  hideToggle,
+  hideToggle = false,
   onClose,
+  onFiltersChange,
+  onViewChange,
+  view = "grid",
 }: PropertyFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = React.useState(false);
-
-  // Initialize local filters from URL params
-  const [localFilters, setLocalFilters] = React.useState<LocalFilters>(() => {
-    const params = new URLSearchParams(searchParams);
-    return {
-      propertyType: params.get('propertyType')?.split(',').filter(Boolean) || [],
-      priceRange: {
-        min: params.get('priceMin') ? Number(params.get('priceMin')) : undefined,
-        max: params.get('priceMax') ? Number(params.get('priceMax')) : undefined,
-      },
+  const [localFilters, setLocalFilters] = React.useState<Partial<PropertyFilters>>(() => {
+    // Get current URL params
+    const currentParams = new URLSearchParams(searchParams.toString());
+    
+    // Parse the current filters from URL
+    const currentFilters = {
+      ...initialFilters,
+      propertyType: currentParams.get("propertyType")?.split(",") as PropertyTypeName[] || [],
+      operationType: currentParams.get("operationType")?.split(",") as OperationType[] || [],
+      type: currentParams.get("type")?.split(",") as PropertyEntityType[] || [],
       location: {
-        state: params.get('state') || undefined,
-        city: params.get('city') || undefined,
-        area: params.get('area') || undefined,
+        state: currentParams.get("state")?.split(",") || [],
+        city: currentParams.get("city")?.split(",") || [],
+        area: currentParams.get("area")?.split(",") || [],
+        address: currentParams.get("address") || "",
+        coordinates: {
+          lat: currentParams.get("lat") ? parseFloat(currentParams.get("lat")!) : undefined,
+          lng: currentParams.get("lng") ? parseFloat(currentParams.get("lng")!) : undefined,
+        },
       },
       features: {
-        bedrooms: params.get('beds') ? Number(params.get('beds')) : undefined,
-        bathrooms: params.get('baths') ? Number(params.get('baths')) : undefined,
+        bedrooms: currentParams.get("bedrooms") ? parseInt(currentParams.get("bedrooms")!) : undefined,
+        bathrooms: currentParams.get("bathrooms") ? parseInt(currentParams.get("bathrooms")!) : undefined,
         constructionSize: {
-          min: params.get('constructionSizeMin') ? Number(params.get('constructionSizeMin')) : undefined,
-          max: params.get('constructionSizeMax') ? Number(params.get('constructionSizeMax')) : undefined,
+          min: currentParams.get("minConstructionSize") ? parseInt(currentParams.get("minConstructionSize")!) : undefined,
+          max: currentParams.get("maxConstructionSize") ? parseInt(currentParams.get("maxConstructionSize")!) : undefined,
         },
         lotSize: {
-          min: params.get('lotSizeMin') ? Number(params.get('lotSizeMin')) : undefined,
-          max: params.get('lotSizeMax') ? Number(params.get('lotSizeMax')) : undefined,
+          min: currentParams.get("minLotSize") ? parseInt(currentParams.get("minLotSize")!) : undefined,
+          max: currentParams.get("maxLotSize") ? parseInt(currentParams.get("maxLotSize")!) : undefined,
         },
+        parking: currentParams.get("parking") ? parseInt(currentParams.get("parking")!) : undefined,
+        floors: currentParams.get("floors") ? parseInt(currentParams.get("floors")!) : undefined,
       },
-      amenities: params.get('amenities')?.split(',').filter(Boolean) || [],
-      propertyAge: params.get('propertyAge') ? Number(params.get('propertyAge')) : undefined,
+      amenities: currentParams.get("amenities")?.split(",") as Amenity[] || [],
+      propertyAge: currentParams.get("propertyAge") ? parseInt(currentParams.get("propertyAge")!) : undefined,
       maintenanceFee: {
-        min: params.get('maintenanceFeeMin') ? Number(params.get('maintenanceFeeMin')) : undefined,
-        max: params.get('maintenanceFeeMax') ? Number(params.get('maintenanceFeeMax')) : undefined,
+        min: currentParams.get("minMaintenanceFee") ? parseInt(currentParams.get("minMaintenanceFee")!) : undefined,
+        max: currentParams.get("maxMaintenanceFee") ? parseInt(currentParams.get("maxMaintenanceFee")!) : undefined,
       },
+      status: currentParams.get("status")?.split(",") as PropertyStatus[] || [],
+      viewMode: (currentParams.get("view") as "grid" | "list") || "grid",
     };
+    
+    return currentFilters;
   });
+
+  // Keep track of the last applied filters
+  const lastAppliedFiltersRef = React.useRef<Partial<PropertyFilters>>(localFilters);
 
   const showFilters = hideToggle || isOpen;
 
-  const updateURL = (filters: LocalFilters) => {
-    const params = new URLSearchParams();
-
-    if (filters.propertyType.length > 0) {
-      params.set('propertyType', filters.propertyType.join(','));
+  const updateURL = (filters: Partial<PropertyFilters>) => {
+    // Create new params from current URL to preserve other params
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Update filter params
+    if (filters.propertyType?.length) {
+      params.set("propertyType", filters.propertyType.join(","));
+    } else {
+      params.delete("propertyType");
     }
-    if (filters.priceRange.min !== undefined) {
-      params.set('priceMin', filters.priceRange.min.toString());
+    
+    if (filters.operationType?.length) {
+      params.set("operationType", filters.operationType.join(","));
+    } else {
+      params.delete("operationType");
     }
-    if (filters.priceRange.max !== undefined) {
-      params.set('priceMax', filters.priceRange.max.toString());
+    
+    if (filters.type?.length) {
+      params.set("type", filters.type.join(","));
+    } else {
+      params.delete("type");
     }
-    if (filters.location.state) {
-      params.set('state', filters.location.state);
+    
+    if (filters.location?.state?.length) {
+      params.set("state", filters.location.state.join(","));
+    } else {
+      params.delete("state");
     }
-    if (filters.location.city) {
-      params.set('city', filters.location.city);
+    
+    if (filters.location?.city?.length) {
+      params.set("city", filters.location.city.join(","));
+    } else {
+      params.delete("city");
     }
-    if (filters.location.area) {
-      params.set('area', filters.location.area);
+    
+    if (filters.location?.area?.length) {
+      params.set("area", filters.location.area.join(","));
+    } else {
+      params.delete("area");
     }
-    if (filters.features.bedrooms !== undefined) {
-      params.set('beds', filters.features.bedrooms.toString());
+    
+    if (filters.location?.address) {
+      params.set("address", filters.location.address);
+    } else {
+      params.delete("address");
     }
-    if (filters.features.bathrooms !== undefined) {
-      params.set('baths', filters.features.bathrooms.toString());
+    
+    if (filters.location?.coordinates?.lat) {
+      params.set("lat", filters.location.coordinates.lat.toString());
+    } else {
+      params.delete("lat");
     }
-    if (filters.features.constructionSize?.min !== undefined) {
-      params.set('constructionSizeMin', filters.features.constructionSize.min.toString());
+    
+    if (filters.location?.coordinates?.lng) {
+      params.set("lng", filters.location.coordinates.lng.toString());
+    } else {
+      params.delete("lng");
     }
-    if (filters.features.constructionSize?.max !== undefined) {
-      params.set('constructionSizeMax', filters.features.constructionSize.max.toString());
+    
+    if (filters.features?.bedrooms !== undefined && filters.features?.bedrooms !== null) {
+      params.set("bedrooms", filters.features.bedrooms.toString());
+    } else {
+      params.delete("bedrooms");
     }
-    if (filters.features.lotSize?.min !== undefined) {
-      params.set('lotSizeMin', filters.features.lotSize.min.toString());
+    
+    if (filters.features?.bathrooms !== undefined && filters.features?.bathrooms !== null) {
+      params.set("bathrooms", filters.features.bathrooms.toString());
+    } else {
+      params.delete("bathrooms");
     }
-    if (filters.features.lotSize?.max !== undefined) {
-      params.set('lotSizeMax', filters.features.lotSize.max.toString());
+    
+    if (filters.features?.constructionSize?.min !== undefined) {
+      params.set("minConstructionSize", filters.features.constructionSize.min.toString());
+    } else {
+      params.delete("minConstructionSize");
     }
-    if (filters.amenities.length > 0) {
-      params.set('amenities', filters.amenities.join(','));
+    
+    if (filters.features?.constructionSize?.max !== undefined) {
+      params.set("maxConstructionSize", filters.features.constructionSize.max.toString());
+    } else {
+      params.delete("maxConstructionSize");
     }
+    
+    if (filters.features?.lotSize?.min !== undefined) {
+      params.set("minLotSize", filters.features.lotSize.min.toString());
+    } else {
+      params.delete("minLotSize");
+    }
+    
+    if (filters.features?.lotSize?.max !== undefined) {
+      params.set("maxLotSize", filters.features.lotSize.max.toString());
+    } else {
+      params.delete("maxLotSize");
+    }
+    
+    if (filters.features?.parking !== undefined && filters.features?.parking !== null) {
+      params.set("parking", filters.features.parking.toString());
+    } else {
+      params.delete("parking");
+    }
+    
+    if (filters.features?.floors !== undefined && filters.features?.floors !== null) {
+      params.set("floors", filters.features.floors.toString());
+    } else {
+      params.delete("floors");
+    }
+    
+    if (filters.amenities?.length) {
+      params.set("amenities", filters.amenities.join(","));
+    } else {
+      params.delete("amenities");
+    }
+    
     if (filters.propertyAge !== undefined) {
-      params.set('propertyAge', filters.propertyAge.toString());
+      params.set("propertyAge", filters.propertyAge.toString());
+    } else {
+      params.delete("propertyAge");
     }
+    
     if (filters.maintenanceFee?.min !== undefined) {
-      params.set('maintenanceFeeMin', filters.maintenanceFee.min.toString());
+      params.set("minMaintenanceFee", filters.maintenanceFee.min.toString());
+    } else {
+      params.delete("minMaintenanceFee");
     }
+    
     if (filters.maintenanceFee?.max !== undefined) {
-      params.set('maintenanceFeeMax', filters.maintenanceFee.max.toString());
+      params.set("maxMaintenanceFee", filters.maintenanceFee.max.toString());
+    } else {
+      params.delete("maxMaintenanceFee");
     }
-
-    router.push(`/properties?${params.toString()}`);
+    
+    if (filters.status?.length) {
+      params.set("status", filters.status.join(","));
+    } else {
+      params.delete("status");
+    }
+    
+    if (filters.viewMode) {
+      params.set("view", filters.viewMode);
+    } else {
+      params.delete("view");
+    }
+    
+    return params;
   };
 
-  const handleSearch = () => {
-    onClose?.();
-    updateURL(localFilters);
+  const handleViewChange = (newView: ViewMode) => {
+    onViewChange?.(newView);
   };
 
-  const handlePropertyTypesChange = (types: string[]) => {
-    setLocalFilters((prev) => ({
-      ...prev,
+  const handlePropertyTypesChange = (types: PropertyTypeName[]) => {
+    const newFilters = {
+      ...localFilters,
       propertyType: types,
-    }));
+    };
+    setLocalFilters(newFilters);
   };
 
   const handlePriceRangeChange = (range: { min?: number; max?: number }) => {
-    setLocalFilters((prev) => ({
+    setLocalFilters((prev: PropertyFilters) => ({
       ...prev,
-      priceRange: range,
+      price: range.min || range.max || 0,
     }));
   };
 
-  const handleLocationChange = (location: Partial<{ state?: string; city?: string; area?: string }>) => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      location: { ...prev.location, ...location },
-    }));
+  const handleLocationChange = (
+    location: Partial<{
+      state?: string[];
+      city?: string[];
+      area?: string[];
+      address?: string;
+      coordinates?: { lat?: number; lng?: number };
+    }>
+  ) => {
+    const newFilters = {
+      ...localFilters,
+      location: { ...localFilters.location, ...location },
+    };
+    setLocalFilters(newFilters);
   };
 
-  const handleFeaturesChange = (features: Partial<LocalFilters['features']>) => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      features: { ...prev.features, ...features },
-    }));
+  const handleFeaturesChange = (
+    features: Partial<PropertyFilters["features"]>
+  ) => {
+    const newFilters = {
+      ...localFilters,
+      features: { ...localFilters.features, ...features },
+    };
+    setLocalFilters(newFilters);
   };
 
-  const handleAmenitiesChange = (amenities: string[]) => {
-    setLocalFilters((prev) => ({
-      ...prev,
+  const handleAmenitiesChange = (amenities: Amenity[]) => {
+    const newFilters = {
+      ...localFilters,
       amenities,
-    }));
+    };
+    setLocalFilters(newFilters);
   };
 
   const handlePropertyAgeChange = (age: number | undefined) => {
-    setLocalFilters((prev) => ({
-      ...prev,
+    const newFilters = {
+      ...localFilters,
       propertyAge: age,
-    }));
+    };
+    setLocalFilters(newFilters);
   };
 
-  const handleMaintenanceFeeChange = (fee: { min?: number; max?: number } | undefined) => {
-    setLocalFilters((prev) => ({
-      ...prev,
+  const handleMaintenanceFeeChange = (
+    fee: { min?: number; max?: number } | undefined
+  ) => {
+    const newFilters = {
+      ...localFilters,
       maintenanceFee: fee,
-    }));
+    };
+    setLocalFilters(newFilters);
   };
 
   const handleReset = () => {
     setLocalFilters(initialFilters);
-    router.push('/properties');
+    lastAppliedFiltersRef.current = initialFilters;
+    router.replace(window.location.pathname, { scroll: false });
+    onClose?.();
   };
 
   const handleApplyFilters = () => {
-    handleSearch();
+    lastAppliedFiltersRef.current = localFilters;
+    const params = updateURL(localFilters);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    router.replace(newUrl, { scroll: false });
+    onFiltersChange?.(localFilters as PropertyFilters);
+    onClose?.();
+  };
+
+  // Handle closing without applying
+  const handleClose = () => {
+    setLocalFilters(lastAppliedFiltersRef.current);
+    onClose?.();
   };
 
   return (
     <div className={cn("relative", className)}>
       {!hideToggle && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-2"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <SlidersHorizontal
-            className={cn(
-              "mr-2 h-4 w-4 transition-transform duration-200",
-              isOpen && "rotate-180"
-            )}
-          />
-          {isOpen ? "Ocultar filtros" : "Mostrar filtros"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <SlidersHorizontal
+              className={cn(
+                "mr-2 h-4 w-4 transition-transform duration-200",
+                isOpen && "rotate-180"
+              )}
+            />
+            {isOpen ? "Ocultar filtros" : "Mostrar filtros"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewChange(view === "grid" ? "list" : "grid")}
+          >
+            {view === "grid" ? "Ver lista" : "Ver cuadrícula"}
+          </Button>
+        </div>
       )}
 
       {showFilters && (
@@ -268,7 +418,7 @@ export function PropertyFilters({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
           />
 
           {/* Filters Panel */}
@@ -296,7 +446,7 @@ export function PropertyFilters({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 hover:bg-muted"
-                      onClick={onClose}
+                      onClick={handleClose}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -314,24 +464,22 @@ export function PropertyFilters({
                         <Badge
                           key={type.value}
                           variant={
-                            localFilters.propertyType.includes(type.value)
+                            localFilters.propertyType?.includes(type.value as PropertyTypeName)
                               ? "default"
                               : "outline"
                           }
                           className="cursor-pointer hover:bg-muted/80 transition-colors"
                           onClick={() => {
-                            if (
-                              localFilters.propertyType.includes(type.value)
-                            ) {
+                            if (localFilters.propertyType?.includes(type.value as PropertyTypeName)) {
                               handlePropertyTypesChange(
-                                localFilters.propertyType.filter(
+                                (localFilters.propertyType || []).filter(
                                   (t) => t !== type.value
-                                )
+                                ) as PropertyTypeName[]
                               );
                             } else {
                               handlePropertyTypesChange([
-                                ...localFilters.propertyType,
-                                type.value,
+                                ...(localFilters.propertyType || []),
+                                type.value as PropertyTypeName,
                               ]);
                             }
                           }}
@@ -351,12 +499,12 @@ export function PropertyFilters({
                     <div className="space-y-3">
                       <select
                         className="w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={localFilters.location.state || ""}
+                        value={localFilters.location?.state?.join(",") || ""}
                         onChange={(e) =>
                           handleLocationChange({
-                            state: e.target.value || undefined,
-                            city: undefined,
-                            area: undefined,
+                            state: e.target.value ? e.target.value.split(",") : [],
+                            city: [],
+                            area: [],
                           })
                         }
                       >
@@ -368,42 +516,47 @@ export function PropertyFilters({
                         ))}
                       </select>
 
-                      {localFilters.location.state && (
+                      {localFilters.location?.state?.length === 1 && (
                         <select
                           className="w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                          value={localFilters.location.city || ""}
+                          value={localFilters.location?.city?.join(",") || ""}
                           onChange={(e) =>
                             handleLocationChange({
-                              city: e.target.value || undefined,
-                              area: undefined,
+                              city: e.target.value ? e.target.value.split(",") : [],
+                              area: [],
                             })
                           }
                         >
                           <option value="">Selecciona una ciudad</option>
-                          {(LOCATIONS[localFilters.location.state as StateType] || []).map(
-                            (cityData: CityData) => (
-                              <option key={cityData.city} value={cityData.city}>
-                                {cityData.city}
-                              </option>
-                            )
-                          )}
+                          {(
+                            LOCATIONS[
+                              localFilters.location?.state?.[0] as StateType
+                            ] || []
+                          ).map((cityData: CityData) => (
+                            <option key={cityData.city} value={cityData.city}>
+                              {cityData.city}
+                            </option>
+                          ))}
                         </select>
                       )}
 
-                      {localFilters.location.city && (
+                      {localFilters.location?.city?.length === 1 && (
                         <select
                           className="w-full rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                          value={localFilters.location.area || ""}
+                          value={localFilters.location?.area?.join(",") || ""}
                           onChange={(e) =>
                             handleLocationChange({
-                              area: e.target.value || undefined,
+                              area: e.target.value ? e.target.value.split(",") : [],
                             })
                           }
                         >
                           <option value="">Selecciona una zona</option>
                           {(
-                            LOCATIONS[localFilters.location.state as StateType]?.find(
-                              (c: CityData) => c.city === localFilters.location.city
+                            LOCATIONS[
+                              localFilters.location?.state?.[0] as StateType
+                            ]?.find(
+                              (c: CityData) =>
+                                c.city === localFilters.location?.city?.[0]
                             )?.areas || []
                           ).map((area: string) => (
                             <option key={area} value={area}>
@@ -426,8 +579,8 @@ export function PropertyFilters({
                         max={PRICE_RANGE.max}
                         step={PRICE_RANGE.step}
                         value={[
-                          localFilters.priceRange?.min || PRICE_RANGE.min,
-                          localFilters.priceRange?.max || PRICE_RANGE.max,
+                          localFilters.minPrice || PRICE_RANGE.min,
+                          localFilters.maxPrice || PRICE_RANGE.max,
                         ]}
                         onValueChange={([min, max]) =>
                           handlePriceRangeChange({ min, max })
@@ -438,16 +591,14 @@ export function PropertyFilters({
                         <span>
                           $
                           {(
-                            localFilters.priceRange?.min ||
-                            PRICE_RANGE.min / 1000000
+                            localFilters.minPrice || PRICE_RANGE.min / 1000000
                           ).toFixed(1)}
                           M
                         </span>
                         <span>
                           $
                           {(
-                            localFilters.priceRange?.max ||
-                            PRICE_RANGE.max / 1000000
+                            localFilters.maxPrice || PRICE_RANGE.max / 1000000
                           ).toFixed(1)}
                           M
                         </span>
@@ -463,13 +614,11 @@ export function PropertyFilters({
                     <div className="grid grid-cols-2 gap-3">
                       <select
                         className="rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={localFilters.features.bedrooms || ""}
+                        value={localFilters.features?.bedrooms?.toString() || ""}
                         onChange={(e) =>
                           handleFeaturesChange({
-                            ...localFilters.features,
-                            bedrooms: e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined,
+                            ...(localFilters.features || {}),
+                            bedrooms: e.target.value ? parseInt(e.target.value) : undefined,
                           })
                         }
                       >
@@ -482,13 +631,11 @@ export function PropertyFilters({
                       </select>
                       <select
                         className="rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={localFilters.features.bathrooms || ""}
+                        value={localFilters.features?.bathrooms?.toString() || ""}
                         onChange={(e) =>
                           handleFeaturesChange({
-                            ...localFilters.features,
-                            bathrooms: e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined,
+                            ...(localFilters.features || {}),
+                            bathrooms: e.target.value ? parseInt(e.target.value) : undefined,
                           })
                         }
                       >
@@ -506,23 +653,21 @@ export function PropertyFilters({
 
                   {/* Construction Size */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">
-                      Tamaño de construcción
-                    </h3>
+                    <h3 className="text-sm font-medium">Tamaño de construcción</h3>
                     <div className="space-y-5">
                       <Slider
                         min={CONSTRUCTION_SIZE_RANGE.min}
                         max={CONSTRUCTION_SIZE_RANGE.max}
                         step={CONSTRUCTION_SIZE_RANGE.step}
                         value={[
-                          localFilters.features.constructionSize?.min ||
+                          localFilters.features?.constructionSize?.min ||
                             CONSTRUCTION_SIZE_RANGE.min,
-                          localFilters.features.constructionSize?.max ||
+                          localFilters.features?.constructionSize?.max ||
                             CONSTRUCTION_SIZE_RANGE.max,
                         ]}
                         onValueChange={([min, max]) =>
                           handleFeaturesChange({
-                            ...localFilters.features,
+                            ...(localFilters.features || {}),
                             constructionSize: { min, max },
                           })
                         }
@@ -530,11 +675,10 @@ export function PropertyFilters({
                       />
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>
-                          {localFilters.features.constructionSize?.min || 0}m²
+                          {localFilters.features?.constructionSize?.min || 0}m²
                         </span>
                         <span>
-                          {localFilters.features.constructionSize?.max || 1000}
-                          m²
+                          {localFilters.features?.constructionSize?.max || 1000}m²
                         </span>
                       </div>
                     </div>
@@ -551,25 +695,19 @@ export function PropertyFilters({
                         max={LOT_SIZE_RANGE.max}
                         step={LOT_SIZE_RANGE.step}
                         value={[
-                          localFilters.features.lotSize?.min ||
-                            LOT_SIZE_RANGE.min,
-                          localFilters.features.lotSize?.max ||
-                            LOT_SIZE_RANGE.max,
+                          localFilters.features?.lotSize?.min || LOT_SIZE_RANGE.min,
+                          localFilters.features?.lotSize?.max || LOT_SIZE_RANGE.max,
                         ]}
                         onValueChange={([min, max]) =>
                           handleFeaturesChange({
-                            ...localFilters.features,
+                            ...(localFilters.features || {}),
                             lotSize: { min, max },
                           })
                         }
                       />
                       <div className="flex items-center justify-between text-sm">
-                        <span>
-                          Min: {localFilters.features.lotSize?.min || 0}m²
-                        </span>
-                        <span>
-                          Max: {localFilters.features.lotSize?.max || 2000}m²
-                        </span>
+                        <span>Min: {localFilters.features?.lotSize?.min || 0}m²</span>
+                        <span>Max: {localFilters.features?.lotSize?.max || 2000}m²</span>
                       </div>
                     </div>
                   </div>
@@ -584,24 +722,22 @@ export function PropertyFilters({
                         <Badge
                           key={amenity.value}
                           variant={
-                            localFilters.amenities.includes(amenity.value)
+                            localFilters.amenities?.includes(amenity.value as Amenity)
                               ? "default"
                               : "outline"
                           }
                           className="cursor-pointer hover:bg-muted/80 transition-colors"
                           onClick={() => {
-                            if (
-                              localFilters.amenities.includes(amenity.value)
-                            ) {
+                            if (localFilters.amenities?.includes(amenity.value as Amenity)) {
                               handleAmenitiesChange(
-                                localFilters.amenities.filter(
+                                (localFilters.amenities || []).filter(
                                   (a) => a !== amenity.value
-                                )
+                                ) as Amenity[]
                               );
                             } else {
                               handleAmenitiesChange([
-                                ...localFilters.amenities,
-                                amenity.value,
+                                ...(localFilters.amenities || []),
+                                amenity.value as Amenity,
                               ]);
                             }
                           }}

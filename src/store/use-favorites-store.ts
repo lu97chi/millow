@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Property } from "@/server/models/property";
+import type { Property } from "@/types";
 
 interface FavoritesStore {
   favorites: Property[];

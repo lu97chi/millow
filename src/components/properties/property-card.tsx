@@ -9,25 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
-import type { Property } from "@/server/models/property";
+import type { PropertyCardProps, ViewMode } from "@/types";
 import { useFavoritesStore } from "@/store/use-favorites-store";
 import { cn } from "@/lib/utils";
 import { ShareButton } from "@/components/properties/share-button";
 import { BedDouble, Bath, Ruler, Trees } from "lucide-react";
 
-const VIEW_MODES = {
-  GRID: 'grid',
-  LIST: 'list',
-} as const;
-
-type ViewMode = typeof VIEW_MODES[keyof typeof VIEW_MODES];
-
-interface PropertyCardProps {
-  property: Property;
-  view?: ViewMode;
-}
-
-export function PropertyCard({ property, view = VIEW_MODES.GRID }: PropertyCardProps) {
+export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCardProps & { view?: ViewMode }) {
   const {
     id,
     title,
@@ -55,7 +43,7 @@ export function PropertyCard({ property, view = VIEW_MODES.GRID }: PropertyCardP
     }
   };
 
-  if (view === VIEW_MODES.LIST) {
+  if ((view as ViewMode) === "list") {
     return (
       <Card className="group overflow-hidden">
         <Link href={`/properties/${id}`} className="flex">
@@ -151,18 +139,18 @@ export function PropertyCard({ property, view = VIEW_MODES.GRID }: PropertyCardP
   return (
     <Card className={cn(
       "group overflow-hidden transition-colors hover:border-primary/50",
-      view === VIEW_MODES.LIST ? "flex flex-col md:flex-row" : ""
+      (view as ViewMode) === "list" ? "flex flex-col md:flex-row" : ""
     )}>
       <div className={cn(
         "relative overflow-hidden",
-        view === VIEW_MODES.GRID ? "aspect-[4/3]" : "md:w-[300px] aspect-[4/3] md:aspect-auto"
+        (view as ViewMode) === "grid" ? "aspect-[4/3]" : "md:w-[300px] aspect-[4/3] md:aspect-auto"
       )}>
         <Image
           src={images[0]}
           alt={title}
           fill
           className="object-cover transition-transform group-hover:scale-105"
-          sizes={view === VIEW_MODES.GRID 
+          sizes={(view as ViewMode) === "grid"
             ? "(min-width: 1280px) 400px, (min-width: 780px) 320px, 100vw"
             : "300px"
           }
@@ -182,7 +170,7 @@ export function PropertyCard({ property, view = VIEW_MODES.GRID }: PropertyCardP
       </div>
       <CardContent className={cn(
         "relative flex-1",
-        view === VIEW_MODES.GRID ? "-mt-12 p-4" : "p-6"
+        (view as ViewMode) === "grid" ? "-mt-12 p-4" : "p-6"
       )}>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="text-xs">

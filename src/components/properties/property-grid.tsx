@@ -1,15 +1,11 @@
 "use client";
 
-import { useSearchStore } from "@/store/use-search-store";
+import { useSearchParams } from "next/navigation";
 import { PropertyCard } from "@/components/properties/property-card";
 import { filterProperties, sortProperties } from "@/lib/filter-properties";
-import type { Property } from "@/server/models/property";
 import { motion } from "framer-motion";
+import { PropertyGridProps } from "@/types";
 
-interface PropertyGridProps {
-  properties: Property[];
-  viewMode?: "grid" | "list";
-}
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,9 +24,10 @@ const item = {
 
 export function PropertyGrid({
   properties,
-  viewMode = "grid",
+  view = "grid",
 }: PropertyGridProps) {
-  const { filters } = useSearchStore();
+  const searchParams = useSearchParams();
+  const filters = Object.fromEntries(searchParams.entries());
 
   // Apply filters and sorting
   const filteredProperties = filterProperties(properties, filters);
@@ -55,14 +52,14 @@ export function PropertyGrid({
       initial="hidden"
       animate="show"
       className={
-        viewMode === "grid"
+        view === "grid"
           ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           : "space-y-4"
       }
     >
       {sortedProperties.map((property) => (
         <motion.div key={property.id} variants={item} layout>
-          <PropertyCard property={property} viewMode={viewMode} />
+          <PropertyCard property={property} view={view} />
         </motion.div>
       ))}
     </motion.div>

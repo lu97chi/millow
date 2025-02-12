@@ -1,14 +1,22 @@
 "use client";
 
-import { createContext, useContext, useCallback, useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useSearchStore, type PropertyFilters, initialFilters } from "@/store/use-search-store";
+import { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import type { 
+  OperationType, 
+  Amenity, 
+  PropertyFilters,
+  PropertyTypeName,
+  PropertyEntityType,
+  PropertyStatus
+} from "@/types";
 
 interface SearchContextType {
-  syncWithUrl: (filters: Partial<PropertyFilters>) => void;
+  filters: Partial<PropertyFilters>;
+  setFilters: (filters: Partial<PropertyFilters>) => void;
+  syncWithUrl: () => void;
   parseUrlToFilters: () => Partial<PropertyFilters>;
-  filters: PropertyFilters;
-  setFilters: (filters: PropertyFilters | ((prev: PropertyFilters) => PropertyFilters)) => void;
+  filtersToSearchParams: (filters: Partial<PropertyFilters>) => URLSearchParams;
 }
 
 const SearchContext = createContext<SearchContextType | null>(null);
@@ -16,139 +24,83 @@ const SearchContext = createContext<SearchContextType | null>(null);
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { filters, setFilters } = useSearchStore();
-  const isFirstMount = useRef(true);
-  const lastUrlUpdate = useRef<string>("");
-  console.log("filters", filters);
-  // Convert filters to URL search params
-  const filtersToSearchParams = useCallback((filters: PropertyFilters): URLSearchParams => {
-    const params = new URLSearchParams();
-
-    // Only add defined values
-    if (filters.query) params.set("query", filters.query);
-    if (filters.propertyType.length > 0) params.set("type", filters.propertyType.join(","));
-    if (filters.location.state) params.set("state", filters.location.state);
-    if (filters.location.city) params.set("city", filters.location.city);
-    if (filters.location.area) params.set("area", filters.location.area);
-    
-    // Price range - only add if defined
-    if (typeof filters.priceRange?.min === 'number') {
-      params.set("minPrice", String(filters.priceRange.min));
-    }
-    if (typeof filters.priceRange?.max === 'number') {
-      params.set("maxPrice", String(filters.priceRange.max));
-    }
-    
-    // Features - only add if defined
-    if (typeof filters.features?.bedrooms === 'number') {
-      params.set("beds", String(filters.features.bedrooms));
-    }
-    if (typeof filters.features?.bathrooms === 'number') {
-      params.set("baths", String(filters.features.bathrooms));
-    }
-    
-    // Construction size - only add if defined
-    if (typeof filters.features?.constructionSize?.min === 'number') {
-      params.set("minConstSize", String(filters.features.constructionSize.min));
-    }
-    if (typeof filters.features?.constructionSize?.max === 'number') {
-      params.set("maxConstSize", String(filters.features.constructionSize.max));
-    }
-    
-    // Lot size - only add if defined
-    if (typeof filters.features?.lotSize?.min === 'number') {
-      params.set("minLotSize", String(filters.features.lotSize.min));
-    }
-    if (typeof filters.features?.lotSize?.max === 'number') {
-      params.set("maxLotSize", String(filters.features.lotSize.max));
-    }
-    
-    // Other filters - only add if defined
-    if (filters.amenities?.length > 0) {
-      params.set("amenities", filters.amenities.join(","));
-    }
-    if (typeof filters.propertyAge === 'number') {
-      params.set("age", String(filters.propertyAge));
-    }
-    
-    // Maintenance fee - only add if defined
-    if (typeof filters.maintenanceFee?.min === 'number') {
-      params.set("minMaint", String(filters.maintenanceFee.min));
-    }
-    if (typeof filters.maintenanceFee?.max === 'number') {
-      params.set("maxMaint", String(filters.maintenanceFee.max));
-    }
-    
-    // Sort - only add if not default
-    if (filters.sortBy && filters.sortBy !== "recent") {
-      params.set("sort", filters.sortBy);
-    }
-
-    return params;
-  }, []);
+  const searchParams = useSearchParams();
 
   // Parse URL search params to filters
   const parseUrlToFilters = useCallback((): Partial<PropertyFilters> => {
-    if (typeof window === 'undefined') return {};
-    
-    const params = new URLSearchParams(window.location.search);
     const newFilters: Partial<PropertyFilters> = {};
 
-    // Basic filters
-    const query = params.get("query");
-    const type = params.get("type");
-    const state = params.get("state") as string | null;
-    const city = params.get("city");
-    const area = params.get("area");
+    // Property type and operation type
+    const propertyType = searchParams.get("propertyType");
+    const operationType = searchParams.get("operationType");
+    const type = searchParams.get("type");
 
-    if (query) newFilters.query = query;
-    if (type) newFilters.propertyType = type.split(",");
+    if (propertyType) newFilters.propertyType = propertyType.split(",") as PropertyTypeName[];
+    if (operationType) newFilters.operationType = operationType.split(",") as OperationType[];
+    if (type) newFilters.type = type.split(",") as PropertyEntityType[];
     
     // Location
-    if (state || city || area) {
-      newFilters.location = {};
-      if (state) newFilters.location.state = state;
-      if (city) newFilters.location.city = city;
-      if (area) newFilters.location.area = area;
-    }
+    const state = searchParams.get("state");
+    const city = searchParams.get("city");
+    const area = searchParams.get("area");
+    const address = searchParams.get("address");
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
 
-    // Price Range
-    const minPrice = params.get("minPrice");
-    const maxPrice = params.get("maxPrice");
-    if (minPrice || maxPrice) {
-      newFilters.priceRange = {
-        min: minPrice ? parseInt(minPrice) : initialFilters.priceRange.min,
-        max: maxPrice ? parseInt(maxPrice) : initialFilters.priceRange.max,
+    if (state || city || area || address || lat || lng) {
+      newFilters.location = {
+        state: state ? state.split(",") : [],
+        city: city ? city.split(",") : [],
+        area: area ? area.split(",") : [],
+        address: address || "",
+        coordinates: lat || lng ? {
+          lat: lat ? parseFloat(lat) : undefined,
+          lng: lng ? parseFloat(lng) : undefined,
+        } : undefined
       };
     }
+
+    // Price filters
+    const price = searchParams.get("price");
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
+
+    if (price) newFilters.price = parseInt(price);
+    if (minPrice) newFilters.minPrice = parseInt(minPrice);
+    if (maxPrice) newFilters.maxPrice = parseInt(maxPrice);
 
     // Features
     const features: Partial<PropertyFilters['features']> = {};
     let hasFeatures = false;
 
-    const beds = params.get("beds");
-    const baths = params.get("baths");
-    if (beds) { features.bedrooms = parseInt(beds); hasFeatures = true; }
-    if (baths) { features.bathrooms = parseInt(baths); hasFeatures = true; }
+    const bedrooms = searchParams.get("bedrooms");
+    const bathrooms = searchParams.get("bathrooms");
+    const parking = searchParams.get("parking");
+    const floors = searchParams.get("floors");
+
+    if (bedrooms) { features.bedrooms = parseInt(bedrooms); hasFeatures = true; }
+    if (bathrooms) { features.bathrooms = parseInt(bathrooms); hasFeatures = true; }
+    if (parking) { features.parking = parseInt(parking); hasFeatures = true; }
+    if (floors) { features.floors = parseInt(floors); hasFeatures = true; }
 
     // Construction Size
-    const minConstSize = params.get("minConstSize");
-    const maxConstSize = params.get("maxConstSize");
-    if (minConstSize || maxConstSize) {
+    const minConstructionSize = searchParams.get("minConstructionSize");
+    const maxConstructionSize = searchParams.get("maxConstructionSize");
+    if (minConstructionSize || maxConstructionSize) {
       features.constructionSize = {
-        min: minConstSize ? parseInt(minConstSize) : initialFilters.features.constructionSize!.min,
-        max: maxConstSize ? parseInt(maxConstSize) : initialFilters.features.constructionSize!.max,
+        min: minConstructionSize ? parseInt(minConstructionSize) : undefined,
+        max: maxConstructionSize ? parseInt(maxConstructionSize) : undefined,
       };
       hasFeatures = true;
     }
 
     // Lot Size
-    const minLotSize = params.get("minLotSize");
-    const maxLotSize = params.get("maxLotSize");
+    const minLotSize = searchParams.get("minLotSize");
+    const maxLotSize = searchParams.get("maxLotSize");
     if (minLotSize || maxLotSize) {
       features.lotSize = {
-        min: minLotSize ? parseInt(minLotSize) : initialFilters.features.lotSize!.min,
-        max: maxLotSize ? parseInt(maxLotSize) : initialFilters.features.lotSize!.max,
+        min: minLotSize ? parseInt(minLotSize) : undefined,
+        max: maxLotSize ? parseInt(maxLotSize) : undefined,
       };
       hasFeatures = true;
     }
@@ -157,68 +109,211 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
       newFilters.features = features;
     }
 
-    // Other filters
-    const amenities = params.get("amenities");
-    if (amenities) newFilters.amenities = amenities.split(",");
+    // Amenities
+    const amenities = searchParams.get("amenities");
+    if (amenities) newFilters.amenities = amenities.split(",") as Amenity[];
 
-    const age = params.get("age");
-    if (age) newFilters.propertyAge = parseInt(age);
+    // Property age
+    const propertyAge = searchParams.get("propertyAge");
+    if (propertyAge) newFilters.propertyAge = parseInt(propertyAge);
 
-    const minMaint = params.get("minMaint");
-    const maxMaint = params.get("maxMaint");
-    if (minMaint || maxMaint) {
+    // Maintenance fee
+    const minMaintenanceFee = searchParams.get("minMaintenanceFee");
+    const maxMaintenanceFee = searchParams.get("maxMaintenanceFee");
+    if (minMaintenanceFee || maxMaintenanceFee) {
       newFilters.maintenanceFee = {
-        min: minMaint ? parseInt(minMaint) : 0,
-        max: maxMaint ? parseInt(maxMaint) : 10000,
+        min: minMaintenanceFee ? parseInt(minMaintenanceFee) : undefined,
+        max: maxMaintenanceFee ? parseInt(maxMaintenanceFee) : undefined,
       };
     }
 
-    const sort = params.get("sort");
-    if (sort && (sort === "price-asc" || sort === "price-desc")) {
-      newFilters.sortBy = sort;
-    }
+    // Status
+    const status = searchParams.get("status");
+    if (status) newFilters.status = status.split(",") as PropertyStatus[];
+
+    // View mode and sort
+    const view = searchParams.get("view");
+    const sort = searchParams.get("sort");
+    if (view) newFilters.viewMode = view as "grid" | "list";
+    if (sort) newFilters.sortBy = sort as 'price asc' | 'price desc' | 'age asc' | 'age desc';
 
     return newFilters;
-  }, []);
+  }, [searchParams]);
 
-  // Initialize from URL on mount
-  useEffect(() => {
-    if (isFirstMount.current && typeof window !== 'undefined') {
-      const urlFilters = parseUrlToFilters();
-      setFilters(current => ({ ...current, ...urlFilters }));
-      isFirstMount.current = false;
-      lastUrlUpdate.current = window.location.search;
+  const [filters, setFilters] = useState<Partial<PropertyFilters>>(() => parseUrlToFilters());
+  const isFirstMount = useRef(true);
+  const lastUrlUpdate = useRef<string>(searchParams.toString());
+
+  // Convert filters to URL search params
+  const filtersToSearchParams = useCallback((filters: Partial<PropertyFilters>): URLSearchParams => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Property type and operation type
+    if (filters.propertyType?.length) params.set("propertyType", filters.propertyType.join(","));
+    else params.delete("propertyType");
+    
+    if (filters.operationType?.length) params.set("operationType", filters.operationType.join(","));
+    else params.delete("operationType");
+    
+    if (filters.type?.length) params.set("type", filters.type.join(","));
+    else params.delete("type");
+    
+    // Location filters
+    if (filters.location?.state?.length) params.set("state", filters.location.state.join(","));
+    else params.delete("state");
+    
+    if (filters.location?.city?.length) params.set("city", filters.location.city.join(","));
+    else params.delete("city");
+    
+    if (filters.location?.area?.length) params.set("area", filters.location.area.join(","));
+    else params.delete("area");
+    
+    if (filters.location?.address) params.set("address", filters.location.address);
+    else params.delete("address");
+    
+    if (filters.location?.coordinates?.lat) params.set("lat", String(filters.location.coordinates.lat));
+    else params.delete("lat");
+    
+    if (filters.location?.coordinates?.lng) params.set("lng", String(filters.location.coordinates.lng));
+    else params.delete("lng");
+    
+    // Price filters
+    if (filters.price !== undefined) params.set("price", String(filters.price));
+    else params.delete("price");
+    
+    if (filters.minPrice !== undefined) params.set("minPrice", String(filters.minPrice));
+    else params.delete("minPrice");
+    
+    if (filters.maxPrice !== undefined) params.set("maxPrice", String(filters.maxPrice));
+    else params.delete("maxPrice");
+
+    // Features
+    if (filters.features?.bedrooms !== undefined && filters.features?.bedrooms !== null) {
+      params.set("bedrooms", String(filters.features.bedrooms));
+    } else {
+      params.delete("bedrooms");
     }
-  }, [parseUrlToFilters, setFilters]);
+    
+    if (filters.features?.bathrooms !== undefined && filters.features?.bathrooms !== null) {
+      params.set("bathrooms", String(filters.features.bathrooms));
+    } else {
+      params.delete("bathrooms");
+    }
+    
+    if (filters.features?.constructionSize?.min !== undefined) {
+      params.set("minConstructionSize", String(filters.features.constructionSize.min));
+    } else {
+      params.delete("minConstructionSize");
+    }
+    
+    if (filters.features?.constructionSize?.max !== undefined) {
+      params.set("maxConstructionSize", String(filters.features.constructionSize.max));
+    } else {
+      params.delete("maxConstructionSize");
+    }
+    
+    if (filters.features?.lotSize?.min !== undefined) {
+      params.set("minLotSize", String(filters.features.lotSize.min));
+    } else {
+      params.delete("minLotSize");
+    }
+    
+    if (filters.features?.lotSize?.max !== undefined) {
+      params.set("maxLotSize", String(filters.features.lotSize.max));
+    } else {
+      params.delete("maxLotSize");
+    }
+    
+    if (filters.features?.parking !== undefined && filters.features?.parking !== null) {
+      params.set("parking", String(filters.features.parking));
+    } else {
+      params.delete("parking");
+    }
+    
+    if (filters.features?.floors !== undefined && filters.features?.floors !== null) {
+      params.set("floors", String(filters.features.floors));
+    } else {
+      params.delete("floors");
+    }
+    
+    // Amenities
+    if (filters.amenities?.length) {
+      params.set("amenities", filters.amenities.join(","));
+    } else {
+      params.delete("amenities");
+    }
+    
+    // Property age
+    if (filters.propertyAge !== undefined) {
+      params.set("propertyAge", String(filters.propertyAge));
+    } else {
+      params.delete("propertyAge");
+    }
+    
+    // Maintenance fee
+    if (filters.maintenanceFee?.min !== undefined) {
+      params.set("minMaintenanceFee", String(filters.maintenanceFee.min));
+    } else {
+      params.delete("minMaintenanceFee");
+    }
+    
+    if (filters.maintenanceFee?.max !== undefined) {
+      params.set("maxMaintenanceFee", String(filters.maintenanceFee.max));
+    } else {
+      params.delete("maxMaintenanceFee");
+    }
+    
+    // Status
+    if (filters.status?.length) {
+      params.set("status", filters.status.join(","));
+    } else {
+      params.delete("status");
+    }
+    
+    // View mode and sort
+    if (filters.viewMode) params.set("view", filters.viewMode);
+    else params.delete("view");
+    
+    if (filters.sortBy) params.set("sort", filters.sortBy);
+    else params.delete("sort");
+
+    return params;
+  }, [searchParams]);
+
+  // Initialize from URL on mount and handle URL changes
+  useEffect(() => {
+    const currentParams = searchParams.toString();
+    if (currentParams !== lastUrlUpdate.current) {
+      const urlFilters = parseUrlToFilters();
+      setFilters(urlFilters);
+      lastUrlUpdate.current = currentParams;
+    }
+  }, [searchParams, parseUrlToFilters]);
 
   // Update URL when filters change
   useEffect(() => {
     if (!isFirstMount.current) {
       const params = filtersToSearchParams(filters);
       const newSearch = params.toString();
-
-      // Only update if the URL actually changed and it's different from the last update
+      
       if (newSearch !== lastUrlUpdate.current) {
         lastUrlUpdate.current = newSearch;
         router.replace(`${pathname}${newSearch ? `?${newSearch}` : ''}`, { scroll: false });
       }
+    } else {
+      isFirstMount.current = false;
     }
   }, [filters, pathname, router, filtersToSearchParams]);
 
   // Sync filters with URL
-  const syncWithUrl = useCallback((newFilters: Partial<PropertyFilters>) => {
-    const params = filtersToSearchParams({ ...filters, ...newFilters });
+  const syncWithUrl = useCallback(() => {
+    const params = filtersToSearchParams(filters);
     const newUrl = `${pathname}?${params.toString()}`;
-    
-    // Only update if URL has changed
-    if (newUrl !== lastUrlUpdate.current) {
-      lastUrlUpdate.current = newUrl;
-      router.replace(newUrl, { scroll: false });
-    }
+    router.replace(newUrl, { scroll: false });
   }, [filtersToSearchParams, filters, pathname, router]);
 
   return (
-    <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters, filters, setFilters }}>
+    <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters, filters, setFilters, filtersToSearchParams }}>
       {children}
     </SearchContext.Provider>
   );

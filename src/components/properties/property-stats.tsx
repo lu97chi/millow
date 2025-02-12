@@ -1,17 +1,12 @@
 "use client";
 
-import type { Property } from "@/server/models/property";
+import type { Property, PropertyStatsProps } from "@/types";
 import { formatPrice } from "@/lib/format";
-
-interface PropertyStatsProps {
-  properties: Property[];
-  total: number;
-}
 
 export function PropertyStats({ properties, total }: PropertyStatsProps) {
   // Calculate stats from visible properties
   const averagePrice = properties.length > 0
-    ? properties.reduce((sum, p) => sum + p.price, 0) / properties.length
+    ? properties.reduce((sum: number, p: Property) => sum + p.price, 0) / properties.length
     : 0;
 
   return (

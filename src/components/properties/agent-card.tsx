@@ -4,17 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, Mail, Building2, UserRound } from "lucide-react";
-
-interface AgentCardProps {
-  name: string;
-  title?: string;
-  company: string;
-  image: string;
-  phone?: string;
-  email?: string;
-  experience?: number;
-  activeListings?: number;
-}
+import { AgentCardProps } from "@/types";
 
 export function AgentCard({
   name,

@@ -1,36 +1,11 @@
+import type {
+  Property,
+  PropertyFilters
+} from "@/types";
 import { ALL_PROPERTIES } from "../data/guadalajara";
-import type { Property } from "../models/property";
-import { PROPERTY_TYPES } from "../data/constants";
 
 // Initialize properties once
 const PROPERTIES = ALL_PROPERTIES;
-
-export interface PropertyFilters {
-  title?: string;
-  description?: string;
-  propertyType?: string;
-  operationType?: string;
-  type?: string;
-  price?: number;
-  state?: string;
-  city?: string;
-  area?: string;
-  address?: string;
-  lat?:string;
-  lng?:string;
-  bedrooms?: number;
-  bathrooms?: number;
-  constructionSize?: number;
-  lotSize?: number;
-  parking?: number;
-  floors?: number;
-  amenities?: string[];
-  propertyAge?: number;
-  maintenanceFee?: number;
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export class PropertyService {
   private static instance: PropertyService;
@@ -52,143 +27,226 @@ export class PropertyService {
     return property || null;
   }
 
-  public async getProperties(filters: PropertyFilters = {}): Promise<Property[]> {
+  public async getFeaturedProperties(): Promise<Property[]> {
+    // For now, just return the first 6 properties
+    return this.properties.slice(0, 6);
+  }
+
+  public async getProperties(
+    filters: Partial<PropertyFilters> = {}
+  ): Promise<Property[]> {
+    console.log('Initial properties count:', this.properties.length);
     let filteredProperties = [...this.properties];
+    console.log('Initial filters:', filters);
 
-    // Property type filter
-    if (filters.propertyType) {
-      console.log('Filtering by property type:', filters.propertyType);
-      filteredProperties = filteredProperties.filter(property => {
-        // Find the property type in our constants
-        const propertyTypeConstant = PROPERTY_TYPES.find(
-          t => t.value === property.propertyType || t.name === property.propertyType
+    // ID filter
+    if (filters.id?.trim()) {
+      filteredProperties = filteredProperties.filter(
+        (property) => property.id === filters.id
+      );
+    }
+
+    // Title filter - case insensitive partial match
+    if (filters.title?.trim()) {
+      filteredProperties = filteredProperties.filter(
+        (property) => property.title.toLowerCase().includes(filters.title!.toLowerCase())
+      );
+    }
+
+    // Description filter - case insensitive partial match
+    if (filters.description?.trim()) {
+      filteredProperties = filteredProperties.filter(
+        (property) => property.description.toLowerCase().includes(filters.description!.toLowerCase())
+      );
+    }
+
+    // Property type filter - can match multiple types
+    if (filters.propertyType?.length) {
+      console.log('Filtering by property types:', filters.propertyType);
+      filteredProperties = filteredProperties.filter(
+        (property) => filters.propertyType!.includes(property.propertyType.toLowerCase())
+      );
+      console.log('Properties after type filter:', filteredProperties.length);
+    }
+
+    // Operation type filter - can match multiple types
+    if (filters.operationType?.length) {
+      filteredProperties = filteredProperties.filter(
+        (property) => filters.operationType!.includes(property.operationType)
+      );
+    }
+
+    // Entity type filter - can match multiple types
+    if (filters.type?.length) {
+      filteredProperties = filteredProperties.filter(
+        (property) => filters.type!.includes(property.type)
+      );
+    }
+
+    // Price filters
+    if (filters.price !== undefined && filters.price > 0) {
+      filteredProperties = filteredProperties.filter(
+        (property) => property.price === filters.price
+      );
+    }
+
+    if (filters.minPrice !== undefined && filters.minPrice > 0) {
+      filteredProperties = filteredProperties.filter(
+        (property) => property.price >= filters.minPrice!
+      );
+    }
+
+    if (filters.maxPrice !== undefined && filters.maxPrice > 0) {
+      filteredProperties = filteredProperties.filter(
+        (property) => property.price <= filters.maxPrice!
+      );
+    }
+
+    // Location filters - case insensitive matching with multiple options
+    if (filters.location) {
+      if (filters.location.state?.length) {
+        filteredProperties = filteredProperties.filter(
+          (property) => filters.location!.state!.includes(property.location.state)
         );
-        
-        if (!propertyTypeConstant) {
-          console.log('No matching property type found for:', property.propertyType);
-          return false;
-        }
-
-        // Check if the filter value matches either the name or value
-        const matchesName = propertyTypeConstant.name.toLowerCase() === filters.propertyType?.toLowerCase();
-        const matchesValue = propertyTypeConstant.value.toLowerCase() === filters.propertyType?.toLowerCase();
-        return matchesName || matchesValue;
-      });
-      console.log('Properties after type filtering:', filteredProperties.length);
+      }
+      if (filters.location.city?.length) {
+        filteredProperties = filteredProperties.filter(
+          (property) => filters.location!.city!.includes(property.location.city)
+        );
+      }
+      if (filters.location.area?.length) {
+        filteredProperties = filteredProperties.filter(
+          (property) => filters.location!.area!.includes(property.location.area)
+        );
+      }
+      if (filters.location.address?.trim()) {
+        filteredProperties = filteredProperties.filter(
+          (property) => property.location.address.toLowerCase().includes(filters.location!.address!.toLowerCase())
+        );
+      }
+      // Coordinates filtering with radius (optional)
+      if (filters.location.coordinates?.lat && filters.location.coordinates?.lng) {
+        // You might want to implement a radius-based search here
+        // For now, we'll just match exact coordinates
+        filteredProperties = filteredProperties.filter(
+          (property) => 
+            property.location.coordinates.lat === filters.location!.coordinates!.lat &&
+            property.location.coordinates.lng === filters.location!.coordinates!.lng
+        );
+      }
     }
 
-    // Operation type filter
-    if (filters.operationType) {
-      filteredProperties = filteredProperties.filter(property =>
-        property.operationType.toLowerCase() === filters.operationType?.toLowerCase()
-      );
-    }
-
-    // Price filter
-    if (filters.price) {
+    // Features filters - handle ranges and null values
+    if (filters.features?.bedrooms !== undefined && filters.features?.bedrooms !== null) {
       filteredProperties = filteredProperties.filter(
-        property => property.price === filters.price
+        (property) => property.features.bedrooms !== null &&
+          property.features.bedrooms >= filters.features!.bedrooms!
       );
     }
 
-    // Location filters
-    if (filters.state) {
+    if (filters.features?.bathrooms !== undefined && filters.features?.bathrooms !== null) {
       filteredProperties = filteredProperties.filter(
-        property => property.location.state.toLowerCase() === filters.state!.toLowerCase()
-      );
-    }
-    if (filters.city) {
-      filteredProperties = filteredProperties.filter(
-        property => property.location.city.toLowerCase() === filters.city!.toLowerCase()
-      );
-    }
-    if (filters.area) {
-      filteredProperties = filteredProperties.filter(
-        property => property.location.area.toLowerCase() === filters.area!.toLowerCase()
+        (property) => property.features.bathrooms !== null &&
+          property.features.bathrooms >= filters.features!.bathrooms!
       );
     }
 
-    // Features filters
-    if (filters.bedrooms) {
+    if (filters.features?.constructionSize?.min !== undefined) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.features.bedrooms !== null && 
-          property.features.bedrooms >= filters.bedrooms!
+        (property) => property.features.constructionSize !== null &&
+          property.features.constructionSize >= filters.features!.constructionSize!.min!
       );
     }
 
-    if (filters.bathrooms) {
+    if (filters.features?.constructionSize?.max !== undefined) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.features.bathrooms !== null && 
-          property.features.bathrooms >= filters.bathrooms!
+        (property) => property.features.constructionSize !== null &&
+          property.features.constructionSize <= filters.features!.constructionSize!.max!
       );
     }
 
-    if (filters.constructionSize) {
+    if (filters.features?.lotSize?.min !== undefined) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.features.constructionSize !== null && 
-          property.features.constructionSize >= filters.constructionSize!
+        (property) => property.features.lotSize !== null &&
+          property.features.lotSize >= filters.features!.lotSize!.min!
       );
     }
 
-    if (filters.lotSize) {
+    if (filters.features?.lotSize?.max !== undefined) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.features.lotSize !== null && 
-          property.features.lotSize >= filters.lotSize!
+        (property) => property.features.lotSize !== null &&
+          property.features.lotSize <= filters.features!.lotSize!.max!
       );
     }
 
-    if (filters.parking) {
+    if (filters.features?.parking !== undefined && filters.features?.parking !== null) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.features.parking !== null && 
-          property.features.parking >= filters.parking!
+        (property) => property.features.parking !== null &&
+          property.features.parking >= filters.features!.parking!
       );
     }
 
-    if (filters.floors) {
+    if (filters.features?.floors !== undefined && filters.features?.floors !== null) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.features.floors !== null && 
-          property.features.floors >= filters.floors!
+        (property) => property.features.floors !== null &&
+          property.features.floors >= filters.features!.floors!
       );
     }
 
-    // Amenities filter
+    // Amenities filter - must have all requested amenities
     if (filters.amenities?.length) {
-      filteredProperties = filteredProperties.filter(property =>
-        filters.amenities!.every(amenity => 
-          property.amenities.some(a => a.toLowerCase() === amenity.toLowerCase())
+      filteredProperties = filteredProperties.filter((property) =>
+        filters.amenities!.every((amenity) =>
+          property.amenities.includes(amenity)
         )
       );
     }
 
     // Property age filter
-    if (filters.propertyAge !== undefined) {
+    if (filters.propertyAge !== undefined && filters.propertyAge > 0) {
       filteredProperties = filteredProperties.filter(
-        property => property.propertyAge === filters.propertyAge
+        (property) => property.propertyAge <= filters.propertyAge!
       );
     }
 
-    // Maintenance fee filter
-    if (filters.maintenanceFee !== undefined) {
+    // Maintenance fee range filter
+    if (filters.maintenanceFee) {
+      if (filters.maintenanceFee.min !== undefined) {
+        filteredProperties = filteredProperties.filter(
+          (property) => property.maintenanceFee !== null &&
+            property.maintenanceFee >= filters.maintenanceFee!.min!
+        );
+      }
+      if (filters.maintenanceFee.max !== undefined) {
+        filteredProperties = filteredProperties.filter(
+          (property) => property.maintenanceFee !== null &&
+            property.maintenanceFee <= filters.maintenanceFee!.max!
+        );
+      }
+    }
+
+    // Status filter - can match multiple statuses
+    if (filters.status?.length) {
       filteredProperties = filteredProperties.filter(
-        property => 
-          property.maintenanceFee !== null && 
-          property.maintenanceFee === filters.maintenanceFee
+        (property) => filters.status!.includes(property.status)
       );
     }
 
-    // Status filter
-    if (filters.status) {
-      filteredProperties = filteredProperties.filter(
-        property => property.status === filters.status
-      );
+    // Sort if specified
+    if (filters.sortBy) {
+      const [field, direction] = filters.sortBy.split(' ');
+      filteredProperties.sort((a, b) => {
+        const multiplier = direction === 'asc' ? 1 : -1;
+        if (field === 'price') {
+          return (a.price - b.price) * multiplier;
+        } else if (field === 'age') {
+          return (a.propertyAge - b.propertyAge) * multiplier;
+        }
+        return 0;
+      });
     }
 
+    console.log('Final filtered properties count:', filteredProperties.length);
     return filteredProperties;
   }
 
@@ -295,10 +353,5 @@ export class PropertyService {
       priceRange: stats.priceRange,
       sizeRange: stats.sizeRange,
     };
-  }
-
-  public async getFeaturedProperties(): Promise<Property[]> {
-    // For now, return the first 6 properties or all if less than 6
-    return this.properties.slice(0, 6);
   }
 }

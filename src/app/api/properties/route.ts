@@ -3,13 +3,19 @@ import { PropertyService } from "@/server/services/property-service";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('API Route: Received request');
     const propertyService = PropertyService.getInstance();
     const { searchParams } = new URL(request.url);
+    
+    // Log all search parameters
+    console.log('API Route: Search params:', Object.fromEntries(searchParams.entries()));
+    
     const id = searchParams.get("id");
     const excludeId = searchParams.get("excludeId");
 
     // Return a single property by ID
     if (id) {
+      console.log('API Route: Fetching single property by ID:', id);
       const property = await propertyService.getPropertyById(id);
       if (!property) {
         return NextResponse.json({ error: "Property not found" }, { status: 404 });
@@ -19,26 +25,30 @@ export async function GET(request: NextRequest) {
 
     // Get filter parameters
     const filters = {
-      propertyType: searchParams.getAll("propertyType"),
-      minPrice: Number(searchParams.get("priceMin")) || undefined,
-      maxPrice: Number(searchParams.get("priceMax")) || undefined,
-      minSize: Number(searchParams.get("constructionSizeMin")) || undefined,
-      maxSize: Number(searchParams.get("constructionSizeMax")) || undefined,
-      bedrooms: Number(searchParams.get("beds")) || undefined,
-      bathrooms: Number(searchParams.get("baths")) || undefined,
-      amenities: searchParams.getAll("amenities"),
+      propertyType: searchParams.get("propertyType")?.split(",").filter(Boolean),
+      operationType: searchParams.get("operationType")?.split(",").filter(Boolean),
+      price: searchParams.get("price") ? Number(searchParams.get("price")) : undefined,
       state: searchParams.get("state") || undefined,
       city: searchParams.get("city") || undefined,
       area: searchParams.get("area") || undefined,
-      propertyAge: Number(searchParams.get("propertyAge")) || undefined
+      bedrooms: searchParams.get("bedrooms") ? Number(searchParams.get("bedrooms")) : undefined,
+      bathrooms: searchParams.get("bathrooms") ? Number(searchParams.get("bathrooms")) : undefined,
+      constructionSize: searchParams.get("constructionSize") ? Number(searchParams.get("constructionSize")) : undefined,
+      lotSize: searchParams.get("lotSize") ? Number(searchParams.get("lotSize")) : undefined,
+      parking: searchParams.get("parking") ? Number(searchParams.get("parking")) : undefined,
+      floors: searchParams.get("floors") ? Number(searchParams.get("floors")) : undefined,
+      amenities: searchParams.get("amenities")?.split(",").filter(Boolean),
+      propertyAge: searchParams.get("propertyAge") ? Number(searchParams.get("propertyAge")) : undefined,
+      maintenanceFee: searchParams.get("maintenanceFee") ? Number(searchParams.get("maintenanceFee")) : undefined,
+      status: searchParams.get("status") || undefined,
     };
 
-    console.log('API Received filters:', filters);
+    console.log('API Route: Applying filters:', filters);
 
     // Get properties with filters
     let properties = await propertyService.getProperties(filters);
 
-    console.log('API Total properties after filtering:', properties.length);
+    console.log('API Route: Found properties count:', properties.length);
 
     // Exclude specific property if requested
     if (excludeId) {
@@ -60,7 +70,7 @@ export async function GET(request: NextRequest) {
       filters: filters
     });
   } catch (error) {
-    console.error("Error in properties API:", error);
+    console.error("API Route Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 } 

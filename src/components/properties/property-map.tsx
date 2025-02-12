@@ -1,55 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Script from "next/script";
-import { useSearchStore } from "@/store/use-search-store";
+import { useSearchParams } from "next/navigation";
 import { filterProperties, sortProperties } from "@/lib/filter-properties";
-import type { Property } from "@/server/models/property";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { create } from "zustand";
+import type { PropertyMapProps, MapStore } from "@/types";
 
-interface MapStore {
-  focusedPropertyId: string | null;
-  setFocusedProperty: (id: string | null) => void;
-}
-
-export const useMapStore = create<MapStore>((set) => ({
+const useMapStore = create<MapStore>((set) => ({
+  map: null,
+  setMap: (map) => set({ map }),
   focusedPropertyId: null,
   setFocusedProperty: (id) => set({ focusedPropertyId: id }),
+  center: { lat: 23.6345, lng: -102.5528 }, // Center of Mexico
+  zoom: 5,
+  setView: (center, zoom) => set({ center, zoom }),
 }));
 
-// Google Maps types
-declare global {
-  interface Window {
-    google: {
-      maps: {
-        Map: typeof google.maps.Map;
-        Marker: typeof google.maps.Marker;
-        InfoWindow: typeof google.maps.InfoWindow;
-        LatLngBounds: typeof google.maps.LatLngBounds;
-        MapOptions: google.maps.MapOptions;
-      };
-    };
-  }
-}
-
-interface PropertyMapProps {
-  properties: Property[];
-}
-
-export function PropertyMap({ properties }: PropertyMapProps) {
+export function PropertyMap({
+  properties = [],
+  center: initialCenter,
+  zoom: initialZoom = 12,
+  showControls = true,
+}: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { filters } = useSearchStore();
-  const focusedPropertyId = useMapStore((state) => state.focusedPropertyId);
+  const { setMap, focusedPropertyId, setFocusedProperty } = useMapStore();
+  const searchParams = useSearchParams();
+  const filters = Object.fromEntries(searchParams.entries());
 
-  // Apply filters and sorting
-  const filteredProperties = filterProperties(properties, filters);
-  const sortedProperties = sortProperties(filteredProperties, filters.sortBy);
+  // Filter properties based on current filters
+  const filteredProperties = useMemo(
+    () => filterProperties(properties, filters),
+    [properties, filters]
+  );
+
+  // Sort properties
+  const sortedProperties = useMemo(
+    () => sortProperties(filteredProperties, filters.sortBy),
+    [filteredProperties, filters.sortBy]
+  );
 
   // Handle script load
   const handleScriptLoad = useCallback(() => {
@@ -57,9 +52,9 @@ export function PropertyMap({ properties }: PropertyMapProps) {
     setIsLoaded(true);
 
     // Initialize map
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: 23.6345, lng: -102.5528 }, // Center of Mexico
-      zoom: 5,
+    const mapInstance = new window.google.maps.Map(mapRef.current, {
+      center: initialCenter || { lat: 23.6345, lng: -102.5528 },
+      zoom: initialZoom,
       styles: [
         {
           featureType: "poi",
@@ -69,7 +64,17 @@ export function PropertyMap({ properties }: PropertyMapProps) {
       ],
     });
 
-    mapInstanceRef.current = map;
+    mapInstanceRef.current = mapInstance;
+    setMap(mapInstance);
+
+    // Add controls if enabled
+    if (showControls) {
+      mapInstance.setOptions({
+        zoomControl: true,
+        streetViewControl: true,
+        mapTypeControl: true,
+      });
+    }
 
     // Add markers for filtered properties
     const bounds = new window.google.maps.LatLngBounds();
@@ -81,9 +86,12 @@ export function PropertyMap({ properties }: PropertyMapProps) {
             lat: property.location.coordinates!.lat,
             lng: property.location.coordinates!.lng,
           },
-          map,
+          map: mapInstance,
           title: property.title,
-          animation: property.id === focusedPropertyId ? google.maps.Animation.BOUNCE : undefined,
+          animation:
+            property.id === focusedPropertyId
+              ? google.maps.Animation.BOUNCE
+              : undefined,
         });
 
         // Create info window
@@ -92,14 +100,17 @@ export function PropertyMap({ properties }: PropertyMapProps) {
             <div class="p-2">
               <h3 class="font-semibold">${property.title}</h3>
               <p class="text-sm">${formatPrice(property.price)}</p>
-              <p class="text-xs text-gray-600">${property.location.area}, ${property.location.city}</p>
+              <p class="text-xs text-gray-600">${property.location.area}, ${
+            property.location.city
+          }</p>
             </div>
           `,
         });
 
         // Add click listener
         marker.addListener("click", () => {
-          infoWindow.open(map, marker);
+          infoWindow.open(mapInstance, marker);
+          setFocusedProperty(property.id);
         });
 
         bounds.extend(marker.getPosition()!);
@@ -110,12 +121,12 @@ export function PropertyMap({ properties }: PropertyMapProps) {
 
     // Fit map to markers
     if (markers.length > 0) {
-      map.fitBounds(bounds);
+      mapInstance.fitBounds(bounds);
       if (markers.length === 1) {
-        map.setZoom(15);
+        mapInstance.setZoom(15);
       }
     }
-  }, [sortedProperties, focusedPropertyId]);
+  }, [sortedProperties, initialCenter, initialZoom, showControls, focusedPropertyId, setMap, setFocusedProperty]);
 
   // Update markers when properties change
   useEffect(() => {
@@ -134,7 +145,9 @@ export function PropertyMap({ properties }: PropertyMapProps) {
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || !focusedPropertyId) return;
 
-    const focusedProperty = sortedProperties.find(p => p.id === focusedPropertyId);
+    const focusedProperty = sortedProperties.find(
+      (p) => p.id === focusedPropertyId
+    );
     if (!focusedProperty?.location.coordinates) return;
 
     const map = mapInstanceRef.current;
@@ -147,9 +160,11 @@ export function PropertyMap({ properties }: PropertyMapProps) {
     map.setZoom(17);
 
     const marker = markersRef.current.find(
-      m => m.getPosition()?.lat() === position.lat && m.getPosition()?.lng() === position.lng
+      (m) =>
+        m.getPosition()?.lat() === position.lat &&
+        m.getPosition()?.lng() === position.lng
     );
-    
+
     if (marker) {
       marker.setAnimation(google.maps.Animation.BOUNCE);
       setTimeout(() => {
@@ -158,7 +173,7 @@ export function PropertyMap({ properties }: PropertyMapProps) {
     }
 
     return () => {
-      markersRef.current.forEach(m => m.setAnimation(null));
+      markersRef.current.forEach((m) => m.setAnimation(null));
     };
   }, [focusedPropertyId, sortedProperties, isLoaded]);
 
@@ -168,7 +183,9 @@ export function PropertyMap({ properties }: PropertyMapProps) {
         <div className="flex h-full items-center justify-center">
           <div className="text-center text-muted-foreground">
             <p>Google Maps API key not configured</p>
-            <p className="text-sm">Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file</p>
+            <p className="text-sm">
+              Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env file
+            </p>
           </div>
         </div>
       </Card>
@@ -196,4 +213,4 @@ export function PropertyMap({ properties }: PropertyMapProps) {
       )}
     </Card>
   );
-} 
+}

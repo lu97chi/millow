@@ -34,7 +34,7 @@ export class StatsService {
       propertyTypeDistribution: this.stats.propertyTypeDistribution,
       topLocations: this.stats.topLocations,
       priceRanges: this.stats.priceRanges,
-      newConstructions: this.stats.propertyAgeDistribution["New Construction"],
+      newConstructions: this.stats.propertyAgeDistribution["new construction"],
       averagePriceByType: this.stats.averagePriceByType,
     };
   }

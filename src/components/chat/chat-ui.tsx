@@ -4,12 +4,21 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bot, User, Send, Home, Loader2, X, Info, SlidersHorizontal, Lightbulb } from "lucide-react";
+import {
+  Bot,
+  User,
+  Send,
+  Home,
+  Loader2,
+  X,
+  Info,
+  SlidersHorizontal,
+  Lightbulb,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearch } from "@/providers/search-provider";
 import { cn } from "@/lib/utils";
 import { PropertyFilters as PropertyFiltersComponent } from "@/components/properties/property-filters";
-import { useChatContextStore } from "@/store/use-chat-context-store";
 import {
   Dialog,
   DialogContent,
@@ -17,19 +26,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import type { PropertyFilters } from "@/store/use-search-store";
 import { useState, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
-interface ChatResponseData {
-  message: string;
-  filters?: PropertyFilters;
-}
+import { ChatMessage, ChatResponseData, LocalFilters, Property } from "@/types";
+import type { 
+  PropertyTypeName, 
+  OperationType, 
+  PropertyFeatures, 
+  Amenity 
+} from "@/types";
 
 const EXAMPLE_PROMPTS = [
   "Busco una casa en Polanco con 3 recámaras y jardín",
@@ -39,18 +44,34 @@ const EXAMPLE_PROMPTS = [
 ];
 
 // Helper function to get display content
-function getDisplayContent(content: string | { message: string; context?: Record<string, unknown> }): string {
+function getDisplayContent(
+  content: string | { message: string; context?: Record<string, unknown> }
+): string {
   return typeof content === "string" ? content : content.message;
 }
 
-export function ChatUI() {
+// Helper function to create a new chat message
+function createChatMessage(role: "user" | "assistant", content: string): ChatMessage {
+  return {
+    id: Math.random().toString(36).substring(7),
+    role,
+    content,
+    timestamp: new Date()
+  };
+}
+
+interface ChatUIProps {
+  initialPropertyContext?: Property;
+}
+
+export function ChatUI({ initialPropertyContext }: ChatUIProps) {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { syncWithUrl, filters, setFilters } = useSearch();
-  const propertyContext = useChatContextStore((state) => state.propertyContext);
+  const { syncWithUrl, filters, setFilters, parseUrlToFilters, filtersToSearchParams } = useSearch();
+  const [propertyContext] = useState<Property | null>(initialPropertyContext || null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -60,24 +81,23 @@ export function ChatUI() {
   // Listen for filter changes
   React.useEffect(() => {
     // Only redirect if we have active filters and we're not on a property detail page
-    const hasActiveFilters = 
-      (filters?.propertyType?.length ?? 0) > 0 ||
+    const hasActiveFilters =
+      filters?.propertyType?.length ||
+      filters?.priceRange?.min ||
+      filters?.priceRange?.max ||
       filters?.location?.state ||
       filters?.location?.city ||
       filters?.location?.area ||
       filters?.features?.bedrooms ||
       filters?.features?.bathrooms ||
-      filters?.propertyAge !== undefined ||
-      (filters?.priceRange?.min ?? undefined) !== undefined ||
-      (filters?.priceRange?.max ?? undefined) !== undefined ||
-      (filters?.features?.constructionSize?.min ?? undefined) !== undefined ||
-      (filters?.features?.constructionSize?.max ?? undefined) !== undefined ||
-      (filters?.features?.lotSize?.min ?? undefined) !== undefined ||
-      (filters?.features?.lotSize?.max ?? undefined) !== undefined ||
+      filters?.features?.constructionSize?.min ||
+      filters?.features?.constructionSize?.max ||
+      filters?.features?.lotSize?.min ||
+      filters?.features?.lotSize?.max ||
       (filters?.amenities?.length ?? 0) > 0 ||
-      filters?.maintenanceFee !== undefined ||
-      (filters?.sortBy ?? "recent") !== "recent" ||
-      (filters?.query ?? "") !== "";
+      filters?.propertyAge !== undefined ||
+      filters?.maintenanceFee?.min !== undefined ||
+      filters?.maintenanceFee?.max !== undefined;
 
     if (hasActiveFilters && !propertyContext && filters && showSuggested) {
       syncWithUrl(filters);
@@ -89,7 +109,10 @@ export function ChatUI() {
   // Improved scroll behavior
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
       // Prevent page scroll
       window.scrollTo({ top: window.scrollY });
     }
@@ -104,58 +127,91 @@ export function ChatUI() {
     if (propertyContext) {
       const timer = setTimeout(async () => {
         try {
-          const response = await fetch('/api/chat', {
-            method: 'POST',
+          const response = await fetch("/api/chat", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               messages: [
-                {
-                  role: "user",
-                  content: `Contexto de la propiedad: ${JSON.stringify(propertyContext)}`
-                }
+                createChatMessage("user", `Contexto de la propiedad: ${JSON.stringify(propertyContext)}`)
               ],
-              propertyContext
+              propertyContext,
             }),
           });
 
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error("Network response was not ok");
           }
 
           const data = await response.json();
-          
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: data.message
-          }]);
+          setMessages((prev) => [
+            ...prev,
+            createChatMessage("assistant", data.message)
+          ]);
         } catch (error) {
           console.error("Error sending property context:", error);
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: "Lo siento, hubo un error al cargar la información de la propiedad."
-          }]);
+          setMessages((prev) => [
+            ...prev,
+            createChatMessage("assistant", "Lo siento, hubo un error al cargar la información de la propiedad.")
+          ]);
         }
       }, 10000); // 10 seconds delay
 
-      // Cleanup the timer if the component unmounts or propertyContext changes
       return () => clearTimeout(timer);
     }
   }, [propertyContext, propertyContext?.id]);
 
-  // Handle chat response and set redirect flag
-  const handleChatResponse = async (data: ChatResponseData) => {
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: data.message },
-    ]);
-
-    // Only apply filters if we're not on a property detail page
-    if (data.filters && !propertyContext) {
-      setFilters(current => ({ ...current, ...data.filters }));
-      setShowSuggested(true);
+  // Handle chat response
+  const handleChatResponse = (data: ChatResponseData) => {
+    if (data.filters) {
+      // Apply filters based on the response type
+      switch (data.type) {
+        case 'propertyType':
+          if (data.filters.propertyType) {
+            handlePropertyTypeSelect(data.filters.propertyType);
+          }
+          break;
+        case 'operationType':
+          if (data.filters.operationType) {
+            handleOperationTypeSelect(data.filters.operationType);
+          }
+          break;
+        case 'location':
+          if (data.filters.location) {
+            handleLocationSelect(data.filters.location);
+          }
+          break;
+        case 'priceRange':
+          if (data.filters.priceRange) {
+            handlePriceRangeSelect(data.filters.priceRange);
+          }
+          break;
+        case 'features':
+          if (data.filters.features) {
+            handleFeaturesSelect(data.filters.features);
+          }
+          break;
+        case 'amenities':
+          if (data.filters.amenities) {
+            handleAmenitiesSelect(data.filters.amenities);
+          }
+          break;
+        default:
+          // For other filter types, sync with URL directly
+          const filters = parseUrlToFilters();
+          const newFilters = {
+            ...filters,
+            ...data.filters
+          };
+          const params = filtersToSearchParams(newFilters);
+          router.push(`/properties?${params.toString()}`);
+      }
     }
+    
+    // Add the response to messages
+    setMessages(prev => [...prev, createChatMessage("assistant", data.message)]);
+    setInput("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,29 +219,26 @@ export function ChatUI() {
     if (!input.trim() || isLoading) return;
 
     // Create user message with context if available
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: input
-    };
+    const userMessage = createChatMessage("user", input);
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          propertyContext
+          propertyContext,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       const data = await response.json();
@@ -194,10 +247,7 @@ export function ChatUI() {
       console.error("Error in chat:", error);
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Lo siento, hubo un error. Por favor, intenta de nuevo.",
-        },
+        createChatMessage("assistant", "Lo siento, hubo un error. Por favor, intenta de nuevo.")
       ]);
     } finally {
       setIsLoading(false);
@@ -207,7 +257,7 @@ export function ChatUI() {
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     // Reset height to auto to properly calculate new height
-    textarea.style.height = 'auto';
+    textarea.style.height = "auto";
     // Set new height based on scrollHeight, but cap it at 120px
     const newHeight = Math.min(textarea.scrollHeight, 120);
     textarea.style.height = `${newHeight}px`;
@@ -217,14 +267,105 @@ export function ChatUI() {
   // Handle escape key
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFiltersOpen) {
+      if (e.key === "Escape" && isFiltersOpen) {
         setIsFiltersOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isFiltersOpen]);
+
+  // Handle property type selection
+  const handlePropertyTypeSelect = (propertyType: PropertyTypeName) => {
+    const filters = parseUrlToFilters();
+    
+    const newFilters = {
+      ...filters,
+      propertyType: [propertyType]
+    };
+    
+    const params = filtersToSearchParams(newFilters);
+    router.push(`/properties?${params.toString()}`);
+    setInput("");
+  };
+
+  // Handle operation type selection
+  const handleOperationTypeSelect = (type: string) => {
+    const filters = parseUrlToFilters();
+    const operationType = type as OperationType;
+    
+    const newFilters = {
+      ...filters,
+      operationType
+    };
+    
+    const params = filtersToSearchParams(newFilters);
+    router.push(`/properties?${params.toString()}`);
+    setInput("");
+  };
+
+  // Handle location selection
+  const handleLocationSelect = (location: { state?: string; city?: string; area?: string }) => {
+    const filters = parseUrlToFilters();
+    
+    const newFilters = {
+      ...filters,
+      location: {
+        ...filters.location,
+        ...location
+      }
+    };
+    
+    const params = filtersToSearchParams(newFilters);
+    router.push(`/properties?${params.toString()}`);
+    setInput("");
+  };
+
+  // Handle price range selection
+  const handlePriceRangeSelect = (range: { min?: number; max?: number }) => {
+    const filters = parseUrlToFilters();
+    
+    const newFilters = {
+      ...filters,
+      priceRange: range
+    };
+    
+    const params = filtersToSearchParams(newFilters);
+    router.push(`/properties?${params.toString()}`);
+    setInput("");
+  };
+
+  // Handle features selection
+  const handleFeaturesSelect = (features: Partial<PropertyFeatures>) => {
+    const filters = parseUrlToFilters();
+    
+    const newFilters = {
+      ...filters,
+      features: {
+        ...filters.features,
+        ...features
+      }
+    };
+    
+    const params = filtersToSearchParams(newFilters);
+    router.push(`/properties?${params.toString()}`);
+    setInput("");
+  };
+
+  // Handle amenities selection
+  const handleAmenitiesSelect = (amenities: Amenity[]) => {
+    const filters = parseUrlToFilters();
+    
+    const newFilters = {
+      ...filters,
+      amenities
+    };
+    
+    const params = filtersToSearchParams(newFilters);
+    router.push(`/properties?${params.toString()}`);
+    setInput("");
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -240,7 +381,9 @@ export function ChatUI() {
               <span className="text-sm font-semibold">Luna</span>
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
             </div>
-            <span className="text-[10px] text-muted-foreground">Asistente inmobiliaria</span>
+            <span className="text-[10px] text-muted-foreground">
+              Asistente inmobiliaria
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -270,9 +413,12 @@ export function ChatUI() {
           <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 text-muted-foreground">
             <Bot className="h-12 w-12" />
             <div className="space-y-2">
-              <h3 className="font-semibold text-foreground">¡Hola! Soy Luna 👋</h3>
+              <h3 className="font-semibold text-foreground">
+                ¡Hola! Soy Luna 👋
+              </h3>
               <p className="text-sm">
-                Puedo ayudarte a encontrar la propiedad perfecta. ¿Qué tipo de propiedad estás buscando?
+                Puedo ayudarte a encontrar la propiedad perfecta. ¿Qué tipo de
+                propiedad estás buscando?
               </p>
             </div>
           </div>
@@ -406,95 +552,96 @@ export function ChatUI() {
       <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>¿Cómo funciona Luna?</DialogTitle>
+            <DialogTitle>Luna - Asistente Inmobiliaria</DialogTitle>
+            <DialogDescription>
+              Soy una asistente virtual especializada en ayudarte a encontrar la propiedad perfecta.
+              Puedo entender tus necesidades y preferencias para recomendarte las mejores opciones disponibles.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <DialogDescription asChild>
-              <div className="space-y-4">
-                <div>
-                  Luna es tu asistente inmobiliaria personal, diseñada para ayudarte a encontrar la propiedad perfecta. 
-                  Puedes interactuar con ella como lo harías con una agente inmobiliaria real.
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="font-medium">Puedes preguntarle sobre:</h4>
-                  <ul className="list-disc pl-4 space-y-1.5 text-sm text-muted-foreground">
-                    <li>Propiedades disponibles en zonas específicas</li>
-                    <li>Características particulares que buscas</li>
-                    <li>Rangos de precios y presupuestos</li>
-                    <li>Tipos de propiedades (casas, departamentos, oficinas)</li>
-                    <li>Amenidades y servicios cercanos</li>
-                  </ul>
-                </div>
-
-                <div>
-                  Luna aprenderá de tus preferencias mientras interactúas con ella y te ayudará a filtrar las mejores opciones 
-                  que se ajusten a tus necesidades.
-                </div>
-              </div>
-            </DialogDescription>
+            <div>
+              <h4 className="font-medium mb-2">¿Qué puedo hacer?</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Buscar propiedades según tus criterios específicos</li>
+                <li>• Responder preguntas sobre las propiedades</li>
+                <li>• Proporcionar información detallada sobre ubicaciones</li>
+                <li>• Ayudarte a comparar diferentes opciones</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">Ejemplos de preguntas</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {EXAMPLE_PROMPTS.map((prompt, index) => (
+                  <li key={index}>• {prompt}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Filters Panel */}
-      {isFiltersOpen && typeof document !== 'undefined' && createPortal(
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/20 z-40"
-            onClick={() => setIsFiltersOpen(false)}
-          />
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ 
-              duration: 0.2,
-              ease: [0.4, 0, 0.2, 1]
-            }}
-            style={{ 
-              position: 'fixed',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: '400px',
-              zIndex: 50
-            }}
-            className="bg-background border-l shadow-lg flex flex-col"
-          >
-            <div className="flex-none border-b px-6 py-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Filtros avanzados</h3>
-                <p className="text-sm text-muted-foreground">Personaliza tu búsqueda</p>
+      {isFiltersOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/20 z-40"
+              onClick={() => setIsFiltersOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{
+                duration: 0.2,
+                ease: [0.4, 0, 0.2, 1],
+              }}
+              style={{
+                position: "fixed",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: "400px",
+                zIndex: 50,
+              }}
+              className="bg-background border-l shadow-lg flex flex-col"
+            >
+              <div className="flex-none border-b px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Filtros avanzados</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Personaliza tu búsqueda
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted"
+                  onClick={() => setIsFiltersOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 hover:bg-muted"
-                onClick={() => setIsFiltersOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <div className="px-6 py-6">
-                <PropertyFiltersComponent 
-                  hideToggle 
-                  onClose={() => {
-                    setIsFiltersOpen(false);
-                    setShowSuggested(true);
-                  }}
-                />
+              <div className="flex-1 overflow-y-auto">
+                <div className="px-6 py-6">
+                  <PropertyFiltersComponent
+                    hideToggle
+                    onClose={() => {
+                      setIsFiltersOpen(false);
+                      setShowSuggested(true);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </>,
-        document.body
-      )}
+            </motion.div>
+          </>,
+          document.body
+        )}
     </div>
   );
-} 
+}

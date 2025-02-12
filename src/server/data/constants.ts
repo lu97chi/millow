@@ -1,147 +1,124 @@
-import type { PropertyType, AmenityOption } from "../models/property";
-import { Building2, Home, Store, Briefcase, Building, HomeIcon, Warehouse, ShoppingBag } from "lucide-react";
+import type { AmenityOption, PropertyType } from "@/types";
+import {
+  Briefcase,
+  Building,
+  Building2,
+  Car,
+  Dumbbell,
+  Flower2,
+  Home,
+  HomeIcon,
+  Shield,
+  ShoppingBag,
+  Store,
+  Sun,
+  Warehouse,
+  Waves
+} from "lucide-react";
 
 export const PROPERTY_TYPES: PropertyType[] = [
   {
     name: "Desarrollos verticales",
-    value: "vertical",
+    value: "desarrollos verticales",
     count: 0,
     description: "Departamentos y desarrollos en altura",
-    icon: Building2
+    icon: Building2,
   },
   {
     name: "Casas",
-    value: "house",
+    value: "casas", 
     count: 0,
     description: "Casas unifamiliares",
-    icon: Home
+    icon: Home,
   },
   {
-    name: "Locales Comerciales",
-    value: "commercial",
+    name: "Locales comerciales",
+    value: "locales comerciales",
     count: 0,
     description: "Locales comerciales independientes",
-    icon: Store
+    icon: Store,
   },
   {
     name: "Oficinas",
-    value: "office",
+    value: "oficinas",
     count: 0,
     description: "Espacios de oficina",
-    icon: Briefcase
+    icon: Briefcase,
   },
   {
     name: "Edificios",
-    value: "building",
+    value: "edificios",
     count: 0,
     description: "Edificios completos",
-    icon: Building
+    icon: Building,
   },
   {
-    name: "Casa uso de suelo",
-    value: "commercial-house",
+    name: "Casas uso de suelo",
+    value: "casas uso de suelo",
     count: 0,
     description: "Casas con permiso comercial",
-    icon: HomeIcon
+    icon: HomeIcon,
   },
   {
-    name: "Bodegas Comerciales",
-    value: "warehouse",
+    name: "Bodegas comerciales",
+    value: "bodegas comerciales",
     count: 0,
     description: "Bodegas y espacios de almacenamiento",
-    icon: Warehouse
+    icon: Warehouse,
   },
   {
     name: "Locales en centro comercial",
-    value: "mall",
+    value: "locales en centro comercial",
     count: 0,
     description: "Locales ubicados en centros comerciales",
-    icon: ShoppingBag
+    icon: ShoppingBag,
   },
   {
     name: "Casas en condominio",
-    value: "condo",
+    value: "casas en condominio",
     count: 0,
     description: "Casas dentro de condominios",
-    icon: Home
-  }
+    icon: Home,
+  },
+  {
+    name: "Departamentos",
+    value: "departamentos",
+    count: 0,
+    description: "Departamentos en altura",
+    icon: Home,
+  },
 ];
 
 export const AMENITIES: AmenityOption[] = [
   {
     label: "Alberca",
-    value: "pool",
-    icon: "pool"
+    value: "alberca",
+    icon: Waves,
   },
   {
     label: "Gimnasio",
-    value: "gym",
-    icon: "dumbbell"
+    value: "gimnasio",
+    icon: Dumbbell,
   },
   {
     label: "Jardín",
-    value: "garden",
-    icon: "flower"
+    value: "jardín",
+    icon: Flower2,
   },
   {
-    label: "Terraza",
-    value: "terrace",
-    icon: "sun"
+    label: "Roof Garden",
+    value: "roof garden",
+    icon: Sun,
   },
   {
-    label: "Seguridad 24/7",
-    value: "security",
-    icon: "shield"
+    label: "Circuito Cerrado",
+    value: "circuito cerrado",
+    icon: Shield,
   },
   {
-    label: "Estacionamiento",
-    value: "parking",
-    icon: "car"
-  },
-  {
-    label: "Aire Acondicionado",
-    value: "ac",
-    icon: "fan"
-  },
-  {
-    label: "Amueblado",
-    value: "furnished",
-    icon: "sofa"
-  },
-  {
-    label: "Cuarto de Servicio",
-    value: "service-room",
-    icon: "bed"
-  },
-  {
-    label: "Área de Lavado",
-    value: "laundry",
-    icon: "washing-machine"
-  },
-  {
-    label: "Bodega",
-    value: "storage",
-    icon: "box"
-  },
-  {
-    label: "Sala de Juegos",
-    value: "game-room",
-    icon: "gamepad"
-  },
-  {
-    label: "Cine",
-    value: "cinema",
-    icon: "video"
-  },
-  {
-    label: "Bar",
-    value: "bar",
-    icon: "glass"
-  },
-  {
-    label: "Área de BBQ",
-    value: "bbq",
-    icon: "flame"
+    label: "Estacionamientos",
+    value: "estacionamientos",
+    icon: Car,
   }
 ];
 
@@ -179,28 +156,44 @@ export const MAINTENANCE_FEE_RANGE = {
 
 export const LOCATIONS = {
   "Ciudad de México": [
-    { city: "Ciudad de México", areas: ["Polanco", "Condesa", "Roma", "Santa Fe"] },
+    {
+      city: "Ciudad de México",
+      areas: ["Polanco", "Condesa", "Roma", "Santa Fe"],
+    },
   ],
-  "Monterrey": [
-    { city: "Monterrey", areas: ["San Pedro Garza García", "Valle Oriente", "Cumbres"] },
+  Monterrey: [
+    {
+      city: "Monterrey",
+      areas: ["San Pedro Garza García", "Valle Oriente", "Cumbres"],
+    },
   ],
-  "Guadalajara": [
-    { city: "Guadalajara", areas: ["Providencia", "Zapopan", "Puerta de Hierro"] },
+  Guadalajara: [
+    {
+      city: "Guadalajara",
+      areas: ["Providencia", "Zapopan", "Puerta de Hierro"],
+    },
   ],
-  "Querétaro": [
+  Querétaro: [
     { city: "Querétaro", areas: ["Centro", "Juriquilla", "El Refugio"] },
   ],
-  "Mérida": [
-    { city: "Mérida", areas: ["Norte", "Montebello", "Country Club"] },
-  ],
+  Mérida: [{ city: "Mérida", areas: ["Norte", "Montebello", "Country Club"] }],
   "San Miguel de Allende": [
-    { city: "San Miguel de Allende", areas: ["Centro", "Los Frailes", "Guadiana"] },
+    {
+      city: "San Miguel de Allende",
+      areas: ["Centro", "Los Frailes", "Guadiana"],
+    },
   ],
   "Los Cabos": [
-    { city: "San José del Cabo", areas: ["Palmilla", "Puerto Los Cabos", "Costa Azul"] },
-    { city: "Cabo San Lucas", areas: ["Pedregal", "Medano Beach", "Pacific Side"] },
+    {
+      city: "San José del Cabo",
+      areas: ["Palmilla", "Puerto Los Cabos", "Costa Azul"],
+    },
+    {
+      city: "Cabo San Lucas",
+      areas: ["Pedregal", "Medano Beach", "Pacific Side"],
+    },
   ],
   "Valle de Bravo": [
     { city: "Valle de Bravo", areas: ["Centro", "Avándaro", "La Peña"] },
   ],
-}; 
+};

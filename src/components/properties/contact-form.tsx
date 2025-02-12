@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ContactFormProps } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -23,11 +24,6 @@ const formSchema = z.object({
   phone: z.string().min(10, "Número de teléfono inválido"),
   message: z.string().min(10, "El mensaje debe tener al menos 10 caracteres"),
 });
-
-interface ContactFormProps {
-  propertyTitle: string;
-  propertyId: string;
-}
 
 export function ContactForm({ propertyTitle, propertyId }: ContactFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,10 +102,10 @@ export function ContactForm({ propertyTitle, propertyId }: ContactFormProps) {
             <FormItem>
               <FormLabel>Mensaje</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Escribe tu mensaje aquí..." 
+                <Textarea
+                  placeholder="Escribe tu mensaje aquí..."
                   className="h-24 resize-none"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -122,4 +118,4 @@ export function ContactForm({ propertyTitle, propertyId }: ContactFormProps) {
       </form>
     </Form>
   );
-} 
+}

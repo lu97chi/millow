@@ -1,5 +1,48 @@
 import { NextResponse } from 'next/server';
 import { generateChatResponse } from '@/lib/openai';
+import { z } from 'zod';
+
+// Validation schemas
+const PriceRangeSchema = z.object({
+  min: z.number().optional(),
+  max: z.number().optional()
+}).optional();
+
+const LocationSchema = z.object({
+  state: z.string().optional(),
+  city: z.string().optional(),
+  area: z.string().optional()
+}).optional();
+
+const FeaturesSchema = z.object({
+  bedrooms: z.number().optional(),
+  bathrooms: z.number().optional(),
+  constructionSize: z.object({
+    min: z.number().optional(),
+    max: z.number().optional()
+  }).optional(),
+  lotSize: z.object({
+    min: z.number().optional(),
+    max: z.number().optional()
+  }).optional()
+}).optional();
+
+const FiltersSchema = z.object({
+  propertyType: z.union([z.string(), z.array(z.string())]).optional(),
+  operationType: z.union([z.string(), z.array(z.string())]).optional(),
+  priceRange: PriceRangeSchema,
+  location: LocationSchema,
+  features: FeaturesSchema,
+  amenities: z.array(z.string()).optional(),
+  propertyAge: z.number().optional(),
+  maintenanceFee: PriceRangeSchema,
+  sortBy: z.enum(['recent', 'price-asc', 'price-desc']).optional()
+});
+
+const ChatResponseSchema = z.object({
+  message: z.string(),
+  filters: FiltersSchema.optional()
+});
 
 export async function POST(request: Request) {
   try {
@@ -49,7 +92,15 @@ export async function POST(request: Request) {
       throw new Error('Empty response from chat generation');
     }
 
-    return NextResponse.json(response);
+    // Validate response against schema
+    const validationResult = ChatResponseSchema.safeParse(response);
+    
+    if (!validationResult.success) {
+      console.error('Invalid response format:', validationResult.error);
+      throw new Error('Invalid response format from chat generation');
+    }
+
+    return NextResponse.json(validationResult.data);
   } catch (error) {
     console.error('Error in chat API:', error);
     
@@ -61,7 +112,7 @@ export async function POST(request: Request) {
       console.error('Error details:', error.message);
       if (error.message.includes('API key')) {
         errorMessage = 'OpenAI API key configuration error';
-      } else if (error.message.includes('parse')) {
+      } else if (error.message.includes('parse') || error.message.includes('format')) {
         errorMessage = 'Error processing AI response';
       }
     }

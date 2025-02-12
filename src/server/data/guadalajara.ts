@@ -1,4 +1,4 @@
-import { Property } from "../models/property";
+import { Property } from "@/types";
 
 export const ALL_PROPERTIES: Property[] = [
   {
