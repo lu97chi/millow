@@ -22,6 +22,7 @@ import { PropertyCard } from "@/components/properties/property-card";
 import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Property } from "@/types";
+import { Suspense } from "react";
 
 export default async function HomePage() {
   const propertyService = PropertyService.getInstance();
@@ -143,9 +144,11 @@ export default async function HomePage() {
           </div>
 
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
-            {featuredProperties.slice(0, 6).map((property: Property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
+            <Suspense fallback={<div className="text-center py-12">Cargando propiedades destacadas...</div>}>
+              {featuredProperties.slice(0, 6).map((property: Property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </Suspense>
           </div>
 
           <div className="flex justify-center">
@@ -373,18 +376,22 @@ export default async function HomePage() {
 }
 
 function getPropertyTypeIcon(type: string) {
-  const icons = {
-    "Desarrollos verticales": Building2,
-    "Casas": Home,
-    "Locales Comerciales": Store,
-    "Oficinas": Briefcase,
-    "Edificios": Building,
-    "Casa uso de suelo": HomeIcon,
-    "Bodegas Comerciales": Warehouse,
-    "Locales en centro comercial": ShoppingBag,
-    "Casas en condominio": Home,
-  };
-
-  const Icon = icons[type as keyof typeof icons] || Building;
-  return <Icon className="h-6 w-6" />;
+  switch (type) {
+    case "Casa":
+      return <Home className="h-6 w-6" />;
+    case "Departamento":
+      return <Building2 className="h-6 w-6" />;
+    case "Oficina":
+      return <Briefcase className="h-6 w-6" />;
+    case "Local":
+      return <Store className="h-6 w-6" />;
+    case "Terreno":
+      return <HomeIcon className="h-6 w-6" />;
+    case "Bodega":
+      return <Warehouse className="h-6 w-6" />;
+    case "Local Comercial":
+      return <ShoppingBag className="h-6 w-6" />;
+    default:
+      return <Building className="h-6 w-6" />;
+  }
 }

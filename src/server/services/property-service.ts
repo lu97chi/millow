@@ -42,7 +42,7 @@ export class PropertyService {
     // ID filter
     if (filters.id?.trim()) {
       filteredProperties = filteredProperties.filter(
-        (property) => property.id === filters.id
+        (property) => property.id.toLowerCase() === filters.id!.toLowerCase()
       );
     }
 
@@ -63,23 +63,26 @@ export class PropertyService {
     // Property type filter - can match multiple types
     if (filters.propertyType?.length) {
       console.log('Filtering by property types:', filters.propertyType);
+      const lowerPropertyTypes = filters.propertyType.map(type => type.toLowerCase());
       filteredProperties = filteredProperties.filter(
-        (property) => filters.propertyType!.includes(property.propertyType.toLowerCase())
+        (property) => lowerPropertyTypes.includes(property.propertyType.toLowerCase())
       );
       console.log('Properties after type filter:', filteredProperties.length);
     }
 
     // Operation type filter - can match multiple types
     if (filters.operationType?.length) {
+      const lowerOperationTypes = filters.operationType.map(type => type.toLowerCase());
       filteredProperties = filteredProperties.filter(
-        (property) => filters.operationType!.includes(property.operationType)
+        (property) => lowerOperationTypes.includes(property.operationType.toLowerCase())
       );
     }
 
     // Entity type filter - can match multiple types
     if (filters.type?.length) {
+      const lowerTypes = filters.type.map(type => type.toLowerCase());
       filteredProperties = filteredProperties.filter(
-        (property) => filters.type!.includes(property.type)
+        (property) => lowerTypes.includes(property.type.toLowerCase())
       );
     }
 
@@ -105,18 +108,21 @@ export class PropertyService {
     // Location filters - case insensitive matching with multiple options
     if (filters.location) {
       if (filters.location.state?.length) {
+        const lowerStates = filters.location.state.map(state => state.toLowerCase());
         filteredProperties = filteredProperties.filter(
-          (property) => filters.location!.state!.includes(property.location.state)
+          (property) => lowerStates.includes(property.location.state.toLowerCase())
         );
       }
       if (filters.location.city?.length) {
+        const lowerCities = filters.location.city.map(city => city.toLowerCase());
         filteredProperties = filteredProperties.filter(
-          (property) => filters.location!.city!.includes(property.location.city)
+          (property) => lowerCities.includes(property.location.city.toLowerCase())
         );
       }
       if (filters.location.area?.length) {
+        const lowerAreas = filters.location.area.map(area => area.toLowerCase());
         filteredProperties = filteredProperties.filter(
-          (property) => filters.location!.area!.includes(property.location.area)
+          (property) => lowerAreas.includes(property.location.area.toLowerCase())
         );
       }
       if (filters.location.address?.trim()) {
@@ -195,9 +201,12 @@ export class PropertyService {
 
     // Amenities filter - must have all requested amenities
     if (filters.amenities?.length) {
+      const lowerAmenities = filters.amenities.map(amenity => amenity.toLowerCase());
       filteredProperties = filteredProperties.filter((property) =>
-        filters.amenities!.every((amenity) =>
-          property.amenities.includes(amenity)
+        lowerAmenities.every((amenity) =>
+          property.amenities.some(propAmenity => 
+            propAmenity.toLowerCase() === amenity
+          )
         )
       );
     }
@@ -227,8 +236,9 @@ export class PropertyService {
 
     // Status filter - can match multiple statuses
     if (filters.status?.length) {
+      const lowerStatuses = filters.status.map(status => status.toLowerCase());
       filteredProperties = filteredProperties.filter(
-        (property) => filters.status!.includes(property.status)
+        (property) => lowerStatuses.includes(property.status.toLowerCase())
       );
     }
 

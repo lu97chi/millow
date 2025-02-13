@@ -1,8 +1,8 @@
-import { FetchPropertiesParams, PropertiesResponse, Property } from "@/types";
+import { Property, PropertyFilters } from "@/types";
 
 export async function fetchProperties(
-  params: FetchPropertiesParams = {}
-): Promise<PropertiesResponse> {
+  params: PropertyFilters = {}
+): Promise<Property[]> {
   const searchParams = new URLSearchParams();
 
   // Add each parameter to the search params if it exists

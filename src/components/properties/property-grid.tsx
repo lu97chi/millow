@@ -1,11 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { PropertyCard } from "@/components/properties/property-card";
 import { filterProperties, sortProperties } from "@/lib/filter-properties";
 import { motion } from "framer-motion";
 import { PropertyGridProps } from "@/types";
-
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,12 +22,16 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function PropertyGrid({
+function PropertyGridContent({
   properties,
   view = "grid",
 }: PropertyGridProps) {
   const searchParams = useSearchParams();
-  const filters = Object.fromEntries(searchParams.entries());
+  const params = Object.fromEntries(searchParams.entries());
+  
+  // Cast sort parameter to the correct type
+  const sort = params.sort as 'price asc' | 'price desc' | 'age asc' | 'age desc' | undefined;
+  const filters = { ...params, sortBy: sort };
 
   // Apply filters and sorting
   const filteredProperties = filterProperties(properties, filters);
@@ -63,5 +67,13 @@ export function PropertyGrid({
         </motion.div>
       ))}
     </motion.div>
+  );
+}
+
+export function PropertyGrid(props: PropertyGridProps) {
+  return (
+    <Suspense fallback={<div className="text-center py-12">Loading properties...</div>}>
+      <PropertyGridContent {...props} />
+    </Suspense>
   );
 }

@@ -4,7 +4,6 @@ import type {
   PropertyFeatures, 
   Amenity 
 } from "./property";
-import { PropertyFilters } from "./property";
 
 export interface ChatMessage {
   id: string;

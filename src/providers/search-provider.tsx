@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { 
   OperationType, 
@@ -21,7 +21,8 @@ interface SearchContextType {
 
 const SearchContext = createContext<SearchContextType | null>(null);
 
-export function SearchProvider({ children }: { children: React.ReactNode }) {
+// Separate the content into its own component
+function SearchProviderContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -148,134 +149,176 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const filtersToSearchParams = useCallback((filters: Partial<PropertyFilters>): URLSearchParams => {
     const params = new URLSearchParams(searchParams.toString());
 
+    // Helper function to handle array parameters
+    const setArrayParam = (key: string, values: string[] | undefined) => {
+      if (values && values.length > 0) {
+        // Remove duplicates and empty values
+        const uniqueValues = Array.from(new Set(values.filter(Boolean)));
+        if (uniqueValues.length > 0) {
+          params.set(key, uniqueValues.join(","));
+        } else {
+          params.delete(key);
+        }
+      } else {
+        params.delete(key);
+      }
+    };
+
     // Property type and operation type
-    if (filters.propertyType?.length) params.set("propertyType", filters.propertyType.join(","));
-    else params.delete("propertyType");
-    
-    if (filters.operationType?.length) params.set("operationType", filters.operationType.join(","));
-    else params.delete("operationType");
-    
-    if (filters.type?.length) params.set("type", filters.type.join(","));
-    else params.delete("type");
+    setArrayParam("propertyType", filters.propertyType);
+    setArrayParam("operationType", filters.operationType);
+    setArrayParam("type", filters.type);
     
     // Location filters
-    if (filters.location?.state?.length) params.set("state", filters.location.state.join(","));
-    else params.delete("state");
-    
-    if (filters.location?.city?.length) params.set("city", filters.location.city.join(","));
-    else params.delete("city");
-    
-    if (filters.location?.area?.length) params.set("area", filters.location.area.join(","));
-    else params.delete("area");
-    
-    if (filters.location?.address) params.set("address", filters.location.address);
-    else params.delete("address");
-    
-    if (filters.location?.coordinates?.lat) params.set("lat", String(filters.location.coordinates.lat));
-    else params.delete("lat");
-    
-    if (filters.location?.coordinates?.lng) params.set("lng", String(filters.location.coordinates.lng));
-    else params.delete("lng");
+    if (filters.location) {
+      setArrayParam("state", filters.location.state);
+      setArrayParam("city", filters.location.city);
+      setArrayParam("area", filters.location.area);
+      
+      if (filters.location.address?.trim()) {
+        params.set("address", filters.location.address.trim());
+      } else {
+        params.delete("address");
+      }
+      
+      if (filters.location.coordinates?.lat) {
+        params.set("lat", String(filters.location.coordinates.lat));
+      } else {
+        params.delete("lat");
+      }
+      
+      if (filters.location.coordinates?.lng) {
+        params.set("lng", String(filters.location.coordinates.lng));
+      } else {
+        params.delete("lng");
+      }
+    } else {
+      params.delete("state");
+      params.delete("city");
+      params.delete("area");
+      params.delete("address");
+      params.delete("lat");
+      params.delete("lng");
+    }
     
     // Price filters
-    if (filters.price !== undefined) params.set("price", String(filters.price));
-    else params.delete("price");
+    if (filters.price !== undefined && filters.price > 0) {
+      params.set("price", String(filters.price));
+    } else {
+      params.delete("price");
+    }
     
-    if (filters.minPrice !== undefined) params.set("minPrice", String(filters.minPrice));
-    else params.delete("minPrice");
+    if (filters.minPrice !== undefined && filters.minPrice > 0) {
+      params.set("minPrice", String(filters.minPrice));
+    } else {
+      params.delete("minPrice");
+    }
     
-    if (filters.maxPrice !== undefined) params.set("maxPrice", String(filters.maxPrice));
-    else params.delete("maxPrice");
+    if (filters.maxPrice !== undefined && filters.maxPrice > 0) {
+      params.set("maxPrice", String(filters.maxPrice));
+    } else {
+      params.delete("maxPrice");
+    }
 
     // Features
-    if (filters.features?.bedrooms !== undefined && filters.features?.bedrooms !== null) {
-      params.set("bedrooms", String(filters.features.bedrooms));
+    if (filters.features) {
+      if (filters.features.bedrooms !== undefined && filters.features.bedrooms !== null) {
+        params.set("bedrooms", String(filters.features.bedrooms));
+      } else {
+        params.delete("bedrooms");
+      }
+      
+      if (filters.features.bathrooms !== undefined && filters.features.bathrooms !== null) {
+        params.set("bathrooms", String(filters.features.bathrooms));
+      } else {
+        params.delete("bathrooms");
+      }
+      
+      if (filters.features.constructionSize?.min !== undefined && filters.features.constructionSize.min > 0) {
+        params.set("minConstructionSize", String(filters.features.constructionSize.min));
+      } else {
+        params.delete("minConstructionSize");
+      }
+      
+      if (filters.features.constructionSize?.max !== undefined && filters.features.constructionSize.max > 0) {
+        params.set("maxConstructionSize", String(filters.features.constructionSize.max));
+      } else {
+        params.delete("maxConstructionSize");
+      }
+      
+      if (filters.features.lotSize?.min !== undefined && filters.features.lotSize.min > 0) {
+        params.set("minLotSize", String(filters.features.lotSize.min));
+      } else {
+        params.delete("minLotSize");
+      }
+      
+      if (filters.features.lotSize?.max !== undefined && filters.features.lotSize.max > 0) {
+        params.set("maxLotSize", String(filters.features.lotSize.max));
+      } else {
+        params.delete("maxLotSize");
+      }
+      
+      if (filters.features.parking !== undefined && filters.features.parking !== null) {
+        params.set("parking", String(filters.features.parking));
+      } else {
+        params.delete("parking");
+      }
+      
+      if (filters.features.floors !== undefined && filters.features.floors !== null) {
+        params.set("floors", String(filters.features.floors));
+      } else {
+        params.delete("floors");
+      }
     } else {
+      // Clean up all feature params if no features object
       params.delete("bedrooms");
-    }
-    
-    if (filters.features?.bathrooms !== undefined && filters.features?.bathrooms !== null) {
-      params.set("bathrooms", String(filters.features.bathrooms));
-    } else {
       params.delete("bathrooms");
-    }
-    
-    if (filters.features?.constructionSize?.min !== undefined) {
-      params.set("minConstructionSize", String(filters.features.constructionSize.min));
-    } else {
       params.delete("minConstructionSize");
-    }
-    
-    if (filters.features?.constructionSize?.max !== undefined) {
-      params.set("maxConstructionSize", String(filters.features.constructionSize.max));
-    } else {
       params.delete("maxConstructionSize");
-    }
-    
-    if (filters.features?.lotSize?.min !== undefined) {
-      params.set("minLotSize", String(filters.features.lotSize.min));
-    } else {
       params.delete("minLotSize");
-    }
-    
-    if (filters.features?.lotSize?.max !== undefined) {
-      params.set("maxLotSize", String(filters.features.lotSize.max));
-    } else {
       params.delete("maxLotSize");
-    }
-    
-    if (filters.features?.parking !== undefined && filters.features?.parking !== null) {
-      params.set("parking", String(filters.features.parking));
-    } else {
       params.delete("parking");
-    }
-    
-    if (filters.features?.floors !== undefined && filters.features?.floors !== null) {
-      params.set("floors", String(filters.features.floors));
-    } else {
       params.delete("floors");
     }
     
     // Amenities
-    if (filters.amenities?.length) {
-      params.set("amenities", filters.amenities.join(","));
-    } else {
-      params.delete("amenities");
-    }
+    setArrayParam("amenities", filters.amenities);
     
     // Property age
-    if (filters.propertyAge !== undefined) {
+    if (filters.propertyAge !== undefined && filters.propertyAge > 0) {
       params.set("propertyAge", String(filters.propertyAge));
     } else {
       params.delete("propertyAge");
     }
     
     // Maintenance fee
-    if (filters.maintenanceFee?.min !== undefined) {
+    if (filters.maintenanceFee?.min !== undefined && filters.maintenanceFee.min > 0) {
       params.set("minMaintenanceFee", String(filters.maintenanceFee.min));
     } else {
       params.delete("minMaintenanceFee");
     }
     
-    if (filters.maintenanceFee?.max !== undefined) {
+    if (filters.maintenanceFee?.max !== undefined && filters.maintenanceFee.max > 0) {
       params.set("maxMaintenanceFee", String(filters.maintenanceFee.max));
     } else {
       params.delete("maxMaintenanceFee");
     }
     
     // Status
-    if (filters.status?.length) {
-      params.set("status", filters.status.join(","));
-    } else {
-      params.delete("status");
-    }
+    setArrayParam("status", filters.status);
     
     // View mode and sort
-    if (filters.viewMode) params.set("view", filters.viewMode);
-    else params.delete("view");
+    if (filters.viewMode) {
+      params.set("view", filters.viewMode);
+    } else {
+      params.delete("view");
+    }
     
-    if (filters.sortBy) params.set("sort", filters.sortBy);
-    else params.delete("sort");
+    if (filters.sortBy) {
+      params.set("sort", filters.sortBy);
+    } else {
+      params.delete("sort");
+    }
 
     return params;
   }, [searchParams]);
@@ -316,6 +359,15 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     <SearchContext.Provider value={{ syncWithUrl, parseUrlToFilters, filters, setFilters, filtersToSearchParams }}>
       {children}
     </SearchContext.Provider>
+  );
+}
+
+// Main provider component with Suspense boundary
+export function SearchProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <SearchProviderContent>{children}</SearchProviderContent>
+    </Suspense>
   );
 }
 

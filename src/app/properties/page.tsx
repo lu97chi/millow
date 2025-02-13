@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PropertyService } from "@/server/services/property-service";
 import { PropertyCard } from "@/components/properties/property-card";
@@ -171,7 +171,8 @@ function parseFilters(searchParams: URLSearchParams): Partial<PropertyFilters> {
   return filters;
 }
 
-export default function PropertiesPage() {
+// Separate the content into its own component
+function PropertiesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -340,5 +341,20 @@ export default function PropertiesPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function PropertiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container py-8">
+        <div className="flex min-h-[400px] items-center justify-center">
+          <p className="text-muted-foreground">Loading properties...</p>
+        </div>
+      </div>
+    }>
+      <PropertiesContent />
+    </Suspense>
   );
 }

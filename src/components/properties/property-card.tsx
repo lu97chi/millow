@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
-import type { PropertyCardProps, ViewMode } from "@/types";
+import type { PropertyCardProps } from "@/types";
 import { useFavoritesStore } from "@/store/use-favorites-store";
 import { cn } from "@/lib/utils";
 import { ShareButton } from "@/components/properties/share-button";
 import { BedDouble, Bath, Ruler, Trees } from "lucide-react";
 
-export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCardProps & { view?: ViewMode }) {
+export function PropertyCard({ property, view = "grid" }: PropertyCardProps) {
   const {
     id,
     title,
@@ -43,7 +43,7 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
     }
   };
 
-  if ((view as ViewMode) === "list") {
+  if (view === "list") {
     return (
       <Card className="group overflow-hidden">
         <Link href={`/properties/${id}`} className="flex">
@@ -57,7 +57,10 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
               sizes="240px"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            <Badge variant="secondary" className="absolute left-2 top-2 px-2.5 py-0.5 text-xs font-medium">
+            <Badge
+              variant="secondary"
+              className="absolute left-2 top-2 px-2.5 py-0.5 text-xs font-medium"
+            >
               {propertyAge === 0 ? "Nueva" : `${propertyAge} años`}
             </Badge>
           </div>
@@ -92,11 +95,20 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
                   )}
                   onClick={handleFavoriteClick}
                 >
-                  <Heart className={cn("h-5 w-5", isPropertyFavorite && "fill-current")} />
+                  <Heart
+                    className={cn(
+                      "h-5 w-5",
+                      isPropertyFavorite && "fill-current"
+                    )}
+                  />
                 </Button>
                 <ShareButton
                   title={title}
-                  url={typeof window !== 'undefined' ? `${window.location.origin}/properties/${id}` : ''}
+                  url={
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/properties/${id}`
+                      : ""
+                  }
                 />
               </div>
             </div>
@@ -106,30 +118,39 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
                 <p className="text-2xl font-bold">{formatPrice(price)}</p>
               </div>
               <p className="text-sm text-muted-foreground">
-                {createdAt ? format(new Date(createdAt), "d MMM", { locale: es }) : ''}
+                {createdAt
+                  ? format(new Date(createdAt), "d MMM", { locale: es })
+                  : ""}
               </p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2 text-sm">
               {features.bedrooms !== null && features.bedrooms !== 0 && (
                 <Badge variant="outline">
-                  {features.bedrooms} {features.bedrooms === 1 ? "Recámara" : "Recámaras"}
+                  {features.bedrooms}{" "}
+                  {features.bedrooms === 1 ? "Recámara" : "Recámaras"}
                 </Badge>
               )}
               {features.bathrooms !== null && features.bathrooms !== 0 && (
                 <Badge variant="outline">
-                  {features.bathrooms} {features.bathrooms === 1 ? "Baño" : "Baños"}
+                  {features.bathrooms}{" "}
+                  {features.bathrooms === 1 ? "Baño" : "Baños"}
                 </Badge>
               )}
-              {features.constructionSize !== null && features.constructionSize !== 0 && (
-                <Badge variant="outline">{features.constructionSize}m² construcción</Badge>
-              )}
+              {features.constructionSize !== null &&
+                features.constructionSize !== 0 && (
+                  <Badge variant="outline">
+                    {features.constructionSize}m² construcción
+                  </Badge>
+                )}
               {features.lotSize !== null && features.lotSize !== 0 && (
                 <Badge variant="outline">{features.lotSize}m² terreno</Badge>
               )}
             </div>
 
-            <p className="mt-4 text-sm text-muted-foreground line-clamp-2">{description}</p>
+            <p className="mt-4 text-sm text-muted-foreground line-clamp-2">
+              {description}
+            </p>
           </div>
         </Link>
       </Card>
@@ -137,22 +158,28 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
   }
 
   return (
-    <Card className={cn(
-      "group overflow-hidden transition-colors hover:border-primary/50",
-      (view as ViewMode) === "list" ? "flex flex-col md:flex-row" : ""
-    )}>
-      <div className={cn(
-        "relative overflow-hidden",
-        (view as ViewMode) === "grid" ? "aspect-[4/3]" : "md:w-[300px] aspect-[4/3] md:aspect-auto"
-      )}>
+    <Card
+      className={cn(
+        "group overflow-hidden transition-colors hover:border-primary/50"
+      )}
+    >
+      <div
+        className={cn(
+          "relative overflow-hidden",
+          view === "grid"
+            ? "aspect-[4/3]"
+            : "md:w-[300px] aspect-[4/3] md:aspect-auto"
+        )}
+      >
         <Image
           src={images[0]}
           alt={title}
           fill
           className="object-cover transition-transform group-hover:scale-105"
-          sizes={(view as ViewMode) === "grid"
-            ? "(min-width: 1280px) 400px, (min-width: 780px) 320px, 100vw"
-            : "300px"
+          sizes={
+            view === "grid"
+              ? "(min-width: 1280px) 400px, (min-width: 780px) 320px, 100vw"
+              : "300px"
           }
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/0" />
@@ -165,13 +192,17 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
           )}
           onClick={handleFavoriteClick}
         >
-          <Heart className={cn("h-4 w-4", isPropertyFavorite && "fill-current")} />
+          <Heart
+            className={cn("h-4 w-4", isPropertyFavorite && "fill-current")}
+          />
         </Button>
       </div>
-      <CardContent className={cn(
-        "relative flex-1",
-        (view as ViewMode) === "grid" ? "-mt-12 p-4" : "p-6"
-      )}>
+      <CardContent
+        className={cn(
+          "relative flex-1",
+          view === "grid" ? "-mt-12 p-4" : "p-6"
+        )}
+      >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="text-xs">
             {operationType}
@@ -203,12 +234,13 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
                 <span>{features.bathrooms}</span>
               </div>
             )}
-            {features.constructionSize !== null && features.constructionSize !== 0 && (
-              <div className="flex items-center gap-1">
-                <Ruler className="h-4 w-4" />
-                <span>{features.constructionSize}m²</span>
-              </div>
-            )}
+            {features.constructionSize !== null &&
+              features.constructionSize !== 0 && (
+                <div className="flex items-center gap-1">
+                  <Ruler className="h-4 w-4" />
+                  <span>{features.constructionSize}m²</span>
+                </div>
+              )}
             {features.lotSize !== null && features.lotSize !== 0 && (
               <div className="flex items-center gap-1">
                 <Trees className="h-4 w-4" />
@@ -231,4 +263,4 @@ export function PropertyCard({ property, view = "grid" as ViewMode }: PropertyCa
       </CardContent>
     </Card>
   );
-} 
+}

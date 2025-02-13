@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PropertyService } from "@/server/services/property-service";
+import { PropertyTypeName, OperationType, Amenity } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,22 +26,30 @@ export async function GET(request: NextRequest) {
 
     // Get filter parameters
     const filters = {
-      propertyType: searchParams.get("propertyType")?.split(",").filter(Boolean),
-      operationType: searchParams.get("operationType")?.split(",").filter(Boolean),
+      propertyType: searchParams.get("propertyType")?.split(",").filter(Boolean) as PropertyTypeName[],
+      operationType: searchParams.get("operationType")?.split(",").filter(Boolean) as OperationType[],
       price: searchParams.get("price") ? Number(searchParams.get("price")) : undefined,
-      state: searchParams.get("state") || undefined,
-      city: searchParams.get("city") || undefined,
-      area: searchParams.get("area") || undefined,
-      bedrooms: searchParams.get("bedrooms") ? Number(searchParams.get("bedrooms")) : undefined,
-      bathrooms: searchParams.get("bathrooms") ? Number(searchParams.get("bathrooms")) : undefined,
-      constructionSize: searchParams.get("constructionSize") ? Number(searchParams.get("constructionSize")) : undefined,
-      lotSize: searchParams.get("lotSize") ? Number(searchParams.get("lotSize")) : undefined,
-      parking: searchParams.get("parking") ? Number(searchParams.get("parking")) : undefined,
-      floors: searchParams.get("floors") ? Number(searchParams.get("floors")) : undefined,
-      amenities: searchParams.get("amenities")?.split(",").filter(Boolean),
-      propertyAge: searchParams.get("propertyAge") ? Number(searchParams.get("propertyAge")) : undefined,
-      maintenanceFee: searchParams.get("maintenanceFee") ? Number(searchParams.get("maintenanceFee")) : undefined,
-      status: searchParams.get("status") || undefined,
+      location: {
+        state: searchParams.get("state") ? [searchParams.get("state")!] : undefined,
+        city: searchParams.get("city") ? [searchParams.get("city")!] : undefined,
+        area: searchParams.get("area") ? [searchParams.get("area")!] : undefined,
+      },
+      features: {
+        bedrooms: searchParams.get("bedrooms") ? Number(searchParams.get("bedrooms")) : undefined,
+        bathrooms: searchParams.get("bathrooms") ? Number(searchParams.get("bathrooms")) : undefined,
+        constructionSize: searchParams.get("constructionSize") ? 
+          { min: Number(searchParams.get("constructionSize")), max: Number(searchParams.get("constructionSize")) } : 
+          undefined,
+        lotSize: searchParams.get("lotSize") ? 
+          { min: Number(searchParams.get("lotSize")), max: Number(searchParams.get("lotSize")) } : 
+          undefined,
+        parking: searchParams.get("parking") ? Number(searchParams.get("parking")) : undefined,
+        floors: searchParams.get("floors") ? Number(searchParams.get("floors")) : undefined,
+      },
+      amenities: searchParams.get("amenities")?.split(",").filter(Boolean) as Amenity[],
+      maintenanceFee: searchParams.get("maintenanceFee") ? 
+        { min: Number(searchParams.get("maintenanceFee")), max: Number(searchParams.get("maintenanceFee")) } : 
+        undefined,
     };
 
     console.log('API Route: Applying filters:', filters);

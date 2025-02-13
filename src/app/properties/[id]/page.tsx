@@ -1,65 +1,81 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { AgentCard } from "@/components/properties/agent-card";
+import { ContactForm } from "@/components/properties/contact-form";
+import { PropertyCard } from "@/components/properties/property-card";
+import { PropertyMap } from "@/components/properties/property-map";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { formatPrice } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { PropertyService } from "@/server/services/property-service";
+import { Property, PropertyTypeName } from "@/types";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { 
-  Heart,
-  BedDouble,
+import {
   Bath,
-  Ruler,
-  Trees,
-  MapPin,
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Car,
+  BedDouble,
   Building2,
   Calendar,
-  Phone,
-  Mail,
-  MessageSquare,
-  Clock,
+  Car,
   Check,
-  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
   Home,
+  Mail,
+  MapPin,
+  Maximize2,
+  MessageSquare,
+  Phone,
+  Ruler,
+  Trees
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { formatPrice } from "@/lib/format";
-import { useFavoritesStore } from "@/store/use-favorites-store";
-import { cn } from "@/lib/utils";
-import { ShareButton } from "@/components/properties/share-button";
-import { PropertyGrid } from "@/components/properties/property-grid";
-import { ContactForm } from "@/components/properties/contact-form";
-import { AgentCard } from "@/components/properties/agent-card";
-import { PropertyMap } from "@/components/properties/property-map";
-import { fetchPropertyById, fetchSimilarProperties } from "@/services/properties";
-import { Property } from "@/types";
-import { RootLayout } from "@/components/layout/root-layout";
-
-interface PageParams {
-  id: string;
-}
+import Image from "next/image";
+import { use, useEffect, useState } from "react";
+import { useProperty } from "@/providers/property-context";
 
 interface PropertyPageProps {
-  params: PageParams;
+  params: Promise<{ id: string }>;
+}
+
+// Helper function to fetch property by ID
+async function fetchPropertyById(id: string): Promise<Property> {
+  const propertyService = PropertyService.getInstance();
+  const properties = await propertyService.getProperties({ id });
+  if (!properties.length) {
+    throw new Error("Property not found");
+  }
+  return properties[0];
+}
+
+// Helper function to fetch similar properties
+async function fetchSimilarProperties(
+  id: string,
+  type: PropertyTypeName,
+  price: number
+): Promise<Property[]> {
+  const propertyService = PropertyService.getInstance();
+  const properties = await propertyService.getProperties({
+    propertyType: [type],
+    minPrice: price * 0.8,
+    maxPrice: price * 1.2,
+  });
+  return properties.filter((p) => p.id !== id).slice(0, 3);
 }
 
 export default function PropertyPage({ params }: PropertyPageProps) {
-  const { id } = params;
+  const resolvedParams = use(params);
+  const { id } = resolvedParams;
   const [property, setProperty] = useState<Property | null>(null);
+  const { setCurrentProperty } = useProperty();
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
-  const isPropertyFavorite = property ? isFavorite(property.id) : false;
 
   useEffect(() => {
     const loadProperty = async () => {
@@ -67,12 +83,13 @@ export default function PropertyPage({ params }: PropertyPageProps) {
         setLoading(true);
         const propertyData = await fetchPropertyById(id);
         setProperty(propertyData);
+        setCurrentProperty(propertyData);
 
         // Load similar properties
         if (propertyData) {
           const similar = await fetchSimilarProperties(
             propertyData.id,
-            propertyData.type,
+            propertyData.propertyType,
             propertyData.price
           );
           setSimilarProperties(similar);
@@ -88,100 +105,59 @@ export default function PropertyPage({ params }: PropertyPageProps) {
     };
 
     loadProperty();
-  }, [id]);
-
-  const handleFavoriteClick = () => {
-    if (!property) return;
-    
-    if (isPropertyFavorite) {
-      removeFavorite(property.id);
-    } else {
-      addFavorite(property);
-    }
-  };
+    return () => {
+      setCurrentProperty(null); // Clean up when unmounting
+    };
+  }, [id, setCurrentProperty]);
 
   // Show loading state
   if (loading) {
     return (
-      <RootLayout>
+      <div className="flex-1">
         <div className="container py-8 space-y-8">
-          <div className="h-[50vh] animate-pulse bg-muted rounded-lg" />
-          <div className="space-y-4">
+          <div className="h-[60vh] animate-pulse bg-muted rounded-lg" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <div className="h-8 w-1/3 animate-pulse bg-muted rounded" />
             <div className="h-6 w-1/4 animate-pulse bg-muted rounded" />
           </div>
         </div>
-      </RootLayout>
+      </div>
     );
   }
 
   // Show error state
   if (error || !property) {
     return (
-      <RootLayout>
-        <div className="flex h-screen items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold">Propiedad no encontrada</h1>
-            <p className="mt-2 text-muted-foreground">
-              {error || "La propiedad que buscas no existe o ha sido eliminada."}
-            </p>
-            <Button asChild className="mt-4">
-              <Link href="/properties">Ver todas las propiedades</Link>
-            </Button>
+      <div className="flex-1">
+        <div className="container py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex min-h-[400px] items-center justify-center">
+              <p className="text-red-500">{error || "Property not found"}</p>
+            </div>
           </div>
         </div>
-      </RootLayout>
+      </div>
     );
   }
 
   return (
-    <RootLayout propertyContext={property}>
-      <div className="min-h-screen">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 items-center justify-between gap-4">
-            <Button variant="ghost" size="sm" asChild className="gap-2">
-              <Link href="/properties">
-                <ChevronLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-            <div className="flex items-center gap-2">
-              <ShareButton
-                title={property.title}
-                url={typeof window !== 'undefined' ? window.location.href : ''}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  isPropertyFavorite && "text-red-500 hover:text-red-600"
-                )}
-                onClick={handleFavoriteClick}
-              >
-                <Heart className={cn("h-4 w-4", isPropertyFavorite && "fill-current")} />
-                {isPropertyFavorite ? "Guardado" : "Guardar"}
-              </Button>
-            </div>
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col">
+      {/* Hero Section */}
+      <section className="relative h-[60vh] lg:h-[75vh] bg-muted">
+        <Image
+          src={property.images[selectedImageIndex]}
+          alt={property.title}
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
 
-        {/* Hero Section */}
-        <div className="relative h-[60vh] lg:h-[70vh] bg-muted">
-          <Image
-            src={property.images[selectedImageIndex]}
-            alt={property.title}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
-
-          {/* Image Navigation */}
-          <div className="absolute inset-x-4 bottom-4">
-            <div className="container">
+        {/* Image Navigation */}
+        <div className="absolute inset-x-0 bottom-4">
+          <div className="container">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="relative">
                 <ScrollArea className="w-full pb-4">
                   <div className="flex gap-2">
@@ -220,287 +196,374 @@ export default function PropertyPage({ params }: PropertyPageProps) {
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Content */}
-        <main className="container relative -mt-16 space-y-6 pb-8">
-          {/* Main Info Card */}
-          <div className="rounded-xl bg-background p-6 shadow-lg">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="text-sm">
-                    {property.operationType}
-                  </Badge>
-                  <Badge variant="outline" className="text-sm">
-                    {property.propertyType}
-                  </Badge>
-                  <Badge variant="outline" className="text-sm bg-muted/50">
-                    {property.propertyAge === 0 ? "Nueva" : `${property.propertyAge} años`}
-                  </Badge>
+      {/* Content */}
+      <main className="flex-1 container pb-8 -mt-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-6">
+            {/* Main Info Card */}
+            <div className="rounded-xl bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="text-sm">
+                      {property.operationType}
+                    </Badge>
+                    <Badge variant="outline" className="text-sm">
+                      {property.propertyType}
+                    </Badge>
+                    <Badge variant="outline" className="text-sm bg-muted/50">
+                      {property.propertyAge === 0
+                        ? "Nueva"
+                        : `${property.propertyAge} años`}
+                    </Badge>
+                  </div>
+                  <h1 className="text-2xl font-semibold sm:text-3xl truncate">
+                    {property.title}
+                  </h1>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">
+                      {property.location.area}, {property.location.city}
+                    </span>
+                  </div>
                 </div>
-                <h1 className="text-2xl font-semibold sm:text-3xl">{property.title}</h1>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{property.location.area}, {property.location.city}</span>
-                </div>
-              </div>
-              <div className="space-y-2 text-right">
-                <p className="text-3xl font-bold">{formatPrice(property.price)}</p>
-                {property.maintenanceFee && property.maintenanceFee > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Mantenimiento: {formatPrice(property.maintenanceFee)}/mes
+                <div className="lg:text-right flex-shrink-0">
+                  <p className="text-3xl font-bold">
+                    {formatPrice(property.price)}
                   </p>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Button className="gap-2" asChild>
-                <a href={`tel:${property.agent.phone}`}>
-                  <Phone className="h-4 w-4" />
-                  Llamar al agente
-                </a>
-              </Button>
-              <Button variant="outline" className="gap-2" asChild>
-                <a href={`mailto:${property.agent.email}`}>
-                  <Mail className="h-4 w-4" />
-                  Enviar email
-                </a>
-              </Button>
-              <Button variant="outline" className="gap-2" onClick={() => {
-                const contactForm = document.getElementById('contact-form');
-                contactForm?.scrollIntoView({ behavior: 'smooth' });
-              }}>
-                <MessageSquare className="h-4 w-4" />
-                Agendar visita
-              </Button>
-            </div>
-
-            {/* Key Features Grid */}
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-              {property.features.bedrooms !== null && property.features.bedrooms !== 0 && (
-                <div className="flex items-center gap-3 rounded-lg border p-4">
-                  <BedDouble className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{property.features.bedrooms}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {property.features.bedrooms === 1 ? "Recámara" : "Recámaras"}
+                  {property.maintenanceFee && property.maintenanceFee > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Mantenimiento: {formatPrice(property.maintenanceFee)}/mes
                     </p>
-                  </div>
-                </div>
-              )}
-              {property.features.bathrooms !== null && property.features.bathrooms !== 0 && (
-                <div className="flex items-center gap-3 rounded-lg border p-4">
-                  <Bath className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{property.features.bathrooms}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {property.features.bathrooms === 1 ? "Baño" : "Baños"}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {property.features.constructionSize !== null && property.features.constructionSize !== 0 && (
-                <div className="flex items-center gap-3 rounded-lg border p-4">
-                  <Ruler className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{property.features.constructionSize}m²</p>
-                    <p className="text-xs text-muted-foreground">Construcción</p>
-                  </div>
-                </div>
-              )}
-              {property.features.lotSize !== null && property.features.lotSize !== 0 && (
-                <div className="flex items-center gap-3 rounded-lg border p-4">
-                  <Trees className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{property.features.lotSize}m²</p>
-                    <p className="text-xs text-muted-foreground">Terreno</p>
-                  </div>
-                </div>
-              )}
-              {property.features.parking !== null && property.features.parking !== 0 && (
-                <div className="flex items-center gap-3 rounded-lg border p-4">
-                  <Car className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{property.features.parking}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {property.features.parking === 1 ? "Estacionamiento" : "Estacionamientos"}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {property.features.floors !== null && property.features.floors !== 0 && (
-                <div className="flex items-center gap-3 rounded-lg border p-4">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{property.features.floors}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {property.features.floors === 1 ? "Piso" : "Pisos"}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Main Content Grid */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
-              {/* Key Details */}
-              <div className="rounded-lg bg-background p-6 shadow">
-                <h2 className="text-xl font-semibold">Detalles principales</h2>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center gap-2">
-                    <Home className="h-4 w-4 text-muted-foreground" />
-                    <span>Tipo: {property.propertyType}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Antigüedad: {property.propertyAge === 0 ? "Nueva" : `${property.propertyAge} años`}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Publicado: {format(new Date(property.createdAt), "d 'de' MMMM, yyyy", { locale: es })}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-muted-foreground" />
-                    <span>Estado: {property.status}</span>
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="rounded-lg bg-background p-6 shadow">
-                <h2 className="text-xl font-semibold">Descripción</h2>
-                <p className="mt-4 whitespace-pre-line text-muted-foreground">
-                  {property.description}
-                </p>
-              </div>
-
-              {/* Amenities */}
-              {property.amenities.length > 0 && (
-                <div className="rounded-lg bg-background p-6 shadow">
-                  <h2 className="text-xl font-semibold">Amenidades</h2>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {property.amenities.map(amenity => (
-                      <div key={amenity} className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border bg-muted/50">
-                          <Check className="h-4 w-4 text-primary" />
-                        </div>
-                        <span>{amenity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Location */}
-              {property.location.coordinates && (
-                <div className="rounded-lg bg-background p-6 shadow">
-                  <h2 className="text-xl font-semibold">Ubicación</h2>
-                  <div className="mt-4 aspect-[16/9] overflow-hidden rounded-lg">
-                    <PropertyMap properties={[property]} />
-                  </div>
-                  <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{property.location.address}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Agent Card */}
-              <AgentCard {...property.agent} />
-
-              {/* Contact Form */}
-              <div id="contact-form" className="rounded-lg bg-background p-6 shadow">
-                <div className="mb-6 space-y-2">
-                  <h2 className="text-xl font-semibold">¿Te interesa esta propiedad?</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Agenda una visita o solicita más información. Nuestro agente te contactará lo antes posible.
-                  </p>
-                </div>
-                <ContactForm propertyTitle={property.title} propertyId={property.id} />
-              </div>
-            </div>
-          </div>
-
-          {/* Similar Properties */}
-          {similarProperties.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Propiedades similares</h2>
-                <Button variant="ghost" size="sm" className="gap-2" asChild>
-                  <Link href="/properties">
-                    Ver más
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
+              {/* Quick Actions */}
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Button className="gap-2" asChild>
+                  <a href={`tel:${property.agent.phone}`}>
+                    <Phone className="h-4 w-4" />
+                    Llamar al agente
+                  </a>
+                </Button>
+                <Button variant="outline" className="gap-2" asChild>
+                  <a href={`mailto:${property.agent.email}`}>
+                    <Mail className="h-4 w-4" />
+                    Enviar email
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => {
+                    const contactForm = document.getElementById("contact-form");
+                    contactForm?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Agendar visita
                 </Button>
               </div>
-              <PropertyGrid properties={similarProperties} />
-            </div>
-          )}
-        </main>
 
-        {/* Full Screen Gallery */}
-        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-          <DialogContent className="max-w-7xl">
-            <div className="relative aspect-[16/9]">
-              <Image
-                src={property.images[selectedImageIndex]}
-                alt={property.title}
-                fill
-                className="object-contain"
-                sizes="(min-width: 1280px) 1200px, 100vw"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-4 top-[50%] -translate-y-1/2"
-                onClick={() => setSelectedImageIndex((i) => (i === 0 ? property.images.length - 1 : i - 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute right-4 top-[50%] -translate-y-1/2"
-                onClick={() => setSelectedImageIndex((i) => (i === property.images.length - 1 ? 0 : i + 1))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              {/* Key Features Grid */}
+              <div className="mt-8 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+                {property.features.bedrooms !== null &&
+                  property.features.bedrooms !== 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <BedDouble className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {property.features.bedrooms}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {property.features.bedrooms === 1
+                            ? "Recámara"
+                            : "Recámaras"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                {property.features.bathrooms !== null &&
+                  property.features.bathrooms !== 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <Bath className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {property.features.bathrooms}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {property.features.bathrooms === 1 ? "Baño" : "Baños"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                {property.features.constructionSize !== null &&
+                  property.features.constructionSize !== 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <Ruler className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {property.features.constructionSize}m²
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          Construcción
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                {property.features.lotSize !== null &&
+                  property.features.lotSize !== 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <Trees className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {property.features.lotSize}m²
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          Terreno
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                {property.features.parking !== null &&
+                  property.features.parking !== 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <Car className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {property.features.parking}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {property.features.parking === 1
+                            ? "Estacionamiento"
+                            : "Estacionamientos"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                {property.features.floors !== null &&
+                  property.features.floors !== 0 && (
+                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                      <Building2 className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {property.features.floors}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {property.features.floors === 1 ? "Piso" : "Pisos"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+              </div>
             </div>
-            <div className="mt-4">
-              <ScrollArea className="w-full">
-                <div className="flex gap-2 pb-4">
-                  {property.images.map((image, index) => (
-                    <button
-                      key={image}
-                      className={cn(
-                        "relative flex-none aspect-[4/3] w-20 overflow-hidden rounded-md transition",
-                        selectedImageIndex === index && "ring-2 ring-primary"
-                      )}
-                      onClick={() => setSelectedImageIndex(index)}
+
+            {/* Main Content Grid */}
+            <div className="grid gap-6 items-start lg:grid-cols-3">
+              {/* Left Column - Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Key Details */}
+                <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+                  <h2 className="text-xl font-semibold">
+                    Detalles principales
+                  </h2>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div className="flex items-center gap-2">
+                      <Home className="h-4 w-4 text-muted-foreground" />
+                      <span>Tipo: {property.propertyType}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        Antigüedad:{" "}
+                        {property.propertyAge === 0
+                          ? "Nueva"
+                          : `${property.propertyAge} años`}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        Publicado:{" "}
+                        {format(
+                          new Date(property.createdAt),
+                          "d 'de' MMMM, yyyy",
+                          { locale: es }
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-muted-foreground" />
+                      <span>Estado: {property.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+                  <h2 className="text-xl font-semibold">Descripción</h2>
+                  <div className="mt-4 prose prose-sm max-w-none text-muted-foreground">
+                    <p className="whitespace-pre-line leading-relaxed">
+                      {property.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Amenities */}
+                {property.amenities.length > 0 && (
+                  <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+                    <h2 className="text-xl font-semibold">Amenidades</h2>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      {property.amenities.map((amenity) => (
+                        <div
+                          key={amenity}
+                          className="flex items-center gap-2 group"
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg border bg-muted/50 flex-shrink-0 transition-colors group-hover:border-primary group-hover:text-primary">
+                            <Check className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm">{amenity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Location */}
+                {property.location.coordinates && (
+                  <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+                    <h2 className="text-xl font-semibold">Ubicación</h2>
+                    <div className="mt-4 h-[400px] overflow-hidden rounded-lg border">
+                      <PropertyMap property={property} />
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-sm">
+                        {property.location.address}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column - Sidebar */}
+              <div className="lg:sticky lg:top-20 space-y-6">
+                {/* Agent Card */}
+                <div className="transform transition-all hover:scale-[1.02]">
+                  <AgentCard {...property.agent} />
+                </div>
+
+                {/* Contact Form */}
+                <div
+                  id="contact-form"
+                  className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5 transform transition-all hover:scale-[1.02]"
+                >
+                  <div className="mb-6 space-y-2">
+                    <h2 className="text-xl font-semibold">
+                      ¿Te interesa esta propiedad?
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Agenda una visita o solicita más información. Nuestro
+                      agente te contactará lo antes posible.
+                    </p>
+                  </div>
+                  <ContactForm
+                    propertyTitle={property.title}
+                    propertyId={property.id}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Similar Properties Section */}
+            {similarProperties.length > 0 && (
+              <section className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+                <h2 className="text-xl font-semibold mb-6">
+                  Propiedades similares
+                </h2>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {similarProperties.map((similarProperty) => (
+                    <div
+                      key={similarProperty.id}
+                      className="transform transition-all hover:scale-[1.02]"
                     >
-                      <Image
-                        src={image}
-                        alt={`${property.title} - Imagen ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    </button>
+                      <PropertyCard property={similarProperty} view="grid" />
+                    </div>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </RootLayout>
+              </section>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Full Screen Gallery */}
+      <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+        <DialogContent className="max-w-7xl">
+          <div className="relative aspect-video bg-background/80 backdrop-blur-sm rounded-lg overflow-hidden">
+            <Image
+              src={property.images[selectedImageIndex]}
+              alt={property.title}
+              fill
+              className="object-contain"
+              sizes="(min-width: 1280px) 1200px, 100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-4 top-[50%] -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all"
+              onClick={() =>
+                setSelectedImageIndex((i) =>
+                  i === 0 ? property.images.length - 1 : i - 1
+                )
+              }
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-[50%] -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all"
+              onClick={() =>
+                setSelectedImageIndex((i) =>
+                  i === property.images.length - 1 ? 0 : i + 1
+                )
+              }
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="mt-4">
+            <ScrollArea className="w-full">
+              <div className="flex gap-2 pb-4">
+                {property.images.map((image, index) => (
+                  <button
+                    key={image}
+                    className={cn(
+                      "relative flex-none aspect-[4/3] w-20 overflow-hidden rounded-lg transition-all hover:ring-2 hover:ring-primary/50",
+                      selectedImageIndex === index && "ring-2 ring-primary"
+                    )}
+                    onClick={() => setSelectedImageIndex(index)}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${property.title} - Imagen ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  </button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
-} 
+}

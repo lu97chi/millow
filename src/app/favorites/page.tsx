@@ -6,14 +6,7 @@ import { useFavoritesStore } from "@/store/use-favorites-store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Heart } from "lucide-react";
 
-export default function FavoritesPage() {
-  return (
-    <Suspense fallback={<FavoritesLoading />}>
-      <FavoritesContent />
-    </Suspense>
-  );
-}
-
+// Loading component for the entire page
 function FavoritesLoading() {
   return (
     <div className="flex h-screen flex-col">
@@ -36,6 +29,7 @@ function FavoritesLoading() {
   );
 }
 
+// Main content component
 function FavoritesContent() {
   const favorites = useFavoritesStore((state) => state.favorites);
 
@@ -66,5 +60,16 @@ function FavoritesContent() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Page component with proper Suspense boundaries
+export default function FavoritesPage() {
+  return (
+    <Suspense fallback={<FavoritesLoading />}>
+      <Suspense fallback={<div className="text-center py-12">Loading properties...</div>}>
+        <FavoritesContent />
+      </Suspense>
+    </Suspense>
   );
 } 

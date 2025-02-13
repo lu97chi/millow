@@ -35,10 +35,12 @@ export interface AgentCardProps {
 
 export interface PropertyCardProps {
   property: Property;
+  view?: "grid" | "list";
 }
 
 export interface PropertyGridProps {
   properties: Property[];
+  view?: "grid" | "list";
 }
 
 export interface ShareButtonProps {

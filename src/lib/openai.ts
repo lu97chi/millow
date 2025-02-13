@@ -29,9 +29,11 @@ export async function generateChatResponse(
       model: "gpt-4o-mini",
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 1500,
       response_format: { type: "json_object" },
     });
+
+    console.log("completion", completion.choices[0].message.content);
 
     if (!completion.choices[0].message.content) {
       console.error("Empty response from OpenAI");
@@ -61,7 +63,7 @@ export async function generateChatResponse(
     }
     return {
       message:
-        "Lo siento, hubo un error al procesar tu solicitud. Por favor, verifica que la configuración de OpenAI sea correcta.",
+        "Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta mas tarde.",
     };
   }
 }

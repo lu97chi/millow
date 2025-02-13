@@ -1,6 +1,5 @@
-import type { PropertyFilters } from "@/store/use-search-store";
 import { PROPERTY_TYPES } from "@/server/data/constants";
-import { Property } from "@/types";
+import { Property, PropertyFilters } from "@/types";
 
 // Helper function to find property type value from name
 function getPropertyTypeValue(typeName: string): string | undefined {
@@ -14,23 +13,11 @@ function getPropertyTypeValue(typeName: string): string | undefined {
 
 export function filterProperties(
   properties: Property[],
-  filters: PropertyFilters
+  filters: Partial<PropertyFilters>
 ): Property[] {
   return properties.filter((property) => {
-    // Query text search - must match ALL terms (AND condition)
-    if (filters.query) {
-      const searchTerms = filters.query.toLowerCase().split(" ");
-      const propertyText =
-        `${property.title} ${property.description} ${property.location.state} ${property.location.city} ${property.location.area}`.toLowerCase();
-
-      // All search terms must match
-      if (!searchTerms.every((term) => propertyText.includes(term))) {
-        return false;
-      }
-    }
-
     // Property type - exact match required
-    if (filters.propertyType.length > 0) {
+    if (filters?.propertyType && filters.propertyType.length > 0) {
       const propertyTypeValues = filters.propertyType
         .map((type) => getPropertyTypeValue(type))
         .filter((type): type is string => type !== undefined);
@@ -45,48 +32,39 @@ export function filterProperties(
 
     // Location - exact matching for all fields
     if (
-      filters.location.state &&
-      property.location.state !== filters.location.state
+      filters?.location?.state &&
+      filters.location.state.length > 0 &&
+      !filters.location.state.includes(property.location.state)
     ) {
       return false;
     }
     if (
-      filters.location.city &&
+      filters?.location?.city &&
+      filters.location.city.length > 0 &&
       (!property.location.city ||
-        property.location.city.toLowerCase() !==
-          filters.location.city.toLowerCase())
+        !filters.location.city.includes(property.location.city))
     ) {
       return false;
     }
     if (
-      filters.location.area &&
+      filters?.location?.area &&
+      filters.location.area.length > 0 &&
       (!property.location.area ||
-        property.location.area.toLowerCase() !==
-          filters.location.area.toLowerCase())
+        !filters.location.area.includes(property.location.area))
     ) {
       return false;
     }
 
     // Price range - keep 5% flexibility for negotiation
-    if (
-      typeof filters.priceRange?.min === "number" ||
-      typeof filters.priceRange?.max === "number"
-    ) {
-      const minPrice =
-        typeof filters.priceRange?.min === "number"
-          ? filters.priceRange.min * 0.95
-          : 0; // 5% below minimum
-      const maxPrice =
-        typeof filters.priceRange?.max === "number"
-          ? filters.priceRange.max * 1.05
-          : Infinity; // 5% above maximum
-      if (property.price < minPrice || property.price > maxPrice) {
-        return false;
-      }
+    const minPrice = filters.minPrice ?? 0;
+    const maxPrice = filters.maxPrice ?? Infinity;
+
+    if (property?.price < minPrice * 0.95 || property?.price > maxPrice * 1.05) {
+      return false;
     }
 
     // Features - Exact matching for all features
-    if (filters.features) {
+    if (filters?.features) {
       if (
         typeof filters.features.bedrooms === "number" &&
         (!property.features.bedrooms ||
@@ -95,9 +73,9 @@ export function filterProperties(
         return false;
       }
       if (
-        typeof filters.features.bathrooms === "number" &&
-        (!property.features.bathrooms ||
-          property.features.bathrooms !== filters.features.bathrooms)
+        typeof filters?.features?.bathrooms === "number" &&
+        (!property?.features?.bathrooms ||
+          property?.features?.bathrooms !== filters?.features?.bathrooms)
       ) {
         return false;
       }
@@ -105,50 +83,38 @@ export function filterProperties(
 
     // Construction size - keep 5% flexibility for measurement variations
     if (
-      filters.features.constructionSize &&
-      property.features.constructionSize
+      filters?.features?.constructionSize &&
+      property?.features?.constructionSize
     ) {
-      const minSize =
-        typeof filters.features.constructionSize.min === "number"
-          ? filters.features.constructionSize.min * 0.95
-          : 0;
-      const maxSize =
-        typeof filters.features.constructionSize.max === "number"
-          ? filters.features.constructionSize.max * 1.05
-          : Infinity;
+      const minSize = filters?.features?.constructionSize?.min ?? 0;
+      const maxSize = filters?.features?.constructionSize?.max ?? Infinity;
 
       if (
-        property.features.constructionSize < minSize ||
-        property.features.constructionSize > maxSize
+        property?.features?.constructionSize < minSize * 0.95 ||
+        property?.features?.constructionSize > maxSize * 1.05
       ) {
         return false;
       }
     }
 
     // Lot size - keep 5% flexibility for measurement variations
-    if (filters.features.lotSize && property.features.lotSize) {
-      const minLotSize =
-        typeof filters.features.lotSize.min === "number"
-          ? filters.features.lotSize.min * 0.95
-          : 0;
-      const maxLotSize =
-        typeof filters.features.lotSize.max === "number"
-          ? filters.features.lotSize.max * 1.05
-          : Infinity;
+    if (filters?.features?.lotSize && property?.features?.lotSize) {
+      const minLotSize = filters?.features?.lotSize?.min ?? 0;
+      const maxLotSize = filters?.features?.lotSize?.max ?? Infinity;
 
       if (
-        property.features.lotSize < minLotSize ||
-        property.features.lotSize > maxLotSize
+        property?.features?.lotSize < minLotSize * 0.95 ||
+        property?.features?.lotSize > maxLotSize * 1.05
       ) {
         return false;
       }
     }
 
     // Amenities - exact matching (all requested amenities must be present)
-    if (filters.amenities && filters.amenities.length > 0) {
+    if (filters?.amenities && filters?.amenities?.length > 0) {
       if (
-        !property.amenities ||
-        !filters.amenities.every((amenity) =>
+        !property?.amenities ||
+        !filters?.amenities?.every((amenity) =>
           property.amenities.includes(amenity)
         )
       ) {
@@ -157,26 +123,20 @@ export function filterProperties(
     }
 
     // Property age - exact matching
-    if (typeof filters.propertyAge === "number") {
-      if (property.propertyAge !== filters.propertyAge) {
+    if (typeof filters?.propertyAge === "number") {
+      if (property?.propertyAge !== filters?.propertyAge) {
         return false;
       }
     }
 
     // Maintenance fee - keep 5% flexibility for variations
-    if (filters.maintenanceFee && property.maintenanceFee) {
-      const minFee =
-        typeof filters.maintenanceFee.min === "number"
-          ? filters.maintenanceFee.min * 0.95
-          : 0;
-      const maxFee =
-        typeof filters.maintenanceFee.max === "number"
-          ? filters.maintenanceFee.max * 1.05
-          : Infinity;
+    if (filters?.maintenanceFee && property?.maintenanceFee) {
+      const minFee = filters?.maintenanceFee?.min ?? 0;
+      const maxFee = filters?.maintenanceFee?.max ?? Infinity;
 
       if (
-        property.maintenanceFee < minFee ||
-        property.maintenanceFee > maxFee
+        property?.maintenanceFee < minFee * 0.95 ||
+        property?.maintenanceFee > maxFee * 1.05
       ) {
         return false;
       }
@@ -188,19 +148,19 @@ export function filterProperties(
 
 export function sortProperties(
   properties: Property[],
-  sortBy: PropertyFilters["sortBy"]
+  sortBy?: 'price asc' | 'price desc' | 'age asc' | 'age desc'
 ): Property[] {
   return [...properties].sort((a, b) => {
     switch (sortBy) {
-      case "price-asc":
+      case "price asc":
         return a.price - b.price;
-      case "price-desc":
+      case "price desc":
         return b.price - a.price;
-      case "recent":
+      case "age asc":
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case "age desc":
       default:
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
   });
 }
