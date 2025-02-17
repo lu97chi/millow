@@ -400,33 +400,45 @@ function PropertyFiltersContent({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative w-full max-w-full overflow-hidden", className)}>
       {!hideToggle && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 px-4 sm:px-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsOpen(!isOpen)}
-            className="min-w-[140px]"
+            className="whitespace-nowrap flex-shrink-0"
           >
             <SlidersHorizontal className="mr-2 h-4 w-4" />
-            {isOpen ? "Ocultar filtros" : "Mostrar filtros"}
+            {isOpen ? (
+              <>
+                <span className="hidden sm:inline">Ocultar filtros</span>
+                <span className="sm:hidden">Ocultar</span>
+              </>
+            ) : (
+              <>
+                <span className="hidden sm:inline">Mostrar filtros</span>
+                <span className="sm:hidden">Filtros</span>
+              </>
+            )}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onViewChange?.(view === "grid" ? "list" : "grid")}
-            className="min-w-[120px]"
+            className="whitespace-nowrap flex-shrink-0"
           >
             {view === "grid" ? (
               <>
                 <ListIcon className="mr-2 h-4 w-4" />
-                Ver lista
+                <span className="hidden sm:inline">Ver lista</span>
+                <span className="sm:hidden">Lista</span>
               </>
             ) : (
               <>
                 <LayoutGrid className="mr-2 h-4 w-4" />
-                Ver cuadrícula
+                <span className="hidden sm:inline">Ver cuadrícula</span>
+                <span className="sm:hidden">Cuadrícula</span>
               </>
             )}
           </Button>
@@ -435,15 +447,15 @@ function PropertyFiltersContent({
 
       {showFilters && (
         <motion.div
-          initial={{ x: 420 }}
-          animate={{ x: 0 }}
-          exit={{ x: 420 }}
+          initial={{ opacity: 0, x: "100%" }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: "100%" }}
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
-          className="fixed right-0 top-[64px] bottom-0 w-[400px] border-l bg-background shadow-lg z-40"
+          className="fixed inset-0 z-50 bg-background sm:right-0 sm:left-auto sm:top-[64px] sm:bottom-0 sm:w-[400px] sm:border-l overflow-hidden"
         >
           <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-6 py-4">
+            <div className="flex items-center justify-between border-b px-4 sm:px-6 py-4">
               <div>
                 <h2 className="font-semibold">Filtros</h2>
                 <p className="text-sm text-muted-foreground">
@@ -453,13 +465,14 @@ function PropertyFiltersContent({
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={handleReset}>
                   <X className="mr-2 h-4 w-4" />
-                  Limpiar
+                  <span className="hidden sm:inline">Limpiar</span>
+                  <span className="sm:hidden">Limpiar</span>
                 </Button>
                 {onClose && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 flex-shrink-0"
                     onClick={onClose}
                   >
                     <X className="h-4 w-4" />
@@ -469,20 +482,20 @@ function PropertyFiltersContent({
             </div>
 
             {/* Filters Content */}
-            <ScrollArea className="flex-1 px-6">
-              <div className="space-y-6 py-6">
+            <ScrollArea className="flex-1 w-full">
+              <div className="space-y-6 p-4 sm:p-6 w-full max-w-full">
                 {/* Property Type */}
-                <div className="space-y-4">
+                <div className="space-y-4 w-full">
                   <div className="flex items-center justify-between">
                     <Label>Tipo de propiedad</Label>
                   </div>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-2 w-full">
                     {PROPERTY_TYPES.map((type) => (
                       <Button
                         key={type.value}
                         variant={localFilters.propertyType?.includes(type.value as PropertyTypeName) ? "default" : "outline"}
                         size="sm"
-                        className="justify-start h-auto py-2 whitespace-normal text-left"
+                        className="justify-start h-auto py-2 whitespace-normal text-left w-full"
                         onClick={() => handlePropertyTypeChange(type.value as PropertyTypeName)}
                       >
                         <type.icon className="mr-2 h-4 w-4 shrink-0" />
@@ -812,14 +825,25 @@ function PropertyFiltersContent({
             </ScrollArea>
 
             {/* Footer */}
-            <div className="border-t bg-background p-6">
+            <div className="border-t bg-background p-4 sm:p-6 w-full">
               <Button className="w-full gap-2" onClick={handleApplyFilters}>
                 <SlidersHorizontal className="h-4 w-4" />
-                Aplicar filtros
+                <span className="hidden sm:inline">Aplicar filtros</span>
+                <span className="sm:hidden">Aplicar</span>
               </Button>
             </div>
           </div>
         </motion.div>
+      )}
+
+      {showFilters && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-40 bg-black/20 sm:hidden"
+          onClick={() => setIsOpen(false)}
+        />
       )}
     </div>
   );

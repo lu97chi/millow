@@ -25,19 +25,40 @@ const fontMono = localFont({
   variable: "--font-mono",
 });
 
+
+
 export const metadata: Metadata = {
-  title: "Millow - AI-Powered Real Estate Platform",
+  metadataBase: new URL("https://tuhogar.mx"),
+  title:{
+    default:"Tu Hogar - Encuentra tu hogar",
+    template:"%s Tu Hogar - Encuentra tu hogar",
+  },
+  openGraph:{
+    title:"Tu Hogar - Encuentra tu hogar",
+    type:"website",
+    locale:"es",
+    url:"https://tuhogar.mx/:", 
+    siteName:"tuhogar",
+    images:[
+      {
+        url:"https://tuhogar.mx/logo.png",
+        width:32,
+        height:32,
+        alt:"Tu Hogar",
+      }
+    ]
+  },
   description:
-    "Find your perfect property in Mexico with our AI-powered real estate platform.",
+    "Encuentra tu hogar ideal en México con nuestra plataforma inmobiliaria impulsada por IA.",
   keywords: [
-    "real estate",
+    "inmobiliaria",
     "mexico",
-    "property",
+    "propiedad",
     "AI",
     "chat",
-    "search",
-    "buy",
-    "rent",
+    "buscar",
+    "comprar",
+    "alquilar",
   ],
 };
 

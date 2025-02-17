@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
       "source.unsplash.com",
       "images.unsplash.com",
       "i.pravatar.cc",
-      "img10.naventcdn.com"
+      "img10.naventcdn.com",
+      "tuhogar.mx"
     ],
   },
   experimental: {
