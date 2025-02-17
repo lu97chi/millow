@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { LayoutGrid, List } from "lucide-react";
 import Link from "next/link";
 import { Amenity, OperationType, PropertyFilters, PropertyTypeName, PropertyEntityType, PropertyStatus, Property } from "@/types";
+//import { Metadata } from "next";
 
 // Valid view modes
 const VALID_VIEW_MODES = ['grid', 'list'] as const;
@@ -287,16 +288,16 @@ function PropertiesContent() {
           <PropertySort />
         </div>
       </div>
-
+  
       {/* Properties Grid */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
         <main className="md:col-span-12">
           {paginatedProperties.length > 0 ? (
-            <div 
-              className={view === 'grid' ? "grid gap-8 sm:grid-cols-2 lg:grid-cols-3" : "space-y-8"}
-              role="region"
-              aria-label="Lista de propiedades"
-            >
+             <div 
+             className={view === 'grid' ? "grid gap-8 sm:grid-cols-2 lg:grid-cols-3" : "space-y-8"}
+             role="region"
+             aria-label="Lista de propiedades"
+           >
               {paginatedProperties.map((property) => (
                 <PropertyCard 
                   key={property.id} 
@@ -312,10 +313,10 @@ function PropertiesContent() {
               </p>
             </div>
           )}
-
+  
           {/* Pagination */}
           {totalPages > 1 && (
-            <nav className="mt-8 flex justify-center gap-2" aria-label="Paginación">
+           <nav className="mt-8 flex justify-center gap-2" aria-label="Paginación">
               {page > 1 && (
                 <Button variant="outline" size="lg" asChild>
                   <Link 
@@ -342,7 +343,15 @@ function PropertiesContent() {
       </div>
     </div>
   );
+  
 }
+// Metadata page property
+/*
+export const metadata: Metadata = {
+title:"Properties",
+description:"Encuentra las mejores propiedades en Mexico",
+}
+*/
 
 // Main page component with Suspense boundary
 export default function PropertiesPage() {

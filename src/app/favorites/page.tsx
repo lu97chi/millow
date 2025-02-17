@@ -5,7 +5,13 @@ import { PropertyGrid } from "@/components/properties/property-grid";
 import { useFavoritesStore } from "@/store/use-favorites-store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Heart } from "lucide-react";
+//import { Metadata } from "next";
 
+
+/*export const metadata: Metadata = {
+  title:"Favoritos",
+  description:"Mis propiedades favoritas",
+}*/
 // Loading component for the entire page
 function FavoritesLoading() {
   return (

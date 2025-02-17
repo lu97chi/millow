@@ -25,7 +25,7 @@ export function RootLayout({ children }: RootLayoutProps) {
         <Header />
         <div className="flex-1 flex">
           <main className={cn(
-            "flex-1",
+            "flex-1 relative z-0",
             showChat && "lg:pr-[350px]" // Only add padding on desktop
           )}>
             {children}
@@ -33,7 +33,7 @@ export function RootLayout({ children }: RootLayoutProps) {
           {showChat && (
             <>
               {/* Desktop Chat Sidebar */}
-              <div className="fixed right-0 top-[64px] bottom-0 w-[350px] border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden lg:block">
+              <div className="fixed right-0 top-[64px] bottom-0 w-[350px] border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden lg:block z-50">
                 <ChatUI />
               </div>
 
@@ -43,7 +43,7 @@ export function RootLayout({ children }: RootLayoutProps) {
                 <button
                   onClick={() => setIsChatOpen(!isChatOpen)}
                   className={cn(
-                    "fixed bottom-4 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-50",
+                    "fixed bottom-4 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-[100]",
                     isChatOpen && "opacity-0 pointer-events-none"
                   )}
                 >
@@ -52,7 +52,7 @@ export function RootLayout({ children }: RootLayoutProps) {
 
                 {/* Mobile Chat Panel */}
                 <div className={cn(
-                  "fixed right-4 bottom-20 w-[calc(100vw-32px)] sm:w-[450px] h-[600px] max-h-[85vh] bg-background rounded-lg shadow-lg border transition-all duration-200 z-50",
+                  "fixed right-4 bottom-20 w-[calc(100vw-32px)] sm:w-[450px] h-[600px] max-h-[85vh] bg-background rounded-lg shadow-lg border transition-all duration-200 z-[100]",
                   isChatOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
                 )}>
                   {/* Chat Header with Close Button */}

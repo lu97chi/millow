@@ -36,13 +36,38 @@ import {
 import Image from "next/image";
 import { use, useEffect, useState } from "react";
 import { useProperty } from "@/providers/property-context";
-
+//import { Metadata } from "next";
+//import { Params } from "next/dist/server/request/params";
 interface PropertyPageProps {
   params: Promise<{ id: string }>;
 }
 
+/* export const metadata: Metadata = { 
+  title:"Detalles de la propiedad",
+
+}
+
+export async function generateMetadata({id}:Params){
+  return{
+    title:`Propiedad${id}`,
+    description:`Detalles de la propiedad: ${id}`,
+    openGraph:{
+      title: `Propiedad ${id}`,
+      description: `Propiedades de ${id}`,
+      type: "website",
+      locale: "es",
+      url: `https://tuhogar.mx/properties/${id}`,
+      siteName: "Tu Hogar",
+      images: [
+        
+      ]
+  }
+}
+}
+ */
+
 // Helper function to fetch property by ID
-async function fetchPropertyById(id: string): Promise<Property> {
+ async function fetchPropertyById(id: string): Promise<Property> {
   const propertyService = PropertyService.getInstance();
   const properties = await propertyService.getProperties({ id });
   if (!properties.length) {
@@ -143,68 +168,66 @@ export default function PropertyPage({ params }: PropertyPageProps) {
   return (
     <div className="flex-1 flex flex-col">
       {/* Hero Section */}
-      <section className="relative h-[60vh] lg:h-[75vh] bg-muted">
+      <section className="relative h-[50vh] sm:h-[70vh] lg:h-[75vh] bg-muted">
         <Image
           src={property.images[selectedImageIndex]}
           alt={property.title}
           fill
           className="object-cover"
           priority
-          sizes="100vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
 
         {/* Image Navigation */}
         <div className="absolute inset-x-0 bottom-4">
-          <div className="container">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="relative">
-                <ScrollArea className="w-full pb-4">
-                  <div className="flex gap-2">
-                    {property.images.map((image, index) => (
-                      <button
-                        key={image}
-                        className={cn(
-                          "group relative flex-none aspect-[4/3] w-28 overflow-hidden rounded-md transition",
-                          selectedImageIndex === index && "ring-2 ring-primary"
-                        )}
-                        onClick={() => setSelectedImageIndex(index)}
-                      >
-                        <Image
-                          src={image}
-                          alt={`${property.title} - Imagen ${index + 1}`}
-                          fill
-                          className="object-cover transition-transform group-hover:scale-105"
-                          sizes="112px"
-                        />
-                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
-                      </button>
-                    ))}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="absolute right-0 top-0 gap-2 bg-background/95 backdrop-blur-sm"
-                  onClick={() => setIsGalleryOpen(true)}
-                >
-                  <Maximize2 className="h-4 w-4" />
-                  Ver galería
-                </Button>
-              </div>
+          <div className="container px-4 sm:px-6">
+            <div className="relative">
+              <ScrollArea className="w-full pb-4">
+                <div className="flex gap-2">
+                  {property.images.map((image, index) => (
+                    <button
+                      key={image}
+                      className={cn(
+                        "group relative flex-none aspect-[4/3] w-20 sm:w-28 overflow-hidden rounded-md transition",
+                        selectedImageIndex === index && "ring-2 ring-primary"
+                      )}
+                      onClick={() => setSelectedImageIndex(index)}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${property.title} - Imagen ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                        sizes="(max-width: 640px) 80px, 112px"
+                      />
+                      <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                    </button>
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute right-0 top-0 gap-2 bg-background/95 backdrop-blur-sm hidden sm:flex"
+                onClick={() => setIsGalleryOpen(true)}
+              >
+                <Maximize2 className="h-4 w-4" />
+                Ver galería
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Content */}
-      <main className="flex-1 container pb-8 -mt-16 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 w-full overflow-hidden">
+        <div className="container max-w-full px-4 sm:px-6 pb-8 -mt-16 relative z-10">
           <div className="space-y-6">
             {/* Main Info Card */}
-            <div className="rounded-xl bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="rounded-xl bg-background p-4 sm:p-6 shadow-lg ring-1 ring-gray-900/5 w-full max-w-full">
+              <div className="flex flex-col gap-4">
                 <div className="space-y-2 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className="text-sm">
@@ -219,18 +242,18 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                         : `${property.propertyAge} años`}
                     </Badge>
                   </div>
-                  <h1 className="text-2xl font-semibold sm:text-3xl truncate">
+                  <h1 className="text-xl sm:text-2xl font-semibold lg:text-3xl break-words pt-4">
                     {property.title}
                   </h1>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">
+                    <span className="text-sm sm:text-base break-words">
                       {property.location.area}, {property.location.city}
                     </span>
                   </div>
                 </div>
-                <div className="lg:text-right flex-shrink-0">
-                  <p className="text-3xl font-bold">
+                <div className="lg:text-right">
+                  <p className="text-2xl sm:text-3xl font-bold">
                     {formatPrice(property.price)}
                   </p>
                   {property.maintenanceFee && property.maintenanceFee > 0 && (
@@ -243,33 +266,36 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
               {/* Quick Actions */}
               <div className="mt-6 flex flex-wrap gap-2">
-                <Button className="gap-2" asChild>
+                <Button className="gap-2 flex-1 sm:flex-none" asChild>
                   <a href={`tel:${property.agent.phone}`}>
                     <Phone className="h-4 w-4" />
-                    Llamar al agente
+                    <span className="hidden sm:inline">Llamar al agente</span>
+                    <span className="sm:hidden">Llamar</span>
                   </a>
                 </Button>
-                <Button variant="outline" className="gap-2" asChild>
+                <Button variant="outline" className="gap-2 flex-1 sm:flex-none" asChild>
                   <a href={`mailto:${property.agent.email}`}>
                     <Mail className="h-4 w-4" />
-                    Enviar email
+                    <span className="hidden sm:inline">Enviar email</span>
+                    <span className="sm:hidden">Email</span>
                   </a>
                 </Button>
                 <Button
                   variant="outline"
-                  className="gap-2"
+                  className="gap-2 flex-1 sm:flex-none"
                   onClick={() => {
                     const contactForm = document.getElementById("contact-form");
                     contactForm?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Agendar visita
+                  <span className="hidden sm:inline">Agendar visita</span>
+                  <span className="sm:hidden">Agendar</span>
                 </Button>
               </div>
 
               {/* Key Features Grid */}
-              <div className="mt-8 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="mt-8 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
                 {property.features.bedrooms !== null &&
                   property.features.bedrooms !== 0 && (
                     <div className="flex items-center gap-3 rounded-lg border p-4">
@@ -480,15 +506,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
             {/* Similar Properties Section */}
             {similarProperties.length > 0 && (
-              <section className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
+              <section className="rounded-lg bg-background p-4 sm:p-6 shadow-lg ring-1 ring-gray-900/5 w-full max-w-full overflow-hidden">
                 <h2 className="text-xl font-semibold mb-6">
                   Propiedades similares
                 </h2>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
                   {similarProperties.map((similarProperty) => (
                     <div
                       key={similarProperty.id}
-                      className="transform transition-all hover:scale-[1.02]"
+                      className="transform transition-all hover:scale-[1.02] w-full"
                     >
                       <PropertyCard property={similarProperty} view="grid" />
                     </div>
@@ -502,14 +528,14 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
       {/* Full Screen Gallery */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-        <DialogContent className="max-w-7xl">
-          <div className="relative aspect-video bg-background/80 backdrop-blur-sm rounded-lg overflow-hidden">
+        <DialogContent className="max-w-7xl w-full p-0 sm:p-6 mx-auto">
+          <div className="relative aspect-[3/4] sm:aspect-video bg-background/80 backdrop-blur-sm rounded-lg overflow-hidden">
             <Image
               src={property.images[selectedImageIndex]}
               alt={property.title}
               fill
               className="object-contain"
-              sizes="(min-width: 1280px) 1200px, 100vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
             <Button
@@ -537,14 +563,14 @@ export default function PropertyPage({ params }: PropertyPageProps) {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 px-4 sm:px-0 w-full max-w-full overflow-hidden">
             <ScrollArea className="w-full">
               <div className="flex gap-2 pb-4">
                 {property.images.map((image, index) => (
                   <button
                     key={image}
                     className={cn(
-                      "relative flex-none aspect-[4/3] w-20 overflow-hidden rounded-lg transition-all hover:ring-2 hover:ring-primary/50",
+                      "relative flex-none aspect-[4/3] w-16 sm:w-20 overflow-hidden rounded-lg transition-all hover:ring-2 hover:ring-primary/50",
                       selectedImageIndex === index && "ring-2 ring-primary"
                     )}
                     onClick={() => setSelectedImageIndex(index)}
@@ -554,7 +580,7 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                       alt={`${property.title} - Imagen ${index + 1}`}
                       fill
                       className="object-cover"
-                      sizes="80px"
+                      sizes="(max-width: 640px) 64px, 80px"
                     />
                   </button>
                 ))}

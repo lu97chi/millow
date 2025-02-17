@@ -29,7 +29,7 @@ export const useFavoritesStore = create<FavoritesStore>()(
       },
     }),
     {
-      name: "millow-favorites",
+      name: "Tu Hogar - Favoritos",
     }
   )
 ); 
