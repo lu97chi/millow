@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PropertyService } from "@/server/services/property-service";
-import { PropertyTypeName, OperationType, Amenity } from "@/types";
+import { PropertyTypeName, OperationType, Amenity, Property } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,11 +57,16 @@ export async function GET(request: NextRequest) {
     // Get properties with filters
     let properties = await propertyService.getProperties(filters);
 
-    console.log('API Route: Found properties count:', properties.length);
+    console.log('API Route: Found properties count:', properties.properties.length);
 
     // Exclude specific property if requested
     if (excludeId) {
-      properties = properties.filter(p => p.id !== excludeId);
+      const filteredProperties = properties.properties.filter((p: Property) => p.id !== excludeId);
+      properties = {
+        ...properties,
+        properties: filteredProperties,
+        total: filteredProperties.length
+      };
     }
 
     // Get pagination parameters
@@ -71,11 +76,13 @@ export async function GET(request: NextRequest) {
     const endIndex = startIndex + limit;
 
     // Get paginated results
-    const paginatedProperties = properties.slice(startIndex, endIndex);
+    const paginatedProperties = properties.properties.slice(startIndex, endIndex);
 
     return NextResponse.json({
       properties: paginatedProperties,
-      total: properties.length,
+      total: properties.total,
+      page: page,
+      pageSize: limit,
       filters: filters
     });
   } catch (error) {

@@ -1,8 +1,11 @@
 import type {
   Property,
-  PropertyFilters
+  PropertyFilters,
+  PaginatedProperties
 } from "@/types";
-import { ALL_PROPERTIES } from "../data/guadalajara";
+import { 
+  ALL_PROPERTIES
+} from "../data/properties";
 
 // Initialize properties once
 const PROPERTIES = ALL_PROPERTIES;
@@ -34,9 +37,12 @@ export class PropertyService {
 
   public async getProperties(
     filters: Partial<PropertyFilters> = {}
-  ): Promise<Property[]> {
+  ): Promise<PaginatedProperties> {
     console.log('Initial properties count:', this.properties.length);
+    
+    // Start with the complete dataset
     let filteredProperties = [...this.properties];
+
     console.log('Initial filters:', filters);
 
     // ID filter
@@ -257,7 +263,24 @@ export class PropertyService {
     }
 
     console.log('Final filtered properties count:', filteredProperties.length);
-    return filteredProperties;
+
+    // Get total count before pagination
+    const total = filteredProperties.length;
+
+    // Apply pagination
+    const page = filters.page || 1;
+    const pageSize = filters.pageSize || 30;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    
+    filteredProperties = filteredProperties.slice(start, end);
+
+    return {
+      properties: filteredProperties,
+      total,
+      page,
+      pageSize
+    };
   }
 
   public async getPropertyTypes(): Promise<{ value: string; count: number }[]> {

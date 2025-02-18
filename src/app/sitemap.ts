@@ -7,7 +7,8 @@ export default async function siteMap(): Promise<MetadataRoute.Sitemap> {
     async function fetchProperties(): Promise<Property[]> {
         try {
             const propertyService = PropertyService.getInstance();
-            return await propertyService.getProperties({status:["available"]}); 
+            const result = await propertyService.getProperties({status:["available"]});
+            return result.properties;
         } catch (error) {
             console.error("Error fetching properties for sitemap:", error);
             return [];

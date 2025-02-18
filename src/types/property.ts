@@ -203,4 +203,13 @@ export interface PropertyFilters {
   }[];
   viewMode?: "grid" | "list";
   sortBy?: 'price asc' | 'price desc' | 'age asc' | 'age desc';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedProperties {
+  properties: Property[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

@@ -24,6 +24,7 @@ export type {
   PropertyTypeName,
   PropertyTypeValue,
   StateType,
+  PaginatedProperties
 } from "./property";
 export type {
   ContactFormProps,

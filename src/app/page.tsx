@@ -277,7 +277,7 @@ export default async function HomePage() {
                     <div key={location.area} className="flex items-center justify-between">
                       <span className="text-sm">{location.area}</span>
                       <Badge variant="secondary">
-                        {formatCurrency(location.averagePrice)}
+                        {formatCurrency(location.averagePrice || 0)}
                       </Badge>
                     </div>
                   ))}

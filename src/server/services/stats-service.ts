@@ -1,11 +1,12 @@
-import { ALL_STATS, type PropertyStats } from "../data/stats";
+import { type PropertyStats } from "@/server/data/properties/stats";
+import { PROPERTY_STATS } from "@/server/data/properties/stats";
 
 export class StatsService {
   private static instance: StatsService;
   private stats: PropertyStats;
 
   private constructor() {
-    this.stats = ALL_STATS;
+    this.stats = PROPERTY_STATS;
   }
 
   public static getInstance(): StatsService {

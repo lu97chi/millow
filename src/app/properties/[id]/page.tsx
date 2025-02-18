@@ -67,13 +67,13 @@ export async function generateMetadata({id}:Params){
  */
 
 // Helper function to fetch property by ID
- async function fetchPropertyById(id: string): Promise<Property> {
+async function fetchPropertyById(id: string): Promise<Property> {
   const propertyService = PropertyService.getInstance();
   const properties = await propertyService.getProperties({ id });
-  if (!properties.length) {
+  if (!properties.properties.length) {
     throw new Error("Property not found");
   }
-  return properties[0];
+  return properties.properties[0];
 }
 
 // Helper function to fetch similar properties
@@ -88,7 +88,7 @@ async function fetchSimilarProperties(
     minPrice: price * 0.8,
     maxPrice: price * 1.2,
   });
-  return properties.filter((p) => p.id !== id).slice(0, 3);
+  return properties.properties.filter((p: Property) => p.id !== id).slice(0, 3);
 }
 
 export default function PropertyPage({ params }: PropertyPageProps) {
@@ -175,7 +175,9 @@ export default function PropertyPage({ params }: PropertyPageProps) {
           fill
           className="object-cover"
           priority
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
+          sizes="100vw"
+          quality={85}
+          unoptimized={false}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
 
@@ -200,6 +202,9 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                         fill
                         className="object-cover transition-transform group-hover:scale-105"
                         sizes="(max-width: 640px) 80px, 112px"
+                        loading="lazy"
+                        quality={85}
+                        unoptimized={false}
                       />
                       <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                     </button>
@@ -535,7 +540,10 @@ export default function PropertyPage({ params }: PropertyPageProps) {
               alt={property.title}
               fill
               className="object-contain"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
+              sizes="100vw"
+              quality={85}
+              unoptimized={false}
+              priority={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
             <Button
@@ -581,6 +589,9 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                       fill
                       className="object-cover"
                       sizes="(max-width: 640px) 64px, 80px"
+                      loading="lazy"
+                      quality={85}
+                      unoptimized={false}
                     />
                   </button>
                 ))}

@@ -8,7 +8,6 @@ import { PropertyStats } from "@/components/properties/property-stats";
 import { PropertySort } from "@/components/properties/property-sort";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List } from "lucide-react";
-import Link from "next/link";
 import { Amenity, OperationType, PropertyFilters, PropertyTypeName, PropertyEntityType, PropertyStatus, Property } from "@/types";
 //import { Metadata } from "next";
 
@@ -27,26 +26,13 @@ function getSearchParamNumber(params: URLSearchParams, key: string): number | un
   return value ? Number(value) : undefined;
 }
 
-// Helper to create URL search params
-function createSearchParams(
-  currentParams: URLSearchParams,
-  newParams: Record<string, string | number>
-): string {
-  const params = new URLSearchParams(currentParams);
-  
-  // Add new params
-  Object.entries(newParams).forEach(([key, value]) => {
-    if (value !== undefined) {
-      params.set(key, String(value));
-    }
-  });
-
-  return params.toString();
-}
-
 // Helper to parse search params into filters
 function parseFilters(searchParams: URLSearchParams): Partial<PropertyFilters> {
   const filters: Partial<PropertyFilters> = {};
+
+  // Add pagination parameters
+  filters.page = getSearchParamNumber(searchParams, 'page') || 1;
+  filters.pageSize = 30;
 
   // Basic filters
   const id = getSearchParam(searchParams, 'id');
@@ -174,64 +160,49 @@ function parseFilters(searchParams: URLSearchParams): Partial<PropertyFilters> {
 
 // Separate the content into its own component
 function PropertiesContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
-  const [paginatedProperties, setPaginatedProperties] = useState<Property[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const limit = 20;
-
-  // Get page and view parameters
-  const page = Math.max(1, Number(getSearchParamNumber(searchParams, 'page')) || 1);
-  const viewParam = getSearchParam(searchParams, 'view');
-  const view = typeof viewParam === 'string' && VALID_VIEW_MODES.includes(viewParam as ViewMode)
-    ? viewParam as ViewMode
-    : 'grid';
+  const [totalProperties, setTotalProperties] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const viewParam = searchParams.get('view');
+    return typeof viewParam === 'string' && VALID_VIEW_MODES.includes(viewParam as ViewMode)
+      ? viewParam as ViewMode
+      : 'grid';
+  });
 
   useEffect(() => {
     async function loadProperties() {
+      setLoading(true);
       try {
-        setLoading(true);
         const filters = parseFilters(searchParams);
-        console.log('Applied filters:', filters);
-        
         const propertyService = PropertyService.getInstance();
-        const results = await propertyService.getProperties(filters);
-        console.log('Results from service:', results);
-        
-        setProperties(results);
-        
-        // Handle pagination
-        const total = results.length;
-        console.log('Total properties:', total);
-        
-        const pages = Math.ceil(total / limit);
-        setTotalPages(pages);
-
-        // Validate page number
-        if (page > pages && total > 0) {
-          const params = createSearchParams(searchParams, { page: pages });
-          router.replace(`/properties?${params}`);
-          return;
-        }
-
-        // Set paginated properties
-        const paginatedResults = results.slice((page - 1) * limit, page * limit);
-        console.log('Paginated results:', paginatedResults);
-        setPaginatedProperties(paginatedResults);
-        setError(null);
-      } catch (err) {
-        console.error('Error loading properties:', err);
-        setError('Error loading properties. Please try again.');
+        const { properties: loadedProperties, total } = await propertyService.getProperties(filters);
+        setProperties(loadedProperties);
+        setTotalProperties(total);
+      } catch (error) {
+        console.error('Error loading properties:', error);
       } finally {
         setLoading(false);
       }
     }
 
     loadProperties();
-  }, [searchParams, page, router]);
+  }, [searchParams]);
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    router.push(`/properties?${params.toString()}`);
+  };
+
+  const handleViewChange = (newView: ViewMode) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('view', newView);
+    router.push(`/properties?${params.toString()}`);
+    setViewMode(newView);
+  };
 
   if (loading) {
     return (
@@ -243,46 +214,32 @@ function PropertiesContent() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container py-8">
-        <div className="flex min-h-[400px] items-center justify-center">
-          <p className="text-red-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container py-8">
+    <div className="container mx-auto px-4 py-8">
       {/* Stats and View Toggle */}
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <PropertyStats properties={paginatedProperties} total={properties.length} />
+        <PropertyStats properties={properties} total={totalProperties} />
         <div className="flex items-center gap-4">
           <div className="flex items-center rounded-lg border p-1" role="group" aria-label="Cambiar vista">
             <Button
-              variant={view === 'grid' ? 'default' : 'ghost'}
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="sm"
               className="h-8 w-8 p-0"
-              asChild
+              onClick={() => handleViewChange('grid')}
               aria-label="Vista en cuadrícula"
-              aria-pressed={view === 'grid'}
+              aria-pressed={viewMode === 'grid'}
             >
-              <Link href={`/properties?${createSearchParams(searchParams, { view: 'grid' })}`}>
-                <LayoutGrid className="h-4 w-4" />
-              </Link>
+              <LayoutGrid className="h-4 w-4" />
             </Button>
             <Button
-              variant={view === 'list' ? 'default' : 'ghost'}
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
               className="h-8 w-8 p-0"
-              asChild
+              onClick={() => handleViewChange('list')}
               aria-label="Vista en lista"
-              aria-pressed={view === 'list'}
+              aria-pressed={viewMode === 'list'}
             >
-              <Link href={`/properties?${createSearchParams(searchParams, { view: 'list' })}`}>
-                <List className="h-4 w-4" />
-              </Link>
+              <List className="h-4 w-4" />
             </Button>
           </div>
           <PropertySort />
@@ -292,17 +249,17 @@ function PropertiesContent() {
       {/* Properties Grid */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
         <main className="md:col-span-12">
-          {paginatedProperties.length > 0 ? (
+          {properties.length > 0 ? (
              <div 
-             className={view === 'grid' ? "grid gap-8 sm:grid-cols-2 lg:grid-cols-3" : "space-y-8"}
+             className={viewMode === 'grid' ? "grid gap-8 sm:grid-cols-2 lg:grid-cols-3" : "space-y-8"}
              role="region"
              aria-label="Lista de propiedades"
            >
-              {paginatedProperties.map((property) => (
+              {properties.map((property) => (
                 <PropertyCard 
                   key={property.id} 
                   property={property}
-                  view={view}
+                  view={viewMode}
                 />
               ))}
             </div>
@@ -315,35 +272,31 @@ function PropertiesContent() {
           )}
   
           {/* Pagination */}
-          {totalPages > 1 && (
-           <nav className="mt-8 flex justify-center gap-2" aria-label="Paginación">
-              {page > 1 && (
-                <Button variant="outline" size="lg" asChild>
-                  <Link 
-                    href={`/properties?${createSearchParams(searchParams, { page: page - 1 })}`}
-                    aria-label={`Ir a la página ${page - 1}`}
-                  >
-                    Anterior
-                  </Link>
-                </Button>
-              )}
-              {page < totalPages && (
-                <Button variant="outline" size="lg" asChild>
-                  <Link 
-                    href={`/properties?${createSearchParams(searchParams, { page: page + 1 })}`}
-                    aria-label={`Ir a la página ${page + 1}`}
-                  >
-                    Siguiente
-                  </Link>
-                </Button>
-              )}
-            </nav>
+          {totalProperties > 0 && (
+           <div className="mt-8 flex justify-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(Math.max(1, (parseFilters(searchParams).page || 1) - 1))}
+                disabled={parseFilters(searchParams).page === 1}
+              >
+                Previous
+              </Button>
+              <span className="py-2 px-4">
+                Page {parseFilters(searchParams).page || 1} of {Math.ceil(totalProperties / 30)}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange((parseFilters(searchParams).page || 1) + 1)}
+                disabled={(parseFilters(searchParams).page || 1) >= Math.ceil(totalProperties / 30)}
+              >
+                Next
+              </Button>
+            </div>
           )}
         </main>
       </div>
     </div>
   );
-  
 }
 // Metadata page property
 /*
