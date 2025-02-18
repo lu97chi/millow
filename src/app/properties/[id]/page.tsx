@@ -3,6 +3,7 @@
 import { AgentCard } from "@/components/properties/agent-card";
 import { ContactForm } from "@/components/properties/contact-form";
 import { PropertyCard } from "@/components/properties/property-card";
+import { PropertyImage } from "@/components/properties/property-image";
 import { PropertyMap } from "@/components/properties/property-map";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,6 @@ import {
   Ruler,
   Trees
 } from "lucide-react";
-import Image from "next/image";
 import { use, useEffect, useState } from "react";
 import { useProperty } from "@/providers/property-context";
 //import { Metadata } from "next";
@@ -169,15 +169,12 @@ export default function PropertyPage({ params }: PropertyPageProps) {
     <div className="flex-1 flex flex-col">
       {/* Hero Section */}
       <section className="relative h-[50vh] sm:h-[70vh] lg:h-[75vh] bg-muted">
-        <Image
+        <PropertyImage
           src={property.images[selectedImageIndex]}
           alt={property.title}
           fill
           className="object-cover"
           priority
-          sizes="100vw"
-          quality={85}
-          unoptimized={false}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
 
@@ -196,15 +193,11 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                       )}
                       onClick={() => setSelectedImageIndex(index)}
                     >
-                      <Image
+                      <PropertyImage
                         src={image}
                         alt={`${property.title} - Imagen ${index + 1}`}
                         fill
                         className="object-cover transition-transform group-hover:scale-105"
-                        sizes="(max-width: 640px) 80px, 112px"
-                        loading="lazy"
-                        quality={85}
-                        unoptimized={false}
                       />
                       <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                     </button>
@@ -535,14 +528,11 @@ export default function PropertyPage({ params }: PropertyPageProps) {
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-7xl w-full p-0 sm:p-6 mx-auto">
           <div className="relative aspect-[3/4] sm:aspect-video bg-background/80 backdrop-blur-sm rounded-lg overflow-hidden">
-            <Image
+            <PropertyImage
               src={property.images[selectedImageIndex]}
               alt={property.title}
               fill
               className="object-contain"
-              sizes="100vw"
-              quality={85}
-              unoptimized={false}
               priority={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
@@ -583,15 +573,11 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                     )}
                     onClick={() => setSelectedImageIndex(index)}
                   >
-                    <Image
+                    <PropertyImage
                       src={image}
                       alt={`${property.title} - Imagen ${index + 1}`}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 640px) 64px, 80px"
-                      loading="lazy"
-                      quality={85}
-                      unoptimized={false}
                     />
                   </button>
                 ))}
