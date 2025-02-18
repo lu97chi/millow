@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
       "images.unsplash.com",
       "i.pravatar.cc",
       "img10.naventcdn.com",
-      "tuhogar.mx"
     ],
   },
   experimental: {

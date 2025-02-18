@@ -364,4 +364,10 @@ export class PropertyService {
       sizeRange: stats.sizeRange,
     };
   }
+
+  public async getPropertiesByLocation(area: string): Promise<Property[]> {
+    return this.properties.filter(
+      (property) => property.location.area.toLowerCase() === area.toLowerCase()
+    );
+  }
 }

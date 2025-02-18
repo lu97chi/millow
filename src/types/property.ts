@@ -32,7 +32,11 @@ export type PropertyTypeName =
   | "Bodegas comerciales"
   | "Locales en centro comercial"
   | "Departamentos"
-  | "Casas en condominio";
+  | "Casas en condominio"
+  | 'Desarrollos horizontales'
+  | 'Naves industriales'
+  | 'Terrenos comerciales'
+  | 'Terrenos'
 
 export type OperationType = "Venta" | "Renta" | "Desarrollo";
 export type PropertyStatus = "available" | "sold" | "rented";
