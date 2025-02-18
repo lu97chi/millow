@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -14,6 +13,7 @@ import { useFavoritesStore } from "@/store/use-favorites-store";
 import { cn } from "@/lib/utils";
 import { ShareButton } from "@/components/properties/share-button";
 import { BedDouble, Bath, Ruler, Trees } from "lucide-react";
+import { PropertyImage } from "@/components/properties/property-image";
 
 export function PropertyCard({ property, view = "grid" }: PropertyCardProps) {
   const {
@@ -49,12 +49,12 @@ export function PropertyCard({ property, view = "grid" }: PropertyCardProps) {
         <Link href={`/properties/${id}`} className="flex">
           {/* Image Section */}
           <div className="relative w-[240px] flex-none">
-            <Image
+            <PropertyImage
               src={images[0]}
               alt={title}
               fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="240px"
+              className="transition-transform group-hover:scale-105"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <Badge
@@ -171,16 +171,12 @@ export function PropertyCard({ property, view = "grid" }: PropertyCardProps) {
             : "md:w-[300px] aspect-[4/3] md:aspect-auto"
         )}
       >
-        <Image
+        <PropertyImage
           src={images[0]}
           alt={title}
           fill
-          className="object-cover transition-transform group-hover:scale-105"
-          sizes={
-            view === "grid"
-              ? "(min-width: 1280px) 400px, (min-width: 780px) 320px, 100vw"
-              : "300px"
-          }
+          className="transition-transform group-hover:scale-105"
+          priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/0" />
         <Button

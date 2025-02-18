@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { PropertyService } from "@/server/services/property-service";
 import { StatsService } from "@/server/services/stats-service";
 import { PropertyCard } from "@/components/properties/property-card";
+import { PropertyImage } from "@/components/properties/property-image";
 import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Property } from "@/types";
@@ -229,11 +230,11 @@ export default async function HomePage() {
                   href={`/properties?area=${encodeURIComponent(locationData.area)}`}
                   className="group relative aspect-[4/3] overflow-hidden rounded-lg"
                 >
-                  <Image
-                    src={locationData.property?.images[0] || '/placeholder-property.jpg'}
+                  <PropertyImage
+                    src={locationData.property?.images[0]}
                     alt={locationData.area}
                     fill
-                    className="object-cover transition-transform group-hover:scale-105"
+                    className="transition-transform group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
