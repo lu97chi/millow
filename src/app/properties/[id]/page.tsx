@@ -166,53 +166,89 @@ export default function PropertyPage({ params }: PropertyPageProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative h-[50vh] sm:h-[70vh] lg:h-[75vh] bg-muted">
-        <PropertyImage
-          src={property.images[selectedImageIndex]}
-          alt={property.title}
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
+      <section className="relative h-[65vh] sm:h-[80vh] xl:h-[85vh] bg-muted">
+        <div className="absolute inset-0">
+          <div className="relative h-full w-full overflow-hidden">
+            <PropertyImage
+              src={property.images[selectedImageIndex]}
+              alt={property.title}
+              fill
+              className="object-cover transition-opacity duration-500"
+              priority
+            />
+            {/* Multiple layered gradients for a more sophisticated look */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
+          </div>
+        </div>
+
+        {/* Content overlay with property title */}
+        <div className="absolute inset-x-0 bottom-40 sm:bottom-48">
+          <div className="container px-4 sm:px-6 max-w-7xl mx-auto">
+            <div className="max-w-3xl space-y-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary" className="text-sm font-medium px-3 py-1">
+                  {property.operationType}
+                </Badge>
+                <Badge variant="outline" className="text-sm bg-background/80 backdrop-blur-sm px-3 py-1">
+                  {property.propertyType}
+                </Badge>
+              </div>
+              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white drop-shadow-lg tracking-tight">
+                {property.title}
+              </h1>
+              <div className="flex items-center gap-3 text-white/90">
+                <MapPin className="h-5 w-5 flex-shrink-0" />
+                <span className="text-lg sm:text-xl font-medium drop-shadow-lg">
+                  {property.location.area}, {property.location.city}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Image Navigation */}
-        <div className="absolute inset-x-0 bottom-4">
-          <div className="container px-4 sm:px-6">
+        <div className="absolute inset-x-0 bottom-6 sm:bottom-10">
+          <div className="container px-4 sm:px-6 max-w-7xl mx-auto">
             <div className="relative">
-              <ScrollArea className="w-full pb-4">
-                <div className="flex gap-2">
+              <ScrollArea className="w-full">
+                <div className="flex gap-4 pb-4 px-[1px]">
                   {property.images.map((image, index) => (
                     <button
                       key={image}
                       className={cn(
-                        "group relative flex-none aspect-[4/3] w-20 sm:w-28 overflow-hidden rounded-md transition",
-                        selectedImageIndex === index && "ring-2 ring-primary"
+                        "group relative flex-none aspect-[4/3] w-24 sm:w-32 overflow-hidden rounded-xl transition-all duration-300",
+                        "hover:ring-4 hover:ring-primary/60",
+                        "shadow-lg hover:shadow-xl",
+                        selectedImageIndex === index && "ring-4 ring-primary"
                       )}
                       onClick={() => setSelectedImageIndex(index)}
                     >
-                      <PropertyImage
-                        src={image}
-                        alt={`${property.title} - Imagen ${index + 1}`}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                      <div className="relative w-full h-full">
+                        <PropertyImage
+                          src={image}
+                          alt={`${property.title} - Imagen ${index + 1}`}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105 duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
                     </button>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" />
+                <ScrollBar orientation="horizontal" className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </ScrollArea>
               <Button
                 variant="outline"
-                size="sm"
-                className="absolute right-0 top-0 gap-2 bg-background/95 backdrop-blur-sm hidden sm:flex"
+                size="lg"
+                className="absolute -top-24 right-0 gap-3 bg-background/95 backdrop-blur-sm hidden sm:flex shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => setIsGalleryOpen(true)}
               >
-                <Maximize2 className="h-4 w-4" />
-                Ver galería
+                <Maximize2 className="h-5 w-5" />
+                Ver galería completa
               </Button>
             </div>
           </div>
@@ -220,42 +256,42 @@ export default function PropertyPage({ params }: PropertyPageProps) {
       </section>
 
       {/* Content */}
-      <main className="flex-1 w-full overflow-hidden">
-        <div className="container max-w-full px-4 sm:px-6 pb-8 -mt-16 relative z-10">
-          <div className="space-y-6">
+      <main className="flex-1 w-full">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 pb-16 -mt-24 relative z-10">
+          <div className="space-y-8">
             {/* Main Info Card */}
-            <div className="rounded-xl bg-background p-4 sm:p-6 shadow-lg ring-1 ring-gray-900/5 w-full max-w-full">
-              <div className="flex flex-col gap-4">
-                <div className="space-y-2 flex-1 min-w-0">
+            <div className="mt-12 rounded-2xl bg-background/80 backdrop-blur-sm p-6 sm:p-8 shadow-xl ring-1 ring-gray-900/5 w-full max-w-full">
+              <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-12">
+                <div className="space-y-4 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="text-sm">
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
                       {property.operationType}
                     </Badge>
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant="outline" className="text-sm px-3 py-1">
                       {property.propertyType}
                     </Badge>
-                    <Badge variant="outline" className="text-sm bg-muted/50">
+                    <Badge variant="outline" className="text-sm bg-muted/50 px-3 py-1">
                       {property.propertyAge === 0
                         ? "Nueva"
                         : `${property.propertyAge} años`}
                     </Badge>
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-semibold lg:text-3xl break-words pt-4">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold break-words tracking-tight">
                     {property.title}
                   </h1>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4 flex-shrink-0" />
-                    <span className="text-sm sm:text-base break-words">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <MapPin className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-base sm:text-lg break-words">
                       {property.location.area}, {property.location.city}
                     </span>
                   </div>
                 </div>
-                <div className="lg:text-right">
-                  <p className="text-2xl sm:text-3xl font-bold">
+                <div className="lg:text-right shrink-0">
+                  <p className="text-3xl sm:text-4xl font-bold text-primary tracking-tight">
                     {formatPrice(property.price)}
                   </p>
                   {property.maintenanceFee && property.maintenanceFee > 0 && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Mantenimiento: {formatPrice(property.maintenanceFee)}/mes
                     </p>
                   )}
@@ -263,46 +299,58 @@ export default function PropertyPage({ params }: PropertyPageProps) {
               </div>
 
               {/* Quick Actions */}
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Button className="gap-2 flex-1 sm:flex-none" asChild>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Button 
+                  className="gap-3 flex-1 sm:flex-none shadow-lg hover:shadow-xl transition-all duration-300" 
+                  size="lg" 
+                  asChild
+                >
                   <a href={`tel:${property.agent.phone}`}>
-                    <Phone className="h-4 w-4" />
+                    <Phone className="h-5 w-5" />
                     <span className="hidden sm:inline">Llamar al agente</span>
                     <span className="sm:hidden">Llamar</span>
                   </a>
                 </Button>
-                <Button variant="outline" className="gap-2 flex-1 sm:flex-none" asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-3 flex-1 sm:flex-none shadow-lg hover:shadow-xl transition-all duration-300" 
+                  size="lg" 
+                  asChild
+                >
                   <a href={`mailto:${property.agent.email}`}>
-                    <Mail className="h-4 w-4" />
+                    <Mail className="h-5 w-5" />
                     <span className="hidden sm:inline">Enviar email</span>
                     <span className="sm:hidden">Email</span>
                   </a>
                 </Button>
                 <Button
                   variant="outline"
-                  className="gap-2 flex-1 sm:flex-none"
+                  className="gap-3 flex-1 sm:flex-none shadow-lg hover:shadow-xl transition-all duration-300"
+                  size="lg"
                   onClick={() => {
                     const contactForm = document.getElementById("contact-form");
                     contactForm?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-5 w-5" />
                   <span className="hidden sm:inline">Agendar visita</span>
                   <span className="sm:hidden">Agendar</span>
                 </Button>
               </div>
 
               {/* Key Features Grid */}
-              <div className="mt-8 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="mt-12 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
                 {property.features.bedrooms !== null &&
                   property.features.bedrooms !== 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
-                      <BedDouble className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center gap-4 rounded-xl border p-4 bg-background/80 backdrop-blur-sm hover:bg-background transition-colors duration-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <BedDouble className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-medium truncate">
                           {property.features.bedrooms}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {property.features.bedrooms === 1
                             ? "Recámara"
                             : "Recámaras"}
@@ -312,13 +360,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                   )}
                 {property.features.bathrooms !== null &&
                   property.features.bathrooms !== 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
-                      <Bath className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center gap-4 rounded-xl border p-4 bg-background/80 backdrop-blur-sm hover:bg-background transition-colors duration-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Bath className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-medium truncate">
                           {property.features.bathrooms}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {property.features.bathrooms === 1 ? "Baño" : "Baños"}
                         </p>
                       </div>
@@ -326,13 +376,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                   )}
                 {property.features.constructionSize !== null &&
                   property.features.constructionSize !== 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
-                      <Ruler className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center gap-4 rounded-xl border p-4 bg-background/80 backdrop-blur-sm hover:bg-background transition-colors duration-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Ruler className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-medium truncate">
                           {property.features.constructionSize}m²
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           Construcción
                         </p>
                       </div>
@@ -340,13 +392,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                   )}
                 {property.features.lotSize !== null &&
                   property.features.lotSize !== 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
-                      <Trees className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center gap-4 rounded-xl border p-4 bg-background/80 backdrop-blur-sm hover:bg-background transition-colors duration-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Trees className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-medium truncate">
                           {property.features.lotSize}m²
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           Terreno
                         </p>
                       </div>
@@ -354,13 +408,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                   )}
                 {property.features.parking !== null &&
                   property.features.parking !== 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
-                      <Car className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center gap-4 rounded-xl border p-4 bg-background/80 backdrop-blur-sm hover:bg-background transition-colors duration-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Car className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-medium truncate">
                           {property.features.parking}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {property.features.parking === 1
                             ? "Estacionamiento"
                             : "Estacionamientos"}
@@ -370,13 +426,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                   )}
                 {property.features.floors !== null &&
                   property.features.floors !== 0 && (
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
-                      <Building2 className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center gap-4 rounded-xl border p-4 bg-background/80 backdrop-blur-sm hover:bg-background transition-colors duration-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Building2 className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-medium truncate">
                           {property.features.floors}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {property.features.floors === 1 ? "Piso" : "Pisos"}
                         </p>
                       </div>
@@ -386,31 +444,37 @@ export default function PropertyPage({ params }: PropertyPageProps) {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid gap-6 items-start lg:grid-cols-3">
+            <div className="grid gap-8 items-start lg:grid-cols-3">
               {/* Left Column - Main Content */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-8">
                 {/* Key Details */}
-                <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
-                  <h2 className="text-xl font-semibold">
+                <div className="rounded-xl bg-background p-6 sm:p-8 shadow-lg ring-1 ring-gray-900/5 hover:shadow-xl transition-all duration-300">
+                  <h2 className="text-2xl font-semibold mb-6 tracking-tight">
                     Detalles principales
                   </h2>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div className="flex items-center gap-2">
-                      <Home className="h-4 w-4 text-muted-foreground" />
-                      <span>Tipo: {property.propertyType}</span>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Home className="h-5 w-5" />
+                      </div>
+                      <span className="text-base">Tipo: {property.propertyType}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <span className="text-base">
                         Antigüedad:{" "}
                         {property.propertyAge === 0
                           ? "Nueva"
                           : `${property.propertyAge} años`}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Clock className="h-5 w-5" />
+                      </div>
+                      <span className="text-base">
                         Publicado:{" "}
                         {format(
                           new Date(property.createdAt),
@@ -419,17 +483,19 @@ export default function PropertyPage({ params }: PropertyPageProps) {
                         )}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-muted-foreground" />
-                      <span>Estado: {property.status}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Check className="h-5 w-5" />
+                      </div>
+                      <span className="text-base">Estado: {property.status}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
-                  <h2 className="text-xl font-semibold">Descripción</h2>
-                  <div className="mt-4 prose prose-sm max-w-none text-muted-foreground">
+                <div className="rounded-xl bg-background p-6 sm:p-8 shadow-lg ring-1 ring-gray-900/5 hover:shadow-xl transition-all duration-300">
+                  <h2 className="text-2xl font-semibold mb-6 tracking-tight">Descripción</h2>
+                  <div className="prose prose-lg max-w-none text-muted-foreground">
                     <p className="whitespace-pre-line leading-relaxed">
                       {property.description}
                     </p>
@@ -438,18 +504,18 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
                 {/* Amenities */}
                 {property.amenities.length > 0 && (
-                  <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
-                    <h2 className="text-xl font-semibold">Amenidades</h2>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                  <div className="rounded-xl bg-background p-6 sm:p-8 shadow-lg ring-1 ring-gray-900/5 hover:shadow-xl transition-all duration-300">
+                    <h2 className="text-2xl font-semibold mb-8 tracking-tight">Amenidades</h2>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {property.amenities.map((amenity) => (
                         <div
                           key={amenity}
-                          className="flex items-center gap-2 group"
+                          className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors duration-300"
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg border bg-muted/50 flex-shrink-0 transition-colors group-hover:border-primary group-hover:text-primary">
-                            <Check className="h-4 w-4" />
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Check className="h-5 w-5" />
                           </div>
-                          <span className="text-sm">{amenity}</span>
+                          <span className="text-base">{amenity}</span>
                         </div>
                       ))}
                     </div>
@@ -458,14 +524,16 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
                 {/* Location */}
                 {property.location.coordinates && (
-                  <div className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5">
-                    <h2 className="text-xl font-semibold">Ubicación</h2>
-                    <div className="mt-4 h-[400px] overflow-hidden rounded-lg border">
+                  <div className="rounded-xl bg-background p-6 sm:p-8 shadow-lg ring-1 ring-gray-900/5 hover:shadow-xl transition-all duration-300">
+                    <h2 className="text-2xl font-semibold mb-6 tracking-tight">Ubicación</h2>
+                    <div className="h-[400px] overflow-hidden rounded-xl shadow-sm">
                       <PropertyMap property={property} />
                     </div>
-                    <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="text-sm">
+                    <div className="mt-6 flex items-center gap-3 text-muted-foreground">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <MapPin className="h-5 w-5" />
+                      </div>
+                      <span className="text-base">
                         {property.location.address}
                       </span>
                     </div>
@@ -474,22 +542,22 @@ export default function PropertyPage({ params }: PropertyPageProps) {
               </div>
 
               {/* Right Column - Sidebar */}
-              <div className="lg:sticky lg:top-20 space-y-6">
+              <div className="lg:sticky lg:top-24 space-y-8">
                 {/* Agent Card */}
-                <div className="transform transition-all hover:scale-[1.02]">
+                <div className="transform transition-all hover:scale-[1.02] duration-300">
                   <AgentCard {...property.agent} />
                 </div>
 
                 {/* Contact Form */}
                 <div
                   id="contact-form"
-                  className="rounded-lg bg-background p-6 shadow-lg ring-1 ring-gray-900/5 transform transition-all hover:scale-[1.02]"
+                  className="rounded-xl bg-background p-6 sm:p-8 shadow-lg ring-1 ring-gray-900/5 transform transition-all hover:scale-[1.02] duration-300"
                 >
-                  <div className="mb-6 space-y-2">
-                    <h2 className="text-xl font-semibold">
+                  <div className="mb-8 space-y-3">
+                    <h2 className="text-2xl font-semibold tracking-tight">
                       ¿Te interesa esta propiedad?
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       Agenda una visita o solicita más información. Nuestro
                       agente te contactará lo antes posible.
                     </p>
@@ -504,15 +572,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
             {/* Similar Properties Section */}
             {similarProperties.length > 0 && (
-              <section className="rounded-lg bg-background p-4 sm:p-6 shadow-lg ring-1 ring-gray-900/5 w-full max-w-full overflow-hidden">
-                <h2 className="text-xl font-semibold mb-6">
+              <section className="rounded-xl bg-background p-6 sm:p-8 shadow-lg ring-1 ring-gray-900/5 hover:shadow-xl transition-all duration-300">
+                <h2 className="text-2xl font-semibold mb-8 tracking-tight">
                   Propiedades similares
                 </h2>
-                <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
+                <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
                   {similarProperties.map((similarProperty) => (
                     <div
                       key={similarProperty.id}
-                      className="transform transition-all hover:scale-[1.02] w-full"
+                      className="transform transition-all hover:scale-[1.02] duration-300"
                     >
                       <PropertyCard property={similarProperty} view="grid" />
                     </div>
@@ -526,63 +594,70 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
       {/* Full Screen Gallery */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-        <DialogContent className="max-w-7xl w-full p-0 sm:p-6 mx-auto">
-          <div className="relative aspect-[3/4] sm:aspect-video bg-background/80 backdrop-blur-sm rounded-lg overflow-hidden">
-            <PropertyImage
-              src={property.images[selectedImageIndex]}
-              alt={property.title}
-              fill
-              className="object-contain"
-              priority={false}
-            />
+        <DialogContent className="max-w-7xl w-full p-0 sm:p-8 mx-auto bg-background/95 backdrop-blur-sm">
+          <div className="relative aspect-video bg-background/80 rounded-xl overflow-hidden">
+            <div className="absolute inset-0">
+              <PropertyImage
+                src={property.images[selectedImageIndex]}
+                alt={property.title}
+                fill
+                className="object-contain transition-opacity duration-500"
+                priority={false}
+              />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-4 top-[50%] -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all"
+              className="absolute left-6 top-[50%] -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all shadow-lg z-10 h-12 w-12"
               onClick={() =>
                 setSelectedImageIndex((i) =>
                   i === 0 ? property.images.length - 1 : i - 1
                 )
               }
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-6 w-6" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-4 top-[50%] -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all"
+              className="absolute right-6 top-[50%] -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all shadow-lg z-10 h-12 w-12"
               onClick={() =>
                 setSelectedImageIndex((i) =>
                   i === property.images.length - 1 ? 0 : i + 1
                 )
               }
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-6 w-6" />
             </Button>
           </div>
-          <div className="mt-4 px-4 sm:px-0 w-full max-w-full overflow-hidden">
+          <div className="mt-8 px-4 sm:px-0 w-full max-w-full">
             <ScrollArea className="w-full">
-              <div className="flex gap-2 pb-4">
+              <div className="flex gap-4 pb-4 px-[1px]">
                 {property.images.map((image, index) => (
                   <button
                     key={image}
                     className={cn(
-                      "relative flex-none aspect-[4/3] w-16 sm:w-20 overflow-hidden rounded-lg transition-all hover:ring-2 hover:ring-primary/50",
-                      selectedImageIndex === index && "ring-2 ring-primary"
+                      "group relative flex-none aspect-[4/3] w-24 sm:w-32 overflow-hidden rounded-xl transition-all duration-300",
+                      "hover:ring-4 hover:ring-primary/60",
+                      "shadow-lg hover:shadow-xl",
+                      selectedImageIndex === index && "ring-4 ring-primary"
                     )}
                     onClick={() => setSelectedImageIndex(index)}
                   >
-                    <PropertyImage
-                      src={image}
-                      alt={`${property.title} - Imagen ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <PropertyImage
+                        src={image}
+                        alt={`${property.title} - Imagen ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105 duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
                   </button>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" />
+              <ScrollBar orientation="horizontal" className="opacity-0 group-hover:opacity-100 transition-opacity" />
             </ScrollArea>
           </div>
         </DialogContent>
