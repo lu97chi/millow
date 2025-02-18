@@ -36,7 +36,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2 shrink-0">
-          <span className="font-heading text-xl">Tu Hogar</span>
+           <span className="font-heading text-xl">Tu Hogar</span>
           {/*<Image src={logo} alt="Tu Hogar" width={32} height={32} />*/}
         </Link>
 
@@ -73,10 +73,10 @@ export function Header() {
             </Link>
           ))}
           <div className="px-4 py-2 sm:px-0 sm:py-0">
-            <ThemeToggle />
+          <ThemeToggle />
           </div>
         </nav>
       </div>
     </header>
   );
-}
+} 

@@ -31,6 +31,18 @@ export default async function HomePage() {
   const featuredProperties = await propertyService.getFeaturedProperties();
   const stats = await statsService.getHomePageStats();
 
+  // Get properties for each location to ensure we have appropriate images
+  const locationProperties = await Promise.all(stats.topLocations.byVolume.slice(0, 6).map(async (location) => {
+    // Get all properties for this location
+    const propertiesInLocation = await propertyService.getPropertiesByLocation(location.area);
+    
+    // Return the first property found or undefined if none found
+    return {
+      ...location,
+      property: propertiesInLocation[0]
+    };
+  }));
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
@@ -211,23 +223,23 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {stats.topLocations.byVolume.slice(0, 6).map((location) => (
+              {locationProperties.map((locationData) => (
                 <Link
-                  key={location.area}
-                  href={`/properties?area=${encodeURIComponent(location.area)}`}
+                  key={locationData.area}
+                  href={`/properties?area=${encodeURIComponent(locationData.area)}`}
                   className="group relative aspect-[4/3] overflow-hidden rounded-lg"
                 >
                   <Image
-                    src={`https://source.unsplash.com/featured/?luxury,property,${location.area.replace(' ', ',')}`}
-                    alt={location.area}
+                    src={locationData.property?.images[0] || '/placeholder-property.jpg'}
+                    alt={locationData.area}
                     fill
                     className="object-cover transition-transform group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                    <h3 className="text-2xl font-bold text-white">{location.area}</h3>
+                    <h3 className="text-2xl font-bold text-white">{locationData.area}</h3>
                     <p className="mt-2 text-sm text-white/90">
-                      {location.count} propiedades disponibles
+                      {locationData.count} propiedades disponibles
                     </p>
                     <Badge variant="secondary" className="mt-4">
                       Zona Premium
