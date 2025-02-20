@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateChatResponse } from "@/lib/openai";
+import { generateChatResponse } from "@/lib/agent/openai";
 import { z } from "zod";
 
 // Validation schemas

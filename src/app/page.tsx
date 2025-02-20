@@ -24,6 +24,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Property } from "@/types";
 import { Suspense } from "react";
+import { EmbeddingsTestButtons } from "@/components/embeddings/test-buttons";
 
 export default async function HomePage() {
   const propertyService = PropertyService.getInstance();
@@ -383,6 +384,9 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Embeddings Test Section */}
+        <EmbeddingsTestButtons />
       </main>
     </div>
   );
