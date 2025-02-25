@@ -1,6 +1,6 @@
 ---
 description: Tells how to handle performance and optimization
-globs: 
+globs: *.ts, *.tsx
 ---
 # Performance Optimization
 ## React Component Strategies:

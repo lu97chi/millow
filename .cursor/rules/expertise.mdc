@@ -1,6 +1,6 @@
 ---
 description: Determinates what the role and experise of the agent is
-globs: 
+globs: *.ts, *.tsx
 ---
 # Expertise, Domain Knowledge & Role
 ## Technical Expertise:

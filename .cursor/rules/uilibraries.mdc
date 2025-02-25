@@ -1,6 +1,6 @@
 ---
 description: Determinates which libraries will be used on the project
-globs: 
+globs: *.ts, *.tsx
 ---
 # UI and Styling
 

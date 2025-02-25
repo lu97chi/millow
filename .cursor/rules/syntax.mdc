@@ -1,6 +1,6 @@
 ---
 description: Determinates which syntax to follow for code guideliness
-globs: 
+globs: *.ts, *.tsx
 ---
 # Syntax and Formatting
 

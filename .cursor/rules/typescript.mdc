@@ -1,6 +1,6 @@
 ---
 description: Contains the instructions for typescript files
-globs: 
+globs: *.ts, *.tsx
 ---
 # TypeScript Usage
 

@@ -1,6 +1,6 @@
 ---
 description: Determinates the structure to follow for organization
-globs: 
+globs: *.ts, *.tsx
 ---
 # Components Organization
 

@@ -1,6 +1,6 @@
 ---
 description: Determinate which tools and dependency managment to use
-globs: 
+globs: *.ts, *.tsx
 ---
 # Dependency Management & Tools
 
