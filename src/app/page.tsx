@@ -1,10 +1,15 @@
-import Navbar from '@/components/layout/Navbar';
-import Hero from '@/components/layout/Hero';
-import Features from '@/components/layout/Features';
-import FeaturedProperties from '@/components/layout/FeaturedProperties';
-import Testimonials from '@/components/layout/Testimonials';
-import CTA from '@/components/layout/CTA';
-import Footer from '@/components/layout/Footer';
+'use client';
+
+import dynamic from 'next/dynamic';
+
+// Dynamic imports to prevent server/client mismatch
+const Navbar = dynamic(() => import('@/components/layout/Navbar'), { ssr: false });
+const Hero = dynamic(() => import('@/components/layout/Hero'), { ssr: false });
+const Features = dynamic(() => import('@/components/layout/Features'), { ssr: false });
+const FeaturedProperties = dynamic(() => import('@/components/layout/FeaturedProperties'), { ssr: false });
+const Testimonials = dynamic(() => import('@/components/layout/Testimonials'), { ssr: false });
+const CTA = dynamic(() => import('@/components/layout/CTA'), { ssr: false });
+const Footer = dynamic(() => import('@/components/layout/Footer'), { ssr: false });
 
 export default function Home() {
   return (

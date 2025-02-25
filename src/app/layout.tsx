@@ -15,9 +15,9 @@ const raleway = Raleway({
 })
 
 export const metadata: Metadata = {
-  title: 'TuHogar | Find Your Dream Home',
-  description: 'TuHogar helps you find the perfect home with a modern, sophisticated approach to real estate.',
-  keywords: ['real estate', 'homes', 'property', 'houses', 'apartments', 'TuHogar'],
+  title: 'TuHogar | Encuentra Tu Hogar Soñado',
+  description: 'TuHogar te ayuda a encontrar la casa perfecta con un enfoque moderno y sofisticado en bienes raíces.',
+  keywords: ['bienes raíces', 'casas', 'propiedades', 'inmuebles', 'apartamentos', 'TuHogar'],
 }
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${raleway.variable}`}>
+    <html lang="es" className={`${montserrat.variable} ${raleway.variable}`}>
       <body className="min-h-screen bg-midnight text-silver-200 antialiased">
         {children}
       </body>

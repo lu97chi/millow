@@ -9,23 +9,23 @@ import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 const testimonials = [
   {
     id: 1,
-    name: 'Maria Rodriguez',
-    role: 'Homeowner',
-    quote: 'TuHogar made finding our dream home so easy. Their personalized approach and attention to detail exceeded our expectations. We couldn\'t be happier with our new home!',
+    name: 'María Rodríguez',
+    role: 'Propietaria',
+    quote: 'TuHogar hizo que encontrar nuestra casa de ensueño fuera muy fácil. Su enfoque personalizado y atención al detalle superaron nuestras expectativas. ¡No podríamos estar más felices con nuestro nuevo hogar!',
     image: '/images/testimonial-1.jpg'
   },
   {
     id: 2,
-    name: 'Carlos Mendez',
-    role: 'First-time Buyer',
-    quote: 'As a first-time homebuyer, I was nervous about the process. The team at TuHogar guided me every step of the way, making it stress-free and enjoyable.',
+    name: 'Carlos Méndez',
+    role: 'Comprador Primerizo',
+    quote: 'Como comprador de vivienda por primera vez, estaba nervioso por el proceso. El equipo de TuHogar me guió en cada paso del camino, haciendo que fuera libre de estrés y agradable.',
     image: '/images/testimonial-2.jpg'
   },
   {
     id: 3,
-    name: 'Sofia Garcia',
-    role: 'Property Investor',
-    quote: 'I\'ve worked with many real estate companies, but TuHogar stands out for their professionalism and market knowledge. They helped me find properties with great investment potential.',
+    name: 'Sofía García',
+    role: 'Inversionista Inmobiliaria',
+    quote: 'He trabajado con muchas empresas inmobiliarias, pero TuHogar destaca por su profesionalismo y conocimiento del mercado. Me ayudaron a encontrar propiedades con gran potencial de inversión.',
     image: '/images/testimonial-3.jpg'
   }
 ];
@@ -61,7 +61,7 @@ const Testimonials = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            TESTIMONIALS
+            TESTIMONIOS
           </motion.span>
           <motion.h2 
             className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-gray-900 mb-6"
@@ -70,7 +70,7 @@ const Testimonials = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            What Our <span className="text-primary">Clients</span> Say
+            Lo Que Dicen Nuestros <span className="text-primary">Clientes</span>
           </motion.h2>
           <motion.p 
             className="text-lg text-gray-600"
@@ -79,7 +79,7 @@ const Testimonials = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Hear from our satisfied clients about their experience finding their perfect home with TuHogar
+            Escucha a nuestros clientes satisfechos sobre su experiencia encontrando su hogar perfecto con TuHogar
           </motion.p>
         </div>
 
@@ -89,7 +89,7 @@ const Testimonials = () => {
             <button 
               onClick={prevTestimonial}
               className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-              aria-label="Previous testimonial"
+              aria-label="Testimonio anterior"
             >
               <ChevronLeft size={24} className="text-gray-600" />
             </button>
@@ -99,7 +99,7 @@ const Testimonials = () => {
             <button 
               onClick={nextTestimonial}
               className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-              aria-label="Next testimonial"
+              aria-label="Siguiente testimonio"
             >
               <ChevronRight size={24} className="text-gray-600" />
             </button>
@@ -154,7 +154,7 @@ const Testimonials = () => {
                 className={`w-3 h-3 rounded-full transition-colors ${
                   index === activeIndex ? 'bg-primary' : 'bg-gray-300'
                 }`}
-                aria-label={`Go to testimonial ${index + 1}`}
+                aria-label={`Ir al testimonio ${index + 1}`}
               />
             ))}
           </div>

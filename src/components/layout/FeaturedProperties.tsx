@@ -10,51 +10,51 @@ import { Bed, Bath, Square, MapPin, Heart } from 'lucide-react';
 const properties = [
   {
     id: 1,
-    title: 'Modern Apartment with City View',
-    location: 'Downtown, City',
+    title: 'Apartamento Moderno con Vista a la Ciudad',
+    location: 'Centro, Ciudad',
     price: '$350,000',
     bedrooms: 2,
     bathrooms: 2,
-    area: '1,200 sqft',
+    area: '110 m²',
     image: '/images/property-1.jpg',
     featured: true,
-    type: 'For Sale'
+    type: 'En Venta'
   },
   {
     id: 2,
-    title: 'Cozy Family Home with Garden',
-    location: 'Suburbia, City',
+    title: 'Acogedora Casa Familiar con Jardín',
+    location: 'Suburbio, Ciudad',
     price: '$450,000',
     bedrooms: 3,
     bathrooms: 2,
-    area: '1,800 sqft',
+    area: '165 m²',
     image: '/images/property-2.jpg',
     featured: true,
-    type: 'For Sale'
+    type: 'En Venta'
   },
   {
     id: 3,
-    title: 'Luxury Penthouse with Terrace',
-    location: 'Central District, City',
+    title: 'Penthouse de Lujo con Terraza',
+    location: 'Distrito Central, Ciudad',
     price: '$1,200,000',
     bedrooms: 4,
     bathrooms: 3,
-    area: '2,500 sqft',
+    area: '230 m²',
     image: '/images/property-3.jpg',
     featured: true,
-    type: 'For Sale'
+    type: 'En Venta'
   },
   {
     id: 4,
-    title: 'Charming Studio in Historic Building',
-    location: 'Old Town, City',
-    price: '$1,500/month',
+    title: 'Encantador Estudio en Edificio Histórico',
+    location: 'Casco Antiguo, Ciudad',
+    price: '$15,000/mes',
     bedrooms: 1,
     bathrooms: 1,
-    area: '650 sqft',
+    area: '60 m²',
     image: '/images/property-4.jpg',
     featured: true,
-    type: 'For Rent'
+    type: 'En Renta'
   }
 ];
 
@@ -83,7 +83,7 @@ const PropertyCard = ({ property }: { property: typeof properties[0] }) => {
             e.stopPropagation();
             setIsLiked(!isLiked);
           }}
-          aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+          aria-label={isLiked ? 'Quitar de favoritos' : 'Añadir a favoritos'}
         >
           <Heart 
             size={18} 
@@ -117,11 +117,11 @@ const PropertyCard = ({ property }: { property: typeof properties[0] }) => {
           <div className="flex justify-between">
             <div className="flex items-center text-gray-700">
               <Bed size={18} className="mr-1 text-gray-500" />
-              <span className="text-sm font-medium">{property.bedrooms} Beds</span>
+              <span className="text-sm font-medium">{property.bedrooms} Hab</span>
             </div>
             <div className="flex items-center text-gray-700">
               <Bath size={18} className="mr-1 text-gray-500" />
-              <span className="text-sm font-medium">{property.bathrooms} Baths</span>
+              <span className="text-sm font-medium">{property.bathrooms} Baños</span>
             </div>
             <div className="flex items-center text-gray-700">
               <Square size={18} className="mr-1 text-gray-500" />
@@ -146,7 +146,7 @@ const FeaturedProperties = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            EXCLUSIVE LISTINGS
+            PROPIEDADES EXCLUSIVAS
           </motion.span>
           <motion.h2 
             className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-gray-900 mb-6"
@@ -155,7 +155,7 @@ const FeaturedProperties = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            Featured <span className="text-primary">Properties</span>
+            Propiedades <span className="text-primary">Destacadas</span>
           </motion.h2>
           <motion.p 
             className="text-lg text-gray-600"
@@ -164,7 +164,7 @@ const FeaturedProperties = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Discover our handpicked selection of properties that might be your next perfect home
+            Descubre nuestra selección de propiedades que podrían ser tu próximo hogar perfecto
           </motion.p>
         </div>
 
@@ -181,7 +181,7 @@ const FeaturedProperties = () => {
             href="/properties" 
             className="inline-block px-8 py-4 border-2 border-primary text-primary hover:bg-primary hover:text-white font-medium rounded-full transition-colors"
           >
-            View All Properties
+            Ver Todas las Propiedades
           </Link>
         </div>
       </div>
