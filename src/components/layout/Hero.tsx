@@ -1,38 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, ChevronDown, Sparkles, Bot, Send, Zap, Building, Home as HomeIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Search, MapPin, ChevronDown, Building, Home as HomeIcon, Sparkles, Shield } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-// Define interfaces
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  duration: number;
-  delay: number;
-}
-
-// Define animation variants
-const fadeInUpVariant = {
+// Define animation variants - dreamy and tech-inspired
+const fadeInVariant = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.7
+      duration: 0.8,
+      ease: [0.22, 1, 0.36, 1]
     }
   }
 };
 
-const scaleInVariant = {
-  hidden: { opacity: 0, scale: 0.8 },
+const staggerContainer = {
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    scale: 1,
     transition: {
-      duration: 0.5
+      staggerChildren: 0.18
+    }
+  }
+};
+
+const floatAnimation = {
+  initial: { y: 0 },
+  animate: {
+    y: [0, -10, 0],
+    transition: {
+      duration: 4.5,
+      repeat: Infinity,
+      repeatType: "reverse" as const,
+      ease: "easeInOut"
     }
   }
 };
@@ -40,16 +43,37 @@ const scaleInVariant = {
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyType, setPropertyType] = useState('Todos');
-  const [isAIFocused, setIsAIFocused] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showAIResponse, setShowAIResponse] = useState(false);
   const [aiResponseText, setAiResponseText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [typedText, setTypedText] = useState('');
 
-  // Simular respuesta de Luna IA
+  // Simulate AI typing effect
+  useEffect(() => {
+    if (showAIResponse && aiResponseText) {
+      setIsTyping(true);
+      setTypedText('');
+      
+      let i = 0;
+      const typeInterval = setInterval(() => {
+        if (i < aiResponseText.length) {
+          setTypedText(prev => prev + aiResponseText.charAt(i));
+          i++;
+        } else {
+          clearInterval(typeInterval);
+          setIsTyping(false);
+        }
+      }, 30);
+      
+      return () => clearInterval(typeInterval);
+    }
+  }, [showAIResponse, aiResponseText]);
+
+  // Simular respuesta de asistente
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     
-    setIsTyping(true);
     setShowAIResponse(true);
     setAiResponseText('');
     
@@ -61,45 +85,16 @@ const Hero = () => {
     ];
     
     const selectedResponse = responses[Math.floor(Math.random() * responses.length)];
-    let currentText = '';
     
-    // Efecto de escritura
-    const typingInterval = setInterval(() => {
-      if (currentText.length < selectedResponse.length) {
-        currentText += selectedResponse[currentText.length];
-        setAiResponseText(currentText);
-      } else {
-        clearInterval(typingInterval);
-        setIsTyping(false);
-      }
-    }, 30);
+    // Delay to simulate AI processing
+    setTimeout(() => {
+      setAiResponseText(selectedResponse);
+    }, 600);
   };
 
-  // Efecto de partículas flotantes para el fondo
-  const [particles, setParticles] = useState<Particle[]>([]);
-  
-  useEffect(() => {
-    const generateParticles = () => {
-      const newParticles = [];
-      for (let i = 0; i < 20; i++) {
-        newParticles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 10 + 5,
-          duration: Math.random() * 20 + 10,
-          delay: Math.random() * 5
-        });
-      }
-      setParticles(newParticles);
-    };
-    
-    generateParticles();
-  }, []);
-
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay and Particles */}
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center" 
         style={{ 
@@ -107,276 +102,180 @@ const Hero = () => {
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 hero-overlay bg-gradient-to-b from-midnight-900/80 via-midnight-800/70 to-midnight/90" />
-        
-        {/* Animated Particles */}
-        {particles.map((particle) => (
-          <motion.div
-            key={particle.id}
-            className="absolute rounded-full bg-primary-500/20 backdrop-blur-sm"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: `${particle.size}px`,
-              height: `${particle.size}px`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [1, 1.2, 1]
-            }}
-            transition={{
-              duration: particle.duration,
-              repeat: Infinity,
-              delay: particle.delay,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
+        <div className="absolute inset-0 hero-overlay" />
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-24 md:pt-0">
-        <div className="max-w-5xl mx-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-28 md:pt-0">
+        <motion.div 
+          className="max-w-4xl mx-auto"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           <motion.div 
-            className="text-center mb-12"
-            initial={fadeInUpVariant.hidden}
-            animate={fadeInUpVariant.visible}
+            className="text-center mb-14"
+            variants={fadeInVariant}
           >
-            <motion.div
-              className="inline-block mb-4 bg-primary-500/20 backdrop-blur-md px-4 py-1 rounded-full border border-primary-500/30"
-              initial={scaleInVariant.hidden}
-              animate={scaleInVariant.visible}
+            <motion.span 
+              variants={floatAnimation}
+              initial="initial"
+              animate="animate"
+              className="inline-flex items-center text-accent text-xs uppercase tracking-widest mb-4 font-medium bg-accent/10 px-4 py-2 rounded-full safety-border"
             >
-              <span className="text-secondary-400 font-medium flex items-center">
-                <Zap size={16} className="mr-2 text-primary-400" />
-                Revolucionando el mercado inmobiliario en México
-              </span>
-            </motion.div>
+              <Sparkles size={14} className="mr-2" />
+              Inteligencia Artificial a Tu Servicio
+            </motion.span>
             
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-silver-100 mb-6 leading-tight">
-              <motion.span
-                initial={fadeInUpVariant.hidden}
-                animate={fadeInUpVariant.visible}
-              >
-                Encuentra Tu 
-              </motion.span>{" "}
-              <motion.span 
-                className="relative inline-block"
-                initial={scaleInVariant.hidden}
-                animate={scaleInVariant.visible}
-              >
-                <span className="text-primary-500 text-glow relative z-10">Hogar</span>
-                <span className="absolute -inset-1 bg-primary-500/20 blur-xl rounded-full -z-10"></span>
-              </motion.span>{" "}
-              <motion.span
-                initial={fadeInUpVariant.hidden}
-                animate={fadeInUpVariant.visible}
-              >
-                Perfecto
-              </motion.span>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight text-shadow">
+              Convierte Tu <span className="text-gradient">Sueño</span> en Realidad <br className="hidden md:block" />
+              <span className="text-accent">Con Seguridad y Confianza</span>
             </h1>
             
             <motion.p 
-              className="text-xl md:text-2xl text-silver-300 mb-8 max-w-3xl mx-auto"
-              initial={fadeInUpVariant.hidden}
-              animate={fadeInUpVariant.visible}
+              className="font-body text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto"
+              variants={fadeInVariant}
             >
-              Descubre el lugar ideal para llamar hogar con nuestra tecnología de inteligencia artificial
+              Descubre espacios que transformarán tu vida con la ayuda de nuestra tecnología de IA, diseñada para entender tus necesidades y encontrar tu hogar ideal
             </motion.p>
           </motion.div>
 
-          {/* AI-Powered Search Bar */}
+          {/* Search Bar */}
           <motion.div 
-            className="glass-card rounded-3xl shadow-2xl p-6 md:p-8 max-w-4xl mx-auto border border-primary-500/30 backdrop-blur-md bg-midnight-800/50"
-            initial={fadeInUpVariant.hidden}
-            animate={fadeInUpVariant.visible}
+            className="illusion-card fancy-card rounded-lg shadow-lg p-8 md:p-10 max-w-3xl mx-auto"
+            variants={fadeInVariant}
           >
-            <div className="flex items-center mb-6">
-              <div className="flex items-center bg-primary-500/30 rounded-full px-4 py-2 mr-auto backdrop-blur-sm border border-primary-500/40">
-                <Bot size={18} className="text-secondary-400 mr-2" />
-                <span className="text-secondary-400 text-sm font-medium">Impulsado por Luna IA</span>
-                <Sparkles size={16} className="text-secondary-400 ml-2" />
-              </div>
-              
-              <div className="flex space-x-3">
-                <motion.button 
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${propertyType === 'Todos' ? 'bg-primary-500 text-silver-100 shadow-lg shadow-primary-500/30' : 'bg-midnight-800/80 text-silver-400 hover:bg-midnight-700 border border-midnight-700'}`} 
-                  onClick={() => setPropertyType('Todos')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="flex items-center">
-                    <Search size={14} className="mr-1.5" />
-                    Todos
-                  </span>
-                </motion.button>
-                <motion.button 
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${propertyType === 'En Venta' ? 'bg-primary-500 text-silver-100 shadow-lg shadow-primary-500/30' : 'bg-midnight-800/80 text-silver-400 hover:bg-midnight-700 border border-midnight-700'}`} 
-                  onClick={() => setPropertyType('En Venta')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="flex items-center">
-                    <HomeIcon size={14} className="mr-1.5" />
-                    Comprar
-                  </span>
-                </motion.button>
-                <motion.button 
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${propertyType === 'En Renta' ? 'bg-primary-500 text-silver-100 shadow-lg shadow-primary-500/30' : 'bg-midnight-800/80 text-silver-400 hover:bg-midnight-700 border border-midnight-700'}`} 
-                  onClick={() => setPropertyType('En Renta')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="flex items-center">
-                    <Building size={14} className="mr-1.5" />
-                    Rentar
-                  </span>
-                </motion.button>
-              </div>
+            <div className="flex flex-wrap items-center justify-center mb-8 gap-3">
+              <button 
+                className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${propertyType === 'Todos' ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'}`} 
+                onClick={() => setPropertyType('Todos')}
+              >
+                <span className="flex items-center">
+                  <Search size={16} className="mr-2" />
+                  Todos
+                </span>
+              </button>
+              <button 
+                className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${propertyType === 'En Venta' ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'}`} 
+                onClick={() => setPropertyType('En Venta')}
+              >
+                <span className="flex items-center">
+                  <HomeIcon size={16} className="mr-2" />
+                  Comprar
+                </span>
+              </button>
+              <button 
+                className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${propertyType === 'En Renta' ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'}`} 
+                onClick={() => setPropertyType('En Renta')}
+              >
+                <span className="flex items-center">
+                  <Building size={16} className="mr-2" />
+                  Rentar
+                </span>
+              </button>
             </div>
             
-            <div className={`relative bg-midnight-900/70 rounded-2xl border transition-all duration-300 ${isAIFocused ? 'border-secondary-400 shadow-[0_0_20px_rgba(146,230,230,0.4)]' : 'border-midnight-700'}`}>
-              <div className="flex items-center px-5 py-4">
-                <div className="flex-shrink-0 mr-4">
-                  <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
-                    <Bot size={20} className="text-silver-100" />
-                  </div>
-                </div>
+            <div className={`relative transition-all duration-300 ${isSearchFocused ? 'transform scale-[1.02]' : ''}`}>
+              <div className="flex items-center px-6 py-4 bg-white/10 rounded-md border border-white/20">
                 <input
                   type="text"
-                  placeholder="Pregúntale a Luna sobre tu hogar ideal... (ej. 'Busca una casa de 3 habitaciones cerca del centro')"
-                  className="w-full bg-transparent border-none focus:outline-none text-silver-200 placeholder-silver-500 text-lg"
+                  placeholder="Describe tu hogar ideal y nuestra IA te ayudará a encontrarlo..."
+                  className="w-full bg-transparent border-none focus:outline-none text-white placeholder-white/60 text-base"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsAIFocused(true)}
-                  onBlur={() => setTimeout(() => setIsAIFocused(false), 100)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
-                <motion.button 
-                  className={`ml-3 p-3 rounded-full transition-colors ${searchQuery ? 'bg-primary-500 text-silver-100 shadow-lg shadow-primary-500/30' : 'bg-midnight-700 text-silver-400'}`}
-                  disabled={!searchQuery}
+                <button 
                   onClick={handleSearch}
-                  whileHover={searchQuery ? { scale: 1.1 } : {}}
-                  whileTap={searchQuery ? { scale: 0.9 } : {}}
+                  className="ml-2 p-2.5 rounded-md bg-accent text-white hover:bg-accent/90 transition-colors ai-glow"
+                  aria-label="Buscar con IA"
                 >
-                  <Send size={20} className={searchQuery ? 'text-silver-100' : 'text-silver-400'} />
-                </motion.button>
+                  <Sparkles size={18} />
+                </button>
               </div>
               
-              {isAIFocused && (
-                <div className="px-5 pb-4 text-sm text-silver-400">
-                  <p className="flex items-center">
-                    <Sparkles size={14} className="inline mr-2 text-secondary-400" />
-                    Prueba: "Encuentra un apartamento moderno de 2 habitaciones con balcón" o "Casas por menos de $5M con alberca"
-                  </p>
+              {showAIResponse && (
+                <div className="mt-4 px-6 py-4 bg-accent/10 border border-accent/20 rounded-md backdrop-blur-sm">
+                  <div className="flex items-start">
+                    <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center mr-3 mt-0.5 pulse-animation">
+                      <Sparkles size={14} className="text-accent" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white/90 text-sm">
+                        {typedText}
+                        {isTyping && <span className="inline-block w-1.5 h-4 bg-accent/80 ml-0.5 animate-pulse"></span>}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
-              
-              {/* AI Response */}
-              <AnimatePresence>
-                {showAIResponse && (
-                  <motion.div 
-                    className="mt-2 px-5 pb-5 border-t border-midnight-700 pt-4"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    <div className="flex">
-                      <div className="w-10 h-10 rounded-full bg-secondary-500/20 flex items-center justify-center mr-4 flex-shrink-0">
-                        <Bot size={20} className="text-secondary-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-silver-200">
-                          {aiResponseText}
-                          {isTyping && (
-                            <span className="inline-flex ml-1">
-                              <motion.span 
-                                className="h-1.5 w-1.5 bg-secondary-400 rounded-full mx-0.5"
-                                animate={{ y: [0, -3, 0] }}
-                                transition={{ duration: 0.6, repeat: Infinity, repeatType: 'loop' }}
-                              />
-                              <motion.span 
-                                className="h-1.5 w-1.5 bg-secondary-400 rounded-full mx-0.5"
-                                animate={{ y: [0, -3, 0] }}
-                                transition={{ duration: 0.6, repeat: Infinity, repeatType: 'loop', delay: 0.2 }}
-                              />
-                              <motion.span 
-                                className="h-1.5 w-1.5 bg-secondary-400 rounded-full mx-0.5"
-                                animate={{ y: [0, -3, 0] }}
-                                transition={{ duration: 0.6, repeat: Infinity, repeatType: 'loop', delay: 0.4 }}
-                              />
-                            </span>
-                          )}
-                        </p>
-                        
-                        {!isTyping && aiResponseText && (
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <motion.button 
-                              className="px-3 py-1.5 bg-primary-500/20 text-primary-400 rounded-full text-sm border border-primary-500/30 hover:bg-primary-500/30 transition-colors"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              Ver resultados
-                            </motion.button>
-                            <motion.button 
-                              className="px-3 py-1.5 bg-midnight-800 text-silver-400 rounded-full text-sm border border-midnight-700 hover:bg-midnight-700 transition-colors"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              Refinar búsqueda
-                            </motion.button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
             
-            <div className="mt-5 text-center">
-              <p className="text-silver-400 text-sm flex items-center justify-center">
-                <Sparkles size={14} className="inline mr-1.5 text-secondary-400" />
-                Luna entiende lenguaje natural y puede encontrar exactamente lo que estás buscando
-              </p>
+            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+              <div className="text-white/70 text-xs uppercase tracking-wider font-medium">Búsquedas populares:</div>
+              {['Apartamentos con vista', 'Casas con jardín', 'Lofts modernos', 'Oficinas inteligentes'].map((tag) => (
+                <button 
+                  key={tag}
+                  onClick={() => setSearchQuery(tag)}
+                  className="px-3 py-1.5 bg-white/5 hover:bg-accent/20 rounded-md text-white/80 text-xs transition-colors border border-white/10 hover:border-accent/30"
+                >
+                  {tag}
+                </button>
+              ))}
             </div>
           </motion.div>
-
-          {/* Stats */}
-          <motion.div 
-            className="mt-16 grid grid-cols-3 gap-6"
-            initial={fadeInUpVariant.hidden}
-            animate={fadeInUpVariant.visible}
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-10 flex justify-center"
           >
-            {[
-              { number: "500+", label: "Propiedades", delay: 0 },
-              { number: "300+", label: "Clientes Satisfechos", delay: 0.1 },
-              { number: "10+", label: "Años de Experiencia", delay: 0.2 }
-            ].map((stat, index) => (
-              <motion.div 
-                key={index}
-                className="glass-card rounded-2xl p-6 text-center border border-primary-500/20 backdrop-blur-md bg-midnight-800/30 hover:bg-midnight-800/50 transition-colors group"
-                whileHover={{ y: -5, boxShadow: "0 15px 30px -10px rgba(41, 163, 195, 0.3)" }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.p 
-                  className="text-3xl md:text-4xl font-bold text-primary-500 mb-1 text-glow relative"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1 + stat.delay, duration: 0.5 }}
-                >
-                  {stat.number}
-                  <motion.span 
-                    className="absolute -inset-3 rounded-full bg-primary-500/20 blur-md -z-10 opacity-0 group-hover:opacity-100"
-                    transition={{ duration: 0.3 }}
-                  />
-                </motion.p>
-                <p className="text-silver-300 text-sm md:text-base">{stat.label}</p>
-              </motion.div>
-            ))}
+            <div className="flex items-center text-white/70 text-sm bg-white/5 px-4 py-2 rounded-full backdrop-blur-sm">
+              <Shield size={14} className="text-primary mr-2" />
+              <span>Todas las propiedades son verificadas para tu seguridad</span>
+            </div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
+      
+      {/* Decorative elements */}
+      <motion.div 
+        className="absolute bottom-10 left-10 w-20 h-20 border border-accent/30 rounded-full hidden lg:block"
+        animate={{
+          boxShadow: ['0 0 0 0 rgba(var(--accent), 0)', '0 0 0 10px rgba(var(--accent), 0.1)', '0 0 0 0 rgba(var(--accent), 0)'],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          repeatType: "loop"
+        }}
+      />
+      <motion.div 
+        className="absolute top-40 right-10 w-10 h-10 border border-accent/30 rounded-full hidden lg:block"
+        animate={{
+          boxShadow: ['0 0 0 0 rgba(var(--accent), 0)', '0 0 0 10px rgba(var(--accent), 0.1)', '0 0 0 0 rgba(var(--accent), 0)'],
+        }}
+        transition={{
+          duration: 3,
+          delay: 1.5,
+          repeat: Infinity,
+          repeatType: "loop"
+        }}
+      />
+      
+      {/* Floating elements */}
+      <motion.div 
+        className="absolute top-1/4 right-1/4 w-4 h-4 bg-accent/50 rounded-full hidden lg:block floating"
+        style={{ animationDelay: '0.5s' }}
+      />
+      <motion.div 
+        className="absolute bottom-1/3 left-1/4 w-3 h-3 bg-primary/50 rounded-full hidden lg:block floating"
+        style={{ animationDelay: '1.2s' }}
+      />
     </section>
   );
 };

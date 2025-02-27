@@ -2,37 +2,43 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+import { Star, Quote, Sparkles, Shield } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Sample testimonial data
+// Testimonial data
 const testimonials = [
   {
     id: 1,
-    name: 'María Rodríguez',
+    name: 'Alejandra Méndez',
     role: 'Propietaria',
-    quote: 'TuHogar hizo que encontrar nuestra casa de ensueño fuera muy fácil. Su enfoque personalizado y atención al detalle superaron nuestras expectativas. ¡No podríamos estar más felices con nuestro nuevo hogar!',
-    image: '/images/testimonial-1.jpg'
+    image: '/images/testimonial-1.jpg',
+    content: 'La inteligencia artificial me ayudó a encontrar exactamente lo que buscaba. El sistema entendió mis necesidades mejor que yo misma. Mi nuevo hogar es un sueño hecho realidad.',
+    rating: 5,
+    aiMatch: 98,
   },
   {
     id: 2,
-    name: 'Carlos Méndez',
-    role: 'Comprador Primerizo',
-    quote: 'Como comprador de vivienda por primera vez, estaba nervioso por el proceso. El equipo de TuHogar me guió en cada paso del camino, haciendo que fuera libre de estrés y agradable.',
-    image: '/images/testimonial-2.jpg'
+    name: 'Carlos Fuentes',
+    role: 'Inversionista',
+    image: '/images/testimonial-2.jpg',
+    content: 'La seguridad y precisión con la que la IA seleccionó propiedades para mi cartera de inversión fue impresionante. He incrementado mi retorno de inversión en un 32%.',
+    rating: 5,
+    aiMatch: 95,
   },
   {
     id: 3,
-    name: 'Sofía García',
-    role: 'Inversionista Inmobiliaria',
-    quote: 'He trabajado con muchas empresas inmobiliarias, pero TuHogar destaca por su profesionalismo y conocimiento del mercado. Me ayudaron a encontrar propiedades con gran potencial de inversión.',
-    image: '/images/testimonial-3.jpg'
-  }
+    name: 'Sofía Ramírez',
+    role: 'Primera Compra',
+    image: '/images/testimonial-3.jpg',
+    content: 'Como primeriza en la compra de vivienda, me sentía perdida. La IA me guió paso a paso y me dio la confianza para tomar la mejor decisión. El proceso fue seguro y transparente.',
+    rating: 5,
+    aiMatch: 97,
+  },
 ];
 
 const Testimonials = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-
+  
   // Auto-rotate testimonials
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,124 +47,135 @@ const Testimonials = () => {
     
     return () => clearInterval(interval);
   }, []);
-
-  const nextTestimonial = () => {
-    setActiveIndex((current) => (current + 1) % testimonials.length);
-  };
-
-  const prevTestimonial = () => {
-    setActiveIndex((current) => (current - 1 + testimonials.length) % testimonials.length);
-  };
-
+  
+  const activeTestimonial = testimonials[activeIndex];
+  
   return (
-    <section className="section-padding home-gradient">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <motion.span 
-            className="inline-block text-primary font-medium mb-3"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            TESTIMONIOS
-          </motion.span>
-          <motion.h2 
-            className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-gray-900 mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            Lo Que Dicen Nuestros <span className="text-primary">Clientes</span>
-          </motion.h2>
-          <motion.p 
-            className="text-lg text-gray-600"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            Escucha a nuestros clientes satisfechos sobre su experiencia encontrando su hogar perfecto con TuHogar
-          </motion.p>
-        </div>
-
-        <div className="max-w-5xl mx-auto relative">
-          {/* Testimonial Navigation Buttons */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 -ml-4 md:-ml-8 z-10 hidden md:block">
-            <button 
-              onClick={prevTestimonial}
-              className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-              aria-label="Testimonio anterior"
-            >
-              <ChevronLeft size={24} className="text-gray-600" />
-            </button>
+    <section className="py-24 bg-background relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -right-64 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 -left-64 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-secondary/10 rounded-full blur-3xl opacity-50"></div>
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="flex items-center bg-accent/10 px-4 py-2 rounded-full safety-border">
+              <Sparkles size={16} className="text-accent mr-2" />
+              <span className="text-sm font-medium text-accent">Experiencias Transformadas</span>
+            </div>
           </div>
           
-          <div className="absolute top-1/2 -translate-y-1/2 right-0 -mr-4 md:-mr-8 z-10 hidden md:block">
-            <button 
-              onClick={nextTestimonial}
-              className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-              aria-label="Siguiente testimonio"
-            >
-              <ChevronRight size={24} className="text-gray-600" />
-            </button>
-          </div>
-
-          {/* Testimonials */}
-          <div className="relative overflow-hidden">
-            <div 
-              className="flex transition-transform duration-500 ease-in-out" 
-              style={{ transform: `translateX(-${activeIndex * 100}%)` }}
-            >
-              {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="w-full flex-shrink-0">
-                  <motion.div 
-                    className="bg-white rounded-2xl shadow-xl p-8 md:p-10"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden flex-shrink-0 border-4 border-secondary">
-                        <Image
-                          src={testimonial.image}
-                          alt={testimonial.name}
-                          fill
-                          className="object-cover"
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4 text-shadow">
+            Lo Que Dicen <span className="text-gradient">Nuestros Clientes</span>
+          </h2>
+          <p className="text-foreground/70 max-w-2xl mx-auto text-base">
+            Descubre cómo nuestra tecnología de IA ha ayudado a miles de personas a encontrar su hogar ideal con seguridad y confianza.
+          </p>
+        </motion.div>
+        
+        <div className="max-w-5xl mx-auto">
+          <div className="relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTestimonial.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="bg-background rounded-2xl p-8 md:p-12 border border-border/40 soft-shadow illusion-card"
+              >
+                <div className="absolute -top-6 -left-6 text-accent opacity-20">
+                  <Quote size={64} />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                  <div className="md:col-span-1">
+                    <div className="relative aspect-square w-32 h-32 mx-auto md:w-full md:h-auto md:aspect-[3/4] rounded-xl overflow-hidden soft-shadow">
+                      <Image 
+                        src={activeTestimonial.image} 
+                        alt={activeTestimonial.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <div className="flex items-center mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          size={18} 
+                          className={i < activeTestimonial.rating ? "text-accent fill-accent" : "text-foreground/20"} 
                         />
+                      ))}
+                    </div>
+                    
+                    <blockquote className="text-foreground/90 text-lg md:text-xl font-display italic mb-6">
+                      "{activeTestimonial.content}"
+                    </blockquote>
+                    
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="font-medium text-foreground">{activeTestimonial.name}</div>
+                        <div className="text-foreground/60 text-sm">{activeTestimonial.role}</div>
                       </div>
                       
-                      <div className="flex-1">
-                        <Quote className="text-primary/20 mb-4" size={48} />
-                        <p className="text-gray-700 text-lg md:text-xl italic mb-8">"{testimonial.quote}"</p>
-                        <div>
-                          <h4 className="text-xl font-bold text-gray-900">{testimonial.name}</h4>
-                          <p className="text-primary">{testimonial.role}</p>
+                      <div className="mt-4 md:mt-0 flex items-center bg-secondary/50 rounded-md p-2 safety-border">
+                        <div className="flex items-center mr-3">
+                          <Sparkles size={14} className="text-accent mr-1" />
+                          <span className="text-xs font-medium">Coincidencia IA</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-accent font-bold">{activeTestimonial.aiMatch}%</span>
+                          <div className="ml-2 w-16 h-2 bg-secondary rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-accent" 
+                              style={{ width: `${activeTestimonial.aiMatch}%` }}
+                            ></div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 </div>
+              </motion.div>
+            </AnimatePresence>
+            
+            <div className="flex justify-center mt-8">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveIndex(index)}
+                  className={`w-3 h-3 rounded-full mx-1 transition-all duration-300 ${
+                    index === activeIndex ? 'bg-accent scale-125' : 'bg-foreground/20 hover:bg-foreground/40'
+                  }`}
+                  aria-label={`Ver testimonio ${index + 1}`}
+                />
               ))}
             </div>
           </div>
-
-          {/* Testimonial Navigation Dots */}
-          <div className="flex justify-center space-x-3 mt-10">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === activeIndex ? 'bg-primary' : 'bg-gray-300'
-                }`}
-                aria-label={`Ir al testimonio ${index + 1}`}
-              />
-            ))}
-          </div>
         </div>
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex items-center justify-center mt-16"
+        >
+          <Shield size={18} className="text-primary mr-2" />
+          <span className="text-foreground/70 text-sm">Todas las experiencias han sido verificadas para garantizar su autenticidad</span>
+        </motion.div>
       </div>
     </section>
   );

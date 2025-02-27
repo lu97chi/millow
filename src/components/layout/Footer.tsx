@@ -1,316 +1,169 @@
+'use client';
+
 import Link from 'next/link';
-import Image from 'next/image';
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, ArrowRight, Globe, Clock, Zap, Send } from 'lucide-react';
+import { Shield, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  // Animación para los elementos
-  const fadeInUpVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: 0.1 * i,
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    })
-  };
-
+  
   return (
-    <footer className="relative bg-midnight-900 text-silver-300 overflow-hidden">
-      {/* Partículas de fondo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-secondary-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/3 w-40 h-40 bg-primary-500/10 rounded-full blur-2xl"></div>
+    <footer className="bg-background border-t border-border/40 relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-accent/5 rounded-full blur-3xl"></div>
         
-        {/* Líneas de grid futuristas */}
-        <div className="absolute inset-0 bg-[url('/images/grid.svg')] bg-repeat opacity-5"></div>
-        
-        {/* Elementos decorativos */}
-        <motion.div 
-          className="absolute top-20 left-10 w-2 h-2 bg-primary-500 rounded-full"
-          animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.5, 1, 0.5]
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-40 right-20 w-3 h-3 bg-secondary-400 rounded-full"
-          animate={{ 
-            scale: [1, 1.8, 1],
-            opacity: [0.5, 1, 0.5]
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
-      </div>
-
-      {/* Main Footer */}
-      <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-          {/* Brand Column */}
-          <motion.div 
-            className="md:col-span-4 space-y-6"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={0}
-            variants={fadeInUpVariants}
-          >
-            <Link href="/" className="inline-block group">
-              <span className="font-heading text-3xl font-bold text-silver-100 relative">
-                Tu<span className="text-primary-500 text-glow">Hogar</span>
-                <span className="absolute -inset-1 rounded-full bg-primary-500/20 blur-md -z-10 opacity-0 group-hover:opacity-100 transition-all duration-300"></span>
-              </span>
-            </Link>
-            <p className="text-silver-400 max-w-xs">
-              Encontrando tu hogar perfecto con un enfoque moderno y sofisticado en bienes raíces. Hacemos que el camino hacia tu hogar soñado sea simple y agradable.
-            </p>
-            
-            {/* Newsletter */}
-            <div className="pt-4">
-              <h4 className="text-silver-100 font-semibold mb-3 flex items-center">
-                <Zap size={16} className="mr-2 text-primary-400" />
-                Suscríbete a nuestro boletín
-              </h4>
-              <div className="flex">
-                <input 
-                  type="email" 
-                  placeholder="Tu correo" 
-                  className="bg-midnight-800 border border-midnight-700 rounded-l-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-500 text-silver-200 transition-all duration-300 focus:bg-midnight-700"
-                />
-                <motion.button 
-                  className="bg-primary-500 hover:bg-primary-600 text-silver-100 px-4 rounded-r-lg flex items-center glow-effect relative overflow-hidden group"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary-400 to-secondary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
-                  <Send size={18} className="relative z-10" />
-                  <span className="absolute -inset-px bg-gradient-to-r from-primary-400 to-secondary-400 opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-500"></span>
-                </motion.button>
-              </div>
-            </div>
-            
-            {/* Social Media */}
-            <div className="flex space-x-4 pt-2">
-              {[
-                { icon: Facebook, label: 'Facebook' },
-                { icon: Instagram, label: 'Instagram' },
-                { icon: Twitter, label: 'Twitter' },
-                { icon: Globe, label: 'Sitio web' }
-              ].map((social, index) => (
-                <motion.a 
-                  key={social.label}
-                  href="#" 
-                  className="bg-midnight-800 p-2.5 rounded-full hover:bg-primary-500/20 transition-colors relative group" 
-                  aria-label={social.label}
-                  whileHover={{ y: -5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <social.icon size={18} className="text-primary-400 group-hover:text-secondary-400 transition-colors" />
-                  <span className="absolute -inset-0.5 rounded-full border border-primary-500/0 group-hover:border-primary-500/30 transition-all duration-300"></span>
-                </motion.a>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Quick Links */}
-          <motion.div 
-            className="md:col-span-2"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={1}
-            variants={fadeInUpVariants}
-          >
-            <h3 className="font-bold text-silver-100 text-lg mb-4 relative inline-block">
-              Enlaces Rápidos
-              <span className="absolute -bottom-1 left-0 w-1/2 h-0.5 bg-primary-500/50"></span>
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { name: 'Propiedades', href: '/properties' },
-                { name: 'Nosotros', href: '/about' },
-                { name: 'Contacto', href: '/contact' },
-                { name: 'Blog', href: '/blog' }
-              ].map((link, index) => (
-                <motion.li key={link.name}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 * index + 0.3, duration: 0.5 }}
-                >
-                  <Link href={link.href} className="text-silver-400 hover:text-secondary-400 transition-colors inline-flex items-center group">
-                    <span className="relative overflow-hidden flex items-center">
-                      <ArrowRight size={14} className="mr-2 text-primary-500 transform group-hover:translate-x-1 transition-transform" />
-                      <span className="group-hover:translate-x-1 transition-transform">{link.name}</span>
-                    </span>
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Services */}
-          <motion.div 
-            className="md:col-span-2"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={2}
-            variants={fadeInUpVariants}
-          >
-            <h3 className="font-bold text-silver-100 text-lg mb-4 relative inline-block">
-              Servicios
-              <span className="absolute -bottom-1 left-0 w-1/2 h-0.5 bg-primary-500/50"></span>
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { name: 'Comprar', href: '/buying' },
-                { name: 'Vender', href: '/selling' },
-                { name: 'Rentar', href: '/renting' },
-                { name: 'Hipoteca', href: '/mortgage' }
-              ].map((service, index) => (
-                <motion.li key={service.name}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 * index + 0.3, duration: 0.5 }}
-                >
-                  <Link href={service.href} className="text-silver-400 hover:text-secondary-400 transition-colors inline-flex items-center group">
-                    <span className="relative overflow-hidden flex items-center">
-                      <ArrowRight size={14} className="mr-2 text-primary-500 transform group-hover:translate-x-1 transition-transform" />
-                      <span className="group-hover:translate-x-1 transition-transform">{service.name}</span>
-                    </span>
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Contact */}
-          <motion.div 
-            className="md:col-span-4"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={3}
-            variants={fadeInUpVariants}
-          >
-            <h3 className="font-bold text-silver-100 text-lg mb-4 relative inline-block">
-              Contáctanos
-              <span className="absolute -bottom-1 left-0 w-1/2 h-0.5 bg-primary-500/50"></span>
-            </h3>
-            <ul className="space-y-4">
-              <motion.li 
-                className="flex items-start group"
-                whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <div className="bg-midnight-800 p-2 rounded-lg mr-3 mt-0.5 flex-shrink-0 group-hover:bg-primary-500/20 transition-colors">
-                  <MapPin size={18} className="text-primary-500" />
-                </div>
-                <span className="text-silver-400">Calle Hogar 123, Ciudad, País</span>
-              </motion.li>
-              <motion.li 
-                className="flex items-center group"
-                whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <div className="bg-midnight-800 p-2 rounded-lg mr-3 flex-shrink-0 group-hover:bg-primary-500/20 transition-colors">
-                  <Phone size={18} className="text-primary-500" />
-                </div>
-                <span className="text-silver-400">+52 (55) 1234-5678</span>
-              </motion.li>
-              <motion.li 
-                className="flex items-center group"
-                whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <div className="bg-midnight-800 p-2 rounded-lg mr-3 flex-shrink-0 group-hover:bg-primary-500/20 transition-colors">
-                  <Mail size={18} className="text-primary-500" />
-                </div>
-                <span className="text-silver-400">info@tuhogar.com</span>
-              </motion.li>
-            </ul>
-            
-            {/* Working Hours */}
-            <div className="mt-6">
-              <h4 className="font-semibold text-silver-100 mb-3 flex items-center">
-                <Clock size={16} className="mr-2 text-primary-400" />
-                Horario de Atención
-              </h4>
-              <div className="bg-midnight-800/50 rounded-xl p-3 border border-midnight-700">
-                <div className="flex justify-between items-center py-1.5">
-                  <span className="text-silver-400">Lunes - Viernes:</span>
-                  <span className="text-silver-300 font-medium">9:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 border-t border-midnight-700">
-                  <span className="text-silver-400">Sábado:</span>
-                  <span className="text-silver-300 font-medium">10:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 border-t border-midnight-700">
-                  <span className="text-silver-400">Domingo:</span>
-                  <span className="text-silver-300 font-medium">Cerrado</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
       </div>
       
-      {/* Bottom Footer */}
-      <div className="border-t border-midnight-800 relative z-10">
-        <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <motion.p 
-              className="text-silver-500 text-sm"
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="space-y-4">
+            <motion.div 
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.5 }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center"
             >
-              © {currentYear} TuHogar. Todos los derechos reservados.
-            </motion.p>
-            <div className="mt-4 md:mt-0 flex flex-wrap gap-4">
-              {[
-                { name: 'Política de Privacidad', href: '/privacy' },
-                { name: 'Términos de Servicio', href: '/terms' },
-                { name: 'Política de Cookies', href: '/cookies' }
-              ].map((policy, index) => (
-                <motion.div
-                  key={policy.name}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5 + (index * 0.1) }}
-                >
-                  <Link href={policy.href} className="text-silver-500 hover:text-primary-400 text-sm transition-colors">
-                    {policy.name}
-                  </Link>
-                </motion.div>
-              ))}
+              <div className="mr-2 relative">
+                <Sparkles className="w-6 h-6 text-accent" />
+              </div>
+              <span className="text-2xl font-display font-bold text-foreground">Millow</span>
+            </motion.div>
+            
+            <p className="text-foreground/70 text-sm">
+              Transformamos la búsqueda de propiedades con inteligencia artificial avanzada, ofreciendo una experiencia segura y personalizada para encontrar tu hogar ideal.
+            </p>
+            
+            <div className="flex items-center">
+              <Shield size={16} className="text-primary mr-2" />
+              <span className="text-sm text-foreground/70">Transacciones 100% seguras</span>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-display font-medium text-foreground mb-4">Enlaces Rápidos</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Inicio
+                </Link>
+              </li>
+              <li>
+                <Link href="/properties" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Propiedades
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Nosotros
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Contacto
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="font-display font-medium text-foreground mb-4">Servicios</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/services/ai-matching" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Coincidencia IA
+                </Link>
+              </li>
+              <li>
+                <Link href="/services/virtual-tours" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Tours Virtuales
+                </Link>
+              </li>
+              <li>
+                <Link href="/services/market-analysis" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Análisis de Mercado
+                </Link>
+              </li>
+              <li>
+                <Link href="/services/financing" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Opciones de Financiamiento
+                </Link>
+              </li>
+              <li>
+                <Link href="/services/legal" className="text-foreground/70 hover:text-accent transition-colors text-sm">
+                  Asesoría Legal
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="font-display font-medium text-foreground mb-4">Suscríbete</h3>
+            <p className="text-foreground/70 text-sm mb-4">
+              Recibe recomendaciones personalizadas de propiedades seleccionadas por nuestra IA.
+            </p>
+            
+            <div className="space-y-4">
+              <div className="relative">
+                <input 
+                  type="email" 
+                  placeholder="Tu correo electrónico" 
+                  className="w-full px-4 py-2 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
+                />
+              </div>
+              
+              <button className="w-full px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors shadow-md hover:shadow-lg font-medium text-sm ai-glow">
+                Suscribirse
+              </button>
+            </div>
+            
+            <div className="mt-6">
+              <h4 className="font-display font-medium text-foreground mb-2">Síguenos</h4>
+              <div className="flex space-x-3">
+                <a href="#" className="text-foreground/70 hover:text-accent transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd"></path>
+                  </svg>
+                </a>
+                <a href="#" className="text-foreground/70 hover:text-accent transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
+                  </svg>
+                </a>
+                <a href="#" className="text-foreground/70 hover:text-accent transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd"></path>
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
         </div>
+        
+        <div className="mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-foreground/60 text-sm mb-4 md:mb-0">
+            © {currentYear} Millow. Todos los derechos reservados.
+          </p>
+          
+          <div className="flex space-x-6">
+            <Link href="/privacy" className="text-foreground/60 hover:text-accent transition-colors text-sm">
+              Política de Privacidad
+            </Link>
+            <Link href="/terms" className="text-foreground/60 hover:text-accent transition-colors text-sm">
+              Términos de Servicio
+            </Link>
+          </div>
+        </div>
       </div>
-      
-      {/* Línea de luz en la parte inferior */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-midnight-900 via-primary-500/30 to-midnight-900"></div>
     </footer>
   );
 };

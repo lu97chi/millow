@@ -13,23 +13,23 @@ interface Coordinates {
   }
   
   interface PropertyFeatures {
-    bedrooms: number;
-    bathrooms: number;
-    constructionSize: number;
-    lotSize: number;
-    parking: number;
-    floors: number;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    constructionSize: number | null;
+    lotSize: number | null;
+    parking: number | null;
+    floors: number | null;
   }
   
   interface Agent {
     name: string;
+    title: string | null;
     company: string;
-    title: string;
     image: string;
     phone: string;
     email: string;
-    experience: number;
-    activeListings: number;
+    experience: number | null;
+    activeListings: number | null;
   }
   
   // Enum types
@@ -73,8 +73,8 @@ interface Coordinates {
     features: PropertyFeatures;
     amenities: Amenity[];
     images: string[];
-    propertyAge: number;
-    maintenanceFee: number;
+    propertyAge: number | null;
+    maintenanceFee: number | null;
     status: PropertyStatus;
     agent: Agent;
     createdAt: string;
@@ -91,4 +91,80 @@ interface Coordinates {
     topCities: Record<string, number>;
     topStates: Record<string, number>;
   }
+  
+  // Properties page interfaces
+  export interface PropertyFilters {
+    search?: string;
+    propertyType?: PropertyTypeName;
+    operationType?: OperationType;
+    status?: PropertyStatus;
+    minPrice?: number;
+    maxPrice?: number;
+    minBedrooms?: number;
+    maxBedrooms?: number;
+    minBathrooms?: number;
+    maxBathrooms?: number;
+    minConstructionSize?: number;
+    maxConstructionSize?: number;
+    minLotSize?: number;
+    maxLotSize?: number;
+    state?: string;
+    city?: string;
+    amenities?: Amenity[];
+    sortBy?: 'price' | 'createdAt' | 'updatedAt';
+    sortOrder?: 'asc' | 'desc';
+  }
+  
+  export interface AIQueryResponse {
+    results: {
+      data: Property[];
+      metadata: {
+        executionTime: number;
+        query: any;
+        sort?: Record<string, 1 | -1>;
+        projection?: Record<string, 1 | 0>;
+        statistics: {
+          totalInDatabase: number;
+          matchingResults: number;
+          percentageMatch: number;
+          averagePrice?: number;
+          priceRange?: {
+            min: number;
+            max: number;
+          };
+          propertyTypes?: Record<string, number>;
+          operationTypes?: Record<string, number>;
+          citiesDistribution?: Record<string, number>;
+        };
+      };
+    };
+    explanation: string;
+  }
+  
+  // New interface for the updated chat response structure
+  export interface ChatQueryResponse {
+    sessionId: string;
+    response: string;
+    searchResults: {
+      data: Property[];
+      metadata: {
+        executionTime: number;
+        statistics: {
+          totalInDatabase: number;
+          matchingResults: number;
+          percentageMatch: number;
+        }
+      }
+    };
+    mongoQuery: any;
+  }
+  
+  export interface PropertiesResponse {
+    properties: Property[];
+    total: number;
+    filters: PropertyFilters;
+    explanation?: string; // Optional explanation from AI query
+  }
+  
+
   

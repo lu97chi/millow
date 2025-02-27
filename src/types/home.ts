@@ -1,6 +1,6 @@
 import { LocationDistribution, PriceRange, Property } from "./properties";
 
-interface HomepageStatistics {
+export interface HomepageStatistics {
     totalProperties: number;
     availableProperties: number;
     soldProperties: number;

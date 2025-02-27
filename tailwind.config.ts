@@ -115,7 +115,7 @@ const config = {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
         heading: ["var(--font-heading)", ...fontFamily.sans],
-        mono: ["var(--font-mono)", ...fontFamily.mono],
+        mono: ["JetBrains Mono", ...fontFamily.mono],
       },
       fontSize: {
         "2xs": ["0.75rem", { lineHeight: "1.25rem" }],
