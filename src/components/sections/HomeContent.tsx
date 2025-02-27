@@ -90,7 +90,7 @@ export default function HomeContent() {
       </Suspense>
       
       <Suspense fallback={<div className="h-96 bg-midnight-900 animate-pulse" />}>
-        <FeaturedProperties properties={homeData.featuredProperties} />
+        <FeaturedProperties />
       </Suspense>
       
       <Suspense fallback={<div className="h-96 bg-midnight-900 animate-pulse" />}>
