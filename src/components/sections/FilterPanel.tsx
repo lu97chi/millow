@@ -17,7 +17,13 @@ import {
   Square, 
   Tag,
   Filter,
-  RotateCcw
+  RotateCcw,
+  Waves,
+  Shield,
+  Car,
+  Dumbbell,
+  Flower2,
+  Trees
 } from 'lucide-react';
 import type { PropertyFilters } from '@/types/properties';
 
@@ -79,27 +85,33 @@ export default function FilterPanel({
   ];
 
   // Operation types
-  const operationTypes: { value: OperationType; label: string }[] = [
-    { value: 'Venta', label: 'Venta' },
-    { value: 'Renta', label: 'Renta' },
-    { value: 'Desarrollo', label: 'Desarrollo' },
+  const operationTypes: { value: OperationType; label: string; icon: JSX.Element }[] = [
+    { value: 'Venta', label: 'Venta', icon: <Tag size={16} /> },
+    { value: 'Renta', label: 'Renta', icon: <DollarSign size={16} /> },
+    { value: 'Desarrollo', label: 'Desarrollo', icon: <Building2 size={16} /> },
   ];
 
-  // Amenities
-  const amenities: { value: Amenity; label: string }[] = [
-    { value: 'Alberca', label: 'Alberca' },
-    { value: 'Circuito Cerrado', label: 'Circuito Cerrado' },
-    { value: 'Estacionamientos', label: 'Estacionamientos' },
-    { value: 'Gimnasio', label: 'Gimnasio' },
-    { value: 'Jardín', label: 'Jardín' },
-    { value: 'Roof Garden', label: 'Roof Garden' },
+  // Amenities with icons
+  const amenities: { value: Amenity; label: string; icon: JSX.Element }[] = [
+    { value: 'Alberca', label: 'Alberca', icon: <Waves size={16} /> },
+    { value: 'Circuito Cerrado', label: 'Circuito Cerrado', icon: <Shield size={16} /> },
+    { value: 'Estacionamientos', label: 'Estacionamientos', icon: <Car size={16} /> },
+    { value: 'Gimnasio', label: 'Gimnasio', icon: <Dumbbell size={16} /> },
+    { value: 'Jardín', label: 'Jardín', icon: <Flower2 size={16} /> },
+    { value: 'Roof Garden', label: 'Roof Garden', icon: <Trees size={16} /> },
   ];
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     
-    if (type === 'number') {
+    if (type === 'checkbox') {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      setFilters(prev => ({
+        ...prev,
+        [name]: isChecked
+      }));
+    } else if (type === 'number') {
       setFilters(prev => ({
         ...prev,
         [name]: value === '' ? undefined : Number(value)
@@ -132,24 +144,18 @@ export default function FilterPanel({
   const handleAmenityChange = (amenity: Amenity) => {
     setFilters(prev => {
       const currentAmenities = prev.amenities || [];
-      const amenityIndex = currentAmenities.indexOf(amenity);
       
-      let newAmenities: Amenity[];
-      if (amenityIndex >= 0) {
-        // Remove amenity if already selected
-        newAmenities = [
-          ...currentAmenities.slice(0, amenityIndex),
-          ...currentAmenities.slice(amenityIndex + 1)
-        ];
+      if (currentAmenities.includes(amenity)) {
+        return {
+          ...prev,
+          amenities: currentAmenities.filter(a => a !== amenity)
+        };
       } else {
-        // Add amenity if not selected
-        newAmenities = [...currentAmenities, amenity];
+        return {
+          ...prev,
+          amenities: [...currentAmenities, amenity]
+        };
       }
-      
-      return {
-        ...prev,
-        amenities: newAmenities.length > 0 ? newAmenities : undefined
-      };
     });
   };
 
@@ -170,7 +176,7 @@ export default function FilterPanel({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -179,262 +185,242 @@ export default function FilterPanel({
           
           {/* Filter Panel */}
           <motion.div
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-background border-l border-border/40 shadow-xl z-50 overflow-y-auto"
+            className="fixed inset-y-0 right-0 w-full max-w-md bg-background border-l border-border shadow-xl z-50 overflow-hidden flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-background z-10 px-6 py-4 border-b border-border/40 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Filter size={18} className="text-accent" />
-                <h2 className="text-lg font-display font-medium">Filtros</h2>
+            <div className="p-4 border-b border-border flex items-center justify-between bg-gradient-to-r from-primary/5 to-accent/5">
+              <div className="flex items-center">
+                <Filter size={18} className="text-accent mr-2" />
+                <h2 className="text-lg font-medium">Filtros de búsqueda</h2>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleResetFilters}
-                  className="flex items-center gap-1 text-sm text-foreground/70 hover:text-accent transition-colors"
-                >
-                  <RotateCcw size={14} />
-                  <span>Reiniciar</span>
-                </button>
-                <button
-                  onClick={onClose}
-                  className="p-2 text-foreground/70 hover:text-accent transition-colors"
-                  aria-label="Cerrar"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+              <motion.button
+                className="p-2 rounded-full hover:bg-secondary/50 text-muted-foreground transition-colors"
+                onClick={onClose}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <X size={18} />
+              </motion.button>
             </div>
             
             {/* Filter Content */}
-            <div className="p-6 space-y-6">
-              {/* Search */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">Búsqueda</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="search"
-                    placeholder="Buscar por ubicación, características..."
-                    className="w-full px-4 py-2 pl-10 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                    value={filters.search || ''}
-                    onChange={handleInputChange}
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/50" size={16} />
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* Property Types */}
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <Building size={16} className="mr-2 text-primary" />
+                  Tipo de propiedad
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {propertyTypes.map((type) => (
+                    <motion.button
+                      key={type.value}
+                      className={`flex items-center p-3 rounded-lg border ${
+                        filters.propertyType === type.value
+                          ? 'border-accent bg-accent/10 text-accent'
+                          : 'border-border hover:border-accent/30 hover:bg-secondary/20'
+                      } transition-all duration-200`}
+                      onClick={() => handlePropertyTypeChange(type.value)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className={`mr-2 ${filters.propertyType === type.value ? 'text-accent' : 'text-muted-foreground'}`}>
+                        {type.icon}
+                      </div>
+                      <span className="text-sm">{type.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Operation Types */}
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <Tag size={16} className="mr-2 text-primary" />
+                  Tipo de operación
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {operationTypes.map((type) => (
+                    <motion.button
+                      key={type.value}
+                      className={`flex items-center px-4 py-2 rounded-lg border ${
+                        filters.operationType === type.value
+                          ? 'border-accent bg-accent/10 text-accent'
+                          : 'border-border hover:border-accent/30 hover:bg-secondary/20'
+                      } transition-all duration-200`}
+                      onClick={() => handleOperationTypeChange(type.value)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className={`mr-2 ${filters.operationType === type.value ? 'text-accent' : 'text-muted-foreground'}`}>
+                        {type.icon}
+                      </div>
+                      <span className="text-sm">{type.label}</span>
+                    </motion.button>
+                  ))}
                 </div>
               </div>
               
               {/* Price Range */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">Rango de Precio</label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      name="minPrice"
-                      placeholder="Mínimo"
-                      className="w-full px-4 py-2 pl-8 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                      value={filters.minPrice || ''}
-                      onChange={handleInputChange}
-                      min={0}
-                    />
-                    <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 text-foreground/50" size={14} />
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <DollarSign size={16} className="mr-2 text-primary" />
+                  Rango de precio
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Mínimo</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                      <input
+                        type="number"
+                        name="minPrice"
+                        value={filters.minPrice || ''}
+                        onChange={handleInputChange}
+                        placeholder="Cualquier"
+                        className="w-full pl-7 pr-3 py-2 rounded-lg border border-border bg-secondary/10 focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+                      />
+                    </div>
                   </div>
-                  <span className="text-foreground/50">-</span>
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      name="maxPrice"
-                      placeholder="Máximo"
-                      className="w-full px-4 py-2 pl-8 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                      value={filters.maxPrice || ''}
-                      onChange={handleInputChange}
-                      min={0}
-                    />
-                    <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 text-foreground/50" size={14} />
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Máximo</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                      <input
+                        type="number"
+                        name="maxPrice"
+                        value={filters.maxPrice || ''}
+                        onChange={handleInputChange}
+                        placeholder="Cualquier"
+                        className="w-full pl-7 pr-3 py-2 rounded-lg border border-border bg-secondary/10 focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              {/* Property Type */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">Tipo de Propiedad</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {propertyTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => handlePropertyTypeChange(type.value)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                        filters.propertyType === type.value
-                          ? 'bg-accent/10 text-accent border border-accent/30'
-                          : 'bg-background border border-border/40 text-foreground/70 hover:border-accent/30'
-                      }`}
-                    >
-                      {type.icon}
-                      <span>{type.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Operation Type */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">Tipo de Operación</label>
-                <div className="flex gap-2">
-                  {operationTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => handleOperationTypeChange(type.value)}
-                      className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                        filters.operationType === type.value
-                          ? 'bg-accent/10 text-accent border border-accent/30'
-                          : 'bg-background border border-border/40 text-foreground/70 hover:border-accent/30'
-                      }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
                 </div>
               </div>
               
               {/* Bedrooms & Bathrooms */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/90">Habitaciones</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="minBedrooms"
-                      placeholder="Mínimo"
-                      className="w-full px-4 py-2 pl-8 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                      value={filters.minBedrooms || ''}
-                      onChange={handleInputChange}
-                      min={0}
-                    />
-                    <Bed className="absolute left-2 top-1/2 transform -translate-y-1/2 text-foreground/50" size={14} />
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <Bed size={16} className="mr-2 text-primary" />
+                  Habitaciones y baños
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Habitaciones</label>
+                    <div className="flex space-x-2">
+                      {[1, 2, 3, 4, '5+'].map((num) => (
+                        <motion.button
+                          key={num}
+                          className={`flex-1 py-2 rounded-lg border ${
+                            filters.minBedrooms === (num === '5+' ? 5 : Number(num))
+                              ? 'border-accent bg-accent/10 text-accent'
+                              : 'border-border hover:border-accent/30 hover:bg-secondary/20'
+                          } transition-all duration-200 text-sm`}
+                          onClick={() => setFilters(prev => ({
+                            ...prev,
+                            minBedrooms: prev.minBedrooms === (num === '5+' ? 5 : Number(num)) 
+                              ? undefined 
+                              : (num === '5+' ? 5 : Number(num))
+                          }))}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {num}
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/90">Baños</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="minBathrooms"
-                      placeholder="Mínimo"
-                      className="w-full px-4 py-2 pl-8 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                      value={filters.minBathrooms || ''}
-                      onChange={handleInputChange}
-                      min={0}
-                    />
-                    <Bath className="absolute left-2 top-1/2 transform -translate-y-1/2 text-foreground/50" size={14} />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Size */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/90">Construcción (m²)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="minConstructionSize"
-                      placeholder="Mínimo"
-                      className="w-full px-4 py-2 pl-8 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                      value={filters.minConstructionSize || ''}
-                      onChange={handleInputChange}
-                      min={0}
-                    />
-                    <Square className="absolute left-2 top-1/2 transform -translate-y-1/2 text-foreground/50" size={14} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/90">Terreno (m²)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="minLotSize"
-                      placeholder="Mínimo"
-                      className="w-full px-4 py-2 pl-8 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                      value={filters.minLotSize || ''}
-                      onChange={handleInputChange}
-                      min={0}
-                    />
-                    <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 text-foreground/50" size={14} />
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Baños</label>
+                    <div className="flex space-x-2">
+                      {[1, 2, 3, 4, '5+'].map((num) => (
+                        <motion.button
+                          key={num}
+                          className={`flex-1 py-2 rounded-lg border ${
+                            filters.minBathrooms === (num === '5+' ? 5 : Number(num))
+                              ? 'border-accent bg-accent/10 text-accent'
+                              : 'border-border hover:border-accent/30 hover:bg-secondary/20'
+                          } transition-all duration-200 text-sm`}
+                          onClick={() => setFilters(prev => ({
+                            ...prev,
+                            minBathrooms: prev.minBathrooms === (num === '5+' ? 5 : Number(num)) 
+                              ? undefined 
+                              : (num === '5+' ? 5 : Number(num))
+                          }))}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {num}
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
               
               {/* Amenities */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">Amenidades</label>
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <Check size={16} className="mr-2 text-primary" />
+                  Amenidades
+                </h3>
                 <div className="grid grid-cols-2 gap-2">
                   {amenities.map((amenity) => {
                     const isSelected = filters.amenities?.includes(amenity.value) || false;
                     return (
-                      <button
+                      <motion.button
                         key={amenity.value}
-                        onClick={() => handleAmenityChange(amenity.value)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        className={`flex items-center p-3 rounded-lg border ${
                           isSelected
-                            ? 'bg-accent/10 text-accent border border-accent/30'
-                            : 'bg-background border border-border/40 text-foreground/70 hover:border-accent/30'
-                        }`}
+                            ? 'border-accent bg-accent/10 text-accent'
+                            : 'border-border hover:border-accent/30 hover:bg-secondary/20'
+                        } transition-all duration-200`}
+                        onClick={() => handleAmenityChange(amenity.value)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        {isSelected && <Check size={14} className="text-accent" />}
-                        <span>{amenity.label}</span>
-                      </button>
+                        <div className={`mr-2 ${isSelected ? 'text-accent' : 'text-muted-foreground'}`}>
+                          {amenity.icon}
+                        </div>
+                        <span className="text-sm">{amenity.label}</span>
+                      </motion.button>
                     );
                   })}
-                </div>
-              </div>
-              
-              {/* Sort Options */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">Ordenar por</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    name="sortBy"
-                    className="px-4 py-2 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                    value={filters.sortBy || ''}
-                    onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as any || undefined }))}
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="price">Precio</option>
-                    <option value="createdAt">Fecha de publicación</option>
-                    <option value="updatedAt">Última actualización</option>
-                  </select>
-                  <select
-                    name="sortOrder"
-                    className="px-4 py-2 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm"
-                    value={filters.sortOrder || ''}
-                    onChange={(e) => setFilters(prev => ({ ...prev, sortOrder: e.target.value as any || undefined }))}
-                    disabled={!filters.sortBy}
-                  >
-                    <option value="asc">Ascendente</option>
-                    <option value="desc">Descendente</option>
-                  </select>
                 </div>
               </div>
             </div>
             
             {/* Footer */}
-            <div className="sticky bottom-0 bg-background border-t border-border/40 p-4 flex gap-2">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-2 border border-border/40 rounded-md text-foreground/90 hover:bg-secondary/20 transition-colors text-sm font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleApplyFilters}
-                className="flex-1 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors text-sm font-medium"
-              >
-                Aplicar Filtros
-              </button>
+            <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-accent/5">
+              <div className="flex space-x-3">
+                <motion.button
+                  className="flex-1 py-2.5 rounded-lg border border-border hover:bg-secondary/20 transition-all duration-200 text-sm font-medium"
+                  onClick={handleResetFilters}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <span className="flex items-center justify-center">
+                    <RotateCcw size={16} className="mr-2" />
+                    Reiniciar
+                  </span>
+                </motion.button>
+                <motion.button
+                  className="flex-1 py-2.5 rounded-lg bg-accent text-white hover:bg-accent/90 transition-all duration-200 text-sm font-medium"
+                  onClick={handleApplyFilters}
+                  whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(var(--accent), 0.25)' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <span className="flex items-center justify-center">
+                    <Filter size={16} className="mr-2" />
+                    Aplicar filtros
+                  </span>
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         </>

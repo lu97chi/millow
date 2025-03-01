@@ -147,7 +147,8 @@ export const endpoints = {
   properties: '/properties',
   property: (id: string) => `/properties/${id}`,
   chat: {
-    query: '/query'
+    query: '/query',
+    propertyQuery: '/property-query'
   }
 } as const;
 
@@ -165,6 +166,12 @@ export const api = {
       apiClient.post<ChatQueryResponse>(endpoints.chat.query, { 
         message, 
         sessionId 
+      }),
+    propertyQuery: (message: string, propertyId: string, sessionId?: string) =>
+      apiClient.post<ChatQueryResponse>(endpoints.chat.propertyQuery, {
+        message,
+        propertyId,
+        sessionId
       })
   }
 } as const; 

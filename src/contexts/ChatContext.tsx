@@ -18,7 +18,7 @@ interface ChatContextType {
   messages: Message[];
   isTyping: boolean;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, propertyId?: string) => Promise<void>;
   clearChatHistory: () => void;
   startNewChat: () => void;
 }
@@ -77,7 +77,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { sessionId, setSessionId } = useSession();
 
   // Function to send a message
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, propertyId?: string) => {
     if (!content.trim()) return;
 
     const newMessage: Message = {
@@ -101,8 +101,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }, 1000);
 
     try {
-      // Call the API endpoint with sessionId if available
-      const data = await api.chat.query(content.trim(), sessionId);
+      // Call the appropriate API endpoint based on whether we have a propertyId
+      const data = propertyId 
+        ? await api.chat.propertyQuery(content.trim(), propertyId, sessionId)
+        : await api.chat.query(content.trim(), sessionId);
+      
       console.log('API Response:', data);
 
       // Store the sessionId if it's returned from the backend

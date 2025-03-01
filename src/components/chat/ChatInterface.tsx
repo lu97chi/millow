@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Bot, User2, Check, Info, Sparkles } from 'lucide-react';
-import * as Dialog from '@radix-ui/react-dialog';
+import { Send, X, Bot, User2, Check, Info, Sparkles, RotateCcw, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useChat, Message, quickSuggestions } from '@/contexts/ChatContext';
@@ -12,6 +11,7 @@ import { useSession } from '@/contexts/SessionContext';
 interface ChatInterfaceProps {
   onClose?: () => void;
   isMobile?: boolean;
+  propertyId?: string;
 }
 
 // Animation variants
@@ -20,7 +20,7 @@ const containerVariants = {
   visible: { 
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.12
     }
   }
 };
@@ -29,7 +29,7 @@ const messageVariants = {
   hidden: { 
     opacity: 0,
     y: 20,
-    scale: 0.9
+    scale: 0.95
   },
   visible: { 
     opacity: 1,
@@ -37,8 +37,8 @@ const messageVariants = {
     scale: 1,
     transition: {
       type: "spring",
-      stiffness: 200,
-      damping: 20
+      stiffness: 300,
+      damping: 24
     }
   },
   exit: {
@@ -52,7 +52,7 @@ const pulseVariants = {
   initial: { scale: 1 },
   pulse: {
     scale: 1.2,
-    boxShadow: "0 0 10px rgba(41, 163, 195, 0.5)",
+    boxShadow: "0 0 15px rgba(41, 163, 195, 0.6)",
     transition: {
       duration: 0.5,
       repeat: Infinity,
@@ -74,12 +74,39 @@ const buttonVariants = {
   tap: { scale: 0.95 }
 };
 
-const ChatInterface = ({ onClose, isMobile }: ChatInterfaceProps) => {
-  const [isInfoOpen, setIsInfoOpen] = useState(false);
+// Add shimmer animation for AI responses
+const shimmerVariants = {
+  initial: { backgroundPosition: '0% 0%' },
+  animate: {
+    backgroundPosition: ['0% 0%', '100% 100%'],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      repeatType: "reverse" as const,
+      ease: "linear"
+    }
+  }
+};
+
+// Helper function to parse and clean message content
+const parseMessageContent = (content: string) => {
+  // Check if the message contains JSON
+  if (content.includes('```json')) {
+    // Extract the human-readable part before the JSON
+    const humanPart = content.split('```json')[0].trim();
+    return humanPart;
+  }
+  return content;
+};
+
+const ChatInterface = ({ onClose, isMobile, propertyId }: ChatInterfaceProps) => {
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const { messages, isTyping, sendMessage, clearChatHistory, startNewChat } = useChat();
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -99,266 +126,345 @@ const ChatInterface = ({ onClose, isMobile }: ChatInterfaceProps) => {
   // Also scroll to bottom on initial load
   useEffect(() => {
     scrollToBottom();
+    // Focus the input field on load
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, []);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
-    
-    await sendMessage(inputValue.trim());
-    setInputValue('');
+    if (inputValue.trim()) {
+      const message = inputValue.trim();
+      setInputValue(''); // Clear input immediately
+      await sendMessage(message, propertyId);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
+    setInputValue(''); // Clear input immediately
+    sendMessage(suggestion, propertyId);
   };
 
   const MessageStatus = ({ status }: { status?: string }) => {
     if (!status) return null;
     
     return (
-      <span className="ml-2 flex">
-        {status === 'sent' && <Check size={14} className="text-foreground/40" />}
-        {status === 'delivered' && (
-          <div className="flex">
-            <Check size={14} className="text-foreground/40" />
-            <Check size={14} className="-ml-1 text-foreground/40" />
-          </div>
-        )}
-        {status === 'read' && (
-          <div className="flex">
-            <Check size={14} className="text-accent" />
-            <Check size={14} className="-ml-1 text-accent" />
-          </div>
-        )}
-      </span>
+      <div className="flex items-center text-xs text-muted-foreground mt-1">
+        <Check size={12} className="mr-1" />
+        {status}
+      </div>
     );
   };
 
+  // Handle textarea auto-resize
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    setInputValue(textarea.value);
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set the height to scrollHeight + 2px for border
+    const newHeight = Math.min(textarea.scrollHeight, 120);
+    textarea.style.height = `${newHeight}px`;
+  };
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   return (
-    <div className={`flex flex-col bg-background border border-border rounded-2xl shadow-lg overflow-hidden ${isMobile ? 'h-[calc(100vh-2rem)] w-full' : 'h-[600px] w-[400px]'}`}>
+    <div className="bg-background border border-border rounded-xl shadow-xl overflow-hidden h-[750px] flex flex-col">
       {/* Chat Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center mr-3">
-            <Bot size={20} className="text-accent" />
-          </div>
+          <motion.div 
+            className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center mr-3"
+            variants={pulseVariants}
+            initial="initial"
+            animate="pulse"
+          >
+            <Sparkles size={16} className="text-accent" />
+          </motion.div>
           <div>
-            <h3 className="font-medium text-foreground">Luna</h3>
-            <p className="text-xs text-foreground/60">Asistente Virtual</p>
+            <h3 className="font-medium text-foreground">Asistente Inmobiliario</h3>
+            <p className="text-xs text-muted-foreground">Powered by AI</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setIsInfoOpen(true)}
-            className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
+        <div className="flex items-center space-x-2">
+          <motion.button
+            className="p-2 rounded-full hover:bg-secondary/50 text-muted-foreground transition-colors"
+            onClick={() => setIsInfoModalOpen(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Información"
           >
-            <Info size={18} className="text-foreground/70" />
-          </button>
-          {onClose && (
-            <button 
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
-            >
-              <X size={18} className="text-foreground/70" />
-            </button>
-          )}
+            <Info size={18} />
+          </motion.button>
+          <motion.button
+            className="p-2 rounded-full hover:bg-secondary/50 text-muted-foreground transition-colors"
+            onClick={onClose}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Cerrar"
+          >
+            <X size={18} />
+          </motion.button>
         </div>
       </div>
-
+      
       {/* Chat Messages */}
       <div 
+        className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
       >
-        <AnimatePresence>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-4"
-          >
-            {messages.map((message) => (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-4"
+        >
+          {messages.length === 0 ? (
+            <motion.div 
+              className="flex flex-col items-center justify-center h-full py-10"
+              variants={messageVariants}
+            >
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4">
+                <Sparkles size={24} className="text-accent" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">¡Bienvenido!</h3>
+              <p className="text-sm text-muted-foreground text-center max-w-xs mb-6">
+                Soy tu asistente inmobiliario virtual. ¿En qué puedo ayudarte hoy?
+              </p>
+              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+                {quickSuggestions.slice(0, 4).map((suggestion, index) => (
+                  <motion.button
+                    key={index}
+                    className="text-xs text-left p-3 rounded-lg border border-border bg-secondary/20 hover:bg-secondary/40 transition-colors"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    whileHover={{ scale: 1.03, backgroundColor: '#e6f7ff' }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {suggestion}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            messages.map((message, index) => (
               <motion.div
-                key={message.id}
+                key={index}
                 variants={messageVariants}
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div 
-                  className={`max-w-[85%] rounded-2xl p-3 ${
-                    message.type === 'user' 
-                      ? 'bg-accent text-white rounded-tr-none shadow-sm' 
-                      : 'bg-secondary/30 text-foreground rounded-tl-none border border-border/40 shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-start">
-                    {message.type === 'agent' && (
-                      <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">
-                        <Bot size={12} className="text-accent" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className={`text-sm ${message.type === 'user' ? 'text-white' : 'text-foreground'}`}>
-                        {message.content}
-                      </p>
-                      <div className="flex justify-end items-center mt-1">
-                        <span className={`text-xs ${message.type === 'user' ? 'text-white/70' : 'text-foreground/60'}`}>
-                          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        {message.type === 'user' && <MessageStatus status={message.status} />}
-                      </div>
-                    </div>
-                    {message.type === 'user' && (
-                      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center ml-2 mt-0.5 flex-shrink-0">
-                        <User2 size={12} className="text-primary" />
-                      </div>
+                <div className={`flex items-start max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user' ? 'ml-2 bg-primary/10' : 'mr-2 bg-accent/10'}`}>
+                    {message.type === 'user' ? (
+                      <User2 size={16} className="text-primary" />
+                    ) : (
+                      <Bot size={16} className="text-accent" />
                     )}
                   </div>
-                  
-                  {/* Text Suggestions */}
-                  {message.type === 'agent' && message.suggestions && message.suggestions.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {message.suggestions.map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="text-xs bg-background border border-border/60 rounded-full px-3 py-1 text-foreground/80 hover:bg-secondary/50 transition-colors"
+                  <div>
+                    <div 
+                      className={`p-3 rounded-lg ${
+                        message.type === 'user' 
+                          ? 'bg-primary text-primary-foreground rounded-tr-none' 
+                          : 'bg-secondary/30 text-foreground rounded-tl-none border border-border/50'
+                      }`}
+                    >
+                      {message.type === 'agent' ? (
+                        <motion.div
+                          initial={{ opacity: 0.8 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.5 }}
                         >
-                          {suggestion}
-                        </button>
-                      ))}
+                          {parseMessageContent(message.content)}
+                        </motion.div>
+                      ) : (
+                        message.content
+                      )}
                     </div>
-                  )}
+                    <MessageStatus status={message.status} />
+                  </div>
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="bg-secondary/30 text-foreground rounded-2xl rounded-tl-none border border-border/40 p-3 max-w-[85%]">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center mr-1 flex-shrink-0">
-                  <Bot size={12} className="text-accent" />
+            ))
+          )}
+          
+          {/* Typing Indicator */}
+          {isTyping && (
+            <motion.div
+              variants={messageVariants}
+              className="flex justify-start"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-start max-w-[80%]">
+                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center mr-2">
+                  <Bot size={16} className="text-accent" />
                 </div>
-                <div className="flex space-x-1">
-                  <motion.div
-                    className="w-2 h-2 rounded-full bg-foreground/40"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity, repeatType: 'loop', delay: 0 }}
-                  />
-                  <motion.div
-                    className="w-2 h-2 rounded-full bg-foreground/40"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity, repeatType: 'loop', delay: 0.15 }}
-                  />
-                  <motion.div
-                    className="w-2 h-2 rounded-full bg-foreground/40"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity, repeatType: 'loop', delay: 0.3 }}
-                  />
+                <div className="p-3 rounded-lg bg-secondary/30 text-foreground rounded-tl-none border border-border/50">
+                  <motion.div 
+                    className="flex space-x-1"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <div className="w-2 h-2 rounded-full bg-accent/60"></div>
+                    <div className="w-2 h-2 rounded-full bg-accent/60"></div>
+                    <div className="w-2 h-2 rounded-full bg-accent/60"></div>
+                  </motion.div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-        
+            </motion.div>
+          )}
+        </motion.div>
         <div ref={messagesEndRef} />
       </div>
-
+      
+      {/* Quick Suggestions */}
+      {messages.length > 0 && (
+        <div className="px-4 py-2 border-t border-border bg-secondary/10">
+          <div className="flex overflow-x-auto space-x-2 pb-2 scrollbar-hide">
+            {quickSuggestions.map((suggestion, index) => (
+              <motion.button
+                key={index}
+                className="text-xs whitespace-nowrap px-3 py-1.5 rounded-full border border-border/50 bg-background hover:bg-secondary/30 transition-colors"
+                onClick={() => handleSuggestionClick(suggestion)}
+                whileHover={{ scale: 1.05, backgroundColor: '#e6f7ff' }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {suggestion}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {/* Chat Input */}
-      <div className="p-3 border-t border-border">
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Escribe tu mensaje..."
-            className="flex-1 bg-secondary/30 border border-border/40 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-          />
+      <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-accent/5">
+        <form onSubmit={handleSendMessage} className="flex items-end">
+          <div className={`relative flex-1 transition-all duration-300 ${isInputFocused ? 'ring-2 ring-accent/30' : ''}`}>
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              placeholder="Escribe tu mensaje..."
+              className="w-full p-3 pr-10 rounded-lg border border-border bg-background/80 focus:outline-none resize-none min-h-[44px] max-h-[120px] text-sm"
+              rows={1}
+            />
+            {messages.length > 0 && (
+              <motion.button
+                type="button"
+                className="absolute right-2 top-2 p-1 text-muted-foreground hover:text-accent transition-colors"
+                onClick={startNewChat}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                title="Iniciar nueva conversación"
+              >
+                <RotateCcw size={16} />
+              </motion.button>
+            )}
+          </div>
           <motion.button
+            type="submit"
+            className={`ml-2 p-3 rounded-lg bg-accent text-white ${!inputValue.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent/90'}`}
+            disabled={!inputValue.trim()}
             variants={buttonVariants}
             initial="initial"
             whileHover="hover"
             whileTap="tap"
-            type="submit"
-            className="bg-accent text-white rounded-full p-2 shadow-sm"
-            disabled={isTyping}
           >
             <Send size={18} />
           </motion.button>
         </form>
-
-        {/* Chat Actions */}
-        <div className="flex justify-between mt-2">
-          <button 
-            onClick={startNewChat}
-            className="text-xs text-foreground/60 hover:text-accent transition-colors"
-          >
-            Nueva conversación
-          </button>
-          <button 
-            onClick={clearChatHistory}
-            className="text-xs text-foreground/60 hover:text-accent transition-colors"
-          >
-            Borrar historial
-          </button>
-        </div>
       </div>
 
-      {/* Info Dialog */}
-      <Dialog.Root open={isInfoOpen} onOpenChange={setIsInfoOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background border border-border rounded-xl p-6 shadow-lg z-50 w-[90vw] max-w-md max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center mr-3">
-                  <Sparkles size={20} className="text-accent" />
+      {/* Info Modal */}
+      <AnimatePresence>
+        {isInfoModalOpen && (
+          <div className="fixed inset-0 isolate" style={{ position: 'fixed', zIndex: 9999, pointerEvents: 'none' }}>
+            <div className="fixed inset-0 w-screen h-screen flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
+              <motion.div 
+                className="absolute inset-0 bg-background/80 backdrop-blur-sm z-[1000]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsInfoModalOpen(false)}
+              />
+              <motion.div
+                className="relative bg-background border border-border rounded-xl p-6 shadow-xl z-[1001] w-full max-w-md"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                style={{
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  pointerEvents: 'auto'
+                }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mr-3">
+                      <Sparkles size={20} className="text-accent" />
+                    </div>
+                    <h3 className="text-xl font-display font-bold text-foreground">Asistente Inmobiliario</h3>
+                  </div>
+                  <button 
+                    onClick={() => setIsInfoModalOpen(false)}
+                    className="p-2 rounded-full hover:bg-secondary/50 text-muted-foreground transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-                <h2 className="text-xl font-semibold">Sobre Luna</h2>
-              </div>
-              <Dialog.Close asChild>
-                <button className="p-2 rounded-full hover:bg-secondary/50 transition-colors">
-                  <X size={18} className="text-foreground/70" />
-                </button>
-              </Dialog.Close>
+                
+                <div className="space-y-4">
+                  <p className="text-foreground/80">
+                    Este asistente utiliza inteligencia artificial para ayudarte a encontrar propiedades que se ajusten a tus necesidades.
+                  </p>
+                  
+                  <div>
+                    <h4 className="font-medium text-foreground mb-2">Puedes preguntarle sobre:</h4>
+                    <ul className="space-y-2 text-foreground/70">
+                      <li className="flex items-start">
+                        <Check size={16} className="text-accent mr-2 mt-0.5" />
+                        <span>Propiedades disponibles en zonas específicas</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-accent mr-2 mt-0.5" />
+                        <span>Detalles sobre precios, características y amenidades</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-accent mr-2 mt-0.5" />
+                        <span>Proceso de compra o renta de propiedades</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-accent mr-2 mt-0.5" />
+                        <span>Recomendaciones basadas en tus preferencias</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-accent/10 p-4 rounded-lg">
+                    <p className="text-foreground/80 text-sm">
+                      <span className="font-medium">Nota:</span> Este asistente está en fase beta y sus respuestas son generadas por IA. Siempre verifica la información importante con un agente inmobiliario real.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-            
-            <div className="space-y-4">
-              <p className="text-sm text-foreground/80">
-                Luna es tu asistente virtual de Millow, diseñada para ayudarte a encontrar la propiedad perfecta y responder todas tus preguntas sobre bienes raíces.
-              </p>
-              
-              <div className="bg-secondary/30 rounded-lg p-4 border border-border/40">
-                <h3 className="font-medium mb-2 flex items-center">
-                  <Sparkles size={16} className="text-accent mr-2" />
-                  ¿Qué puede hacer Luna?
-                </h3>
-                <ul className="text-sm space-y-2 text-foreground/80">
-                  <li>• Buscar propiedades según tus criterios</li>
-                  <li>• Responder preguntas sobre el proceso de compra</li>
-                  <li>• Proporcionar información sobre financiamiento</li>
-                  <li>• Explicar términos inmobiliarios</li>
-                  <li>• Conectarte con un agente humano si lo necesitas</li>
-                </ul>
-              </div>
-              
-              <p className="text-sm text-foreground/60">
-                Luna está en constante aprendizaje. Si no puede responder alguna pregunta, te conectará con un especialista.
-              </p>
-              
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-foreground/60 text-center">
-                  Powered by Millow AI © {new Date().getFullYear()}
-                </p>
-              </div>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

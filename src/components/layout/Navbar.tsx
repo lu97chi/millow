@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X, Home, Search, User, Heart, ChevronDown, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Menu, X, Home, Search, User, Heart, ChevronDown, Sparkles, MessageCircle, LogIn } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Refined fade in animation
 const fadeIn = {
@@ -12,9 +12,47 @@ const fadeIn = {
     opacity: 1,
     y: 0,
     transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1]
+    }
+  }
+};
+
+// Add slide in animation for mobile menu
+const slideIn = {
+  hidden: { opacity: 0, x: 20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
       duration: 0.3,
       ease: [0.22, 1, 0.36, 1]
     }
+  }
+};
+
+// Stagger children animation
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+// Navbar item hover animation
+const navItemVariants = {
+  hidden: { opacity: 0, y: -5 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.3 }
+  },
+  hover: { 
+    scale: 1.05,
+    transition: { duration: 0.2 }
   }
 };
 
@@ -22,6 +60,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isHovering, setIsHovering] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,21 +89,26 @@ const Navbar = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-background/95 backdrop-blur-md border-b border-border/50 luxury-shadow' : 'bg-transparent'
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
+        isScrolled ? 'glass-effect shadow-luxury' : 'bg-transparent'
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center">
-              Tu<span className="text-primary">Hogar</span>
-              <span className="text-accent text-xs align-top ml-0.5">®</span>
+          <Link href="/" className="flex items-center group">
+            <motion.span 
+              className="font-display text-2xl font-bold text-foreground tracking-tight flex items-center"
+              whileHover={{ scale: 1.03 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              Tu<span className="gradient-text bg-gradient-to-r from-primary to-accent group-hover:from-accent group-hover:to-primary transition-all duration-500">Hogar</span>
+              <span className="text-accent text-xs align-top ml-0.5 animate-pulse-subtle">®</span>
               <motion.span 
                 className="ml-2 inline-flex items-center justify-center"
                 animate={{
                   opacity: [0.5, 1, 0.5],
+                  scale: [1, 1.1, 1],
                 }}
                 transition={{
                   duration: 2,
@@ -74,120 +118,164 @@ const Navbar = () => {
               >
                 <Sparkles size={16} className="text-accent" />
               </motion.span>
-            </span>
+            </motion.span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-10">
+          <motion.nav 
+            className="hidden md:flex items-center space-x-6 lg:space-x-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {[
               { name: 'Inicio', href: '/', icon: null },
               { name: 'Propiedades', href: '/properties', icon: null },
               { name: 'Nosotros', href: '/about', icon: null },
               { name: 'Contacto', href: '/contact', icon: null }
             ].map((item) => (
-              <div key={item.name} className="relative">
+              <motion.div 
+                key={item.name} 
+                className="relative group"
+                variants={navItemVariants}
+                onHoverStart={() => setIsHovering(item.name)}
+                onHoverEnd={() => setIsHovering(null)}
+              >
                 <Link 
                   href={item.href} 
-                  className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium pb-1 hover:fancy-border font-body"
+                  className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium pb-1 group-hover:fancy-border font-body"
                 >
                   {item.name}
+                  <motion.div 
+                    className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: isHovering === item.name ? '100%' : 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
                 </Link>
-              </div>
+              </motion.div>
             ))}
-          </nav>
+          </motion.nav>
 
           {/* Desktop Action Buttons */}
-          <div className="hidden md:flex items-center space-x-5">
-            <Link 
-              href="/favorites" 
-              className="p-2 rounded-full hover:bg-secondary transition-colors relative ai-glow"
-              aria-label="Favoritos"
-            >
-              <Heart size={18} className="text-foreground/70 hover:text-accent transition-colors" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center text-[10px] text-white font-medium">3</span>
-            </Link>
+          <motion.div 
+            className="hidden md:flex items-center space-x-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={navItemVariants}>
+              <Link 
+                href="/favorites" 
+                className="p-2 rounded-full hover:bg-secondary/80 transition-colors relative ai-glow"
+                aria-label="Favoritos"
+              >
+                <Heart size={18} className="text-foreground/70 hover:text-accent transition-colors" />
+                <motion.span 
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center text-[10px] text-white font-medium"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                >3</motion.span>
+              </Link>
+            </motion.div>
             
-            <Link 
-              href="/login" 
-              className="flex items-center px-6 py-2 rounded-md border border-accent text-accent hover:bg-accent hover:text-white transition-colors text-sm font-medium btn-dream"
-            >
-              <Sparkles size={14} className="mr-2" />
-              <span>Iniciar Sesión</span>
-            </Link>
-          </div>
+            <motion.div variants={navItemVariants}>
+              <Link 
+                href="/login" 
+                className="flex items-center px-4 py-2 rounded-md border-gradient text-accent hover:text-white transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-accent"
+              >
+                <motion.span
+                  className="flex items-center gradient-border-content px-4 py-2"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
+                  <LogIn size={14} className="mr-2" />
+                  <span>Iniciar Sesión</span>
+                </motion.span>
+              </Link>
+            </motion.div>
+          </motion.div>
 
           {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden text-foreground p-2 rounded-md hover:bg-secondary transition-colors"
+          <motion.button 
+            className="md:hidden text-foreground p-2 rounded-md hover:bg-secondary/80 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Alternar menú"
+            whileTap={{ scale: 0.95 }}
           >
             {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
-        <motion.div 
-          className="md:hidden bg-background border-t border-border luxury-shadow"
-          initial={fadeIn.hidden}
-          animate={fadeIn.visible}
-        >
-          <div className="container mx-auto px-4 py-5">
-            <nav className="flex flex-col space-y-4">
-              <Link 
-                href="/" 
-                className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium py-1 font-body"
-                onClick={() => setIsMenuOpen(false)}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            className="md:hidden glass-effect"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="container mx-auto px-4 py-5">
+              <motion.nav 
+                className="flex flex-col space-y-4"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
               >
-                Inicio
-              </Link>
-              <Link 
-                href="/properties" 
-                className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium py-1 font-body"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Propiedades
-              </Link>
-              <Link 
-                href="/about" 
-                className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium py-1 font-body"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Nosotros
-              </Link>
-              <Link 
-                href="/contact" 
-                className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium py-1 font-body"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Contacto
-              </Link>
-              <div className="pt-4 flex items-center space-x-4 border-t border-border">
-                <Link 
-                  href="/favorites" 
-                  className="p-2 rounded-full hover:bg-secondary transition-colors relative"
-                  aria-label="Favoritos"
-                  onClick={() => setIsMenuOpen(false)}
+                {[
+                  { name: 'Inicio', href: '/', icon: <Home size={16} className="mr-2" /> },
+                  { name: 'Propiedades', href: '/properties', icon: <Search size={16} className="mr-2" /> },
+                  { name: 'Nosotros', href: '/about', icon: <User size={16} className="mr-2" /> },
+                  { name: 'Contacto', href: '/contact', icon: <MessageCircle size={16} className="mr-2" /> }
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.name}
+                    variants={navItemVariants}
+                    whileHover="hover"
+                    className="overflow-hidden"
+                  >
+                    <Link 
+                      href={item.href} 
+                      className="flex items-center text-foreground/80 hover:text-accent transition-colors text-sm font-medium py-2 px-3 rounded-md hover:bg-secondary/30 font-body hover-scale"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.icon}
+                      {item.name}
+                    </Link>
+                  </motion.div>
+                ))}
+                <motion.div 
+                  className="pt-4 flex items-center space-x-4 border-t border-border mt-2"
+                  variants={navItemVariants}
                 >
-                  <Heart size={18} className="text-foreground/70 hover:text-accent transition-colors" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center text-[10px] text-white font-medium">3</span>
-                </Link>
-                
-                <Link 
-                  href="/login" 
-                  className="flex items-center px-6 py-2 rounded-md border border-accent text-accent hover:bg-accent hover:text-white transition-colors text-sm font-medium btn-dream font-body"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <Sparkles size={14} className="mr-2" />
-                  <span>Iniciar Sesión</span>
-                </Link>
-              </div>
-            </nav>
-          </div>
-        </motion.div>
-      )}
+                  <Link 
+                    href="/favorites" 
+                    className="p-2 rounded-full hover:bg-secondary/80 transition-colors relative ai-glow"
+                    aria-label="Favoritos"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Heart size={18} className="text-foreground/70 hover:text-accent transition-colors" />
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center text-[10px] text-white font-medium animate-pulse-subtle">3</span>
+                  </Link>
+                  
+                  <Link 
+                    href="/login" 
+                    className="flex items-center px-6 py-2 rounded-md gradient-border text-accent hover:text-white transition-colors text-sm font-medium btn-dream font-body"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LogIn size={14} className="mr-2" />
+                    <span>Iniciar Sesión</span>
+                  </Link>
+                </motion.div>
+              </motion.nav>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

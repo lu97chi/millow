@@ -64,7 +64,7 @@ const PropertyCard = ({ property }: { property: typeof featuredProperties[0] }) 
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <button
           onClick={() => setIsFavorite(!isFavorite)}
-          className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-md hover:bg-accent/10 transition-colors z-10 ai-glow"
+          className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-md hover:bg-accent/10 transition-colors z-10 ai-glow flex items-center justify-center"
         >
           <Heart
             size={18}

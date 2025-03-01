@@ -30,11 +30,13 @@ import {
   Minimize,
   Map,
   Star,
-  MessageCircle
+  MessageCircle,
+  X
 } from 'lucide-react';
 import type { Property } from '@/types/properties';
 import { api } from '@/lib/api-client';
 import ChatInterface from '@/components/chat/ChatInterface';
+import ChatButton from '@/components/chat/ChatButton';
 
 // Helper function to safely access nested properties
 const safeGetFeatures = (property: Property) => {
@@ -375,20 +377,6 @@ const SimilarProperties = ({ property }: { property: Property }) => {
   );
 };
 
-// Chat Button Component
-const ChatButton = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <motion.button
-      onClick={onClick}
-      className="fixed bottom-6 right-6 z-40 bg-primary text-white rounded-full p-4 shadow-lg hover:bg-primary/90 transition-colors"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <MessageCircle className="w-6 h-6" />
-    </motion.button>
-  );
-};
-
 // Main Property Details Component
 export default function PropertyDetails({ property }: { property: Property }) {
   const [isLiked, setIsLiked] = useState(false);
@@ -490,7 +478,7 @@ export default function PropertyDetails({ property }: { property: Property }) {
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setIsLiked(!isLiked)}
-                  className={`p-2 rounded-full transition-colors ${isLiked ? 'bg-red-100 text-red-500' : 'bg-muted/20 text-foreground/60 hover:bg-muted/30'}`}
+                  className={`p-2 rounded-full transition-colors flex items-center justify-center ${isLiked ? 'bg-red-100 text-red-500' : 'bg-muted/20 text-foreground/60 hover:bg-muted/30'}`}
                   aria-label={isLiked ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                 >
                   <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
@@ -734,7 +722,7 @@ export default function PropertyDetails({ property }: { property: Property }) {
 
       {/* Chat Button */}
       <ChatButton onClick={toggleChat} />
-
+      
       {/* Chat Interface */}
       <AnimatePresence>
         {isChatOpen && (
@@ -743,9 +731,18 @@ export default function PropertyDetails({ property }: { property: Property }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-20 right-6 z-40 w-full max-w-md"
+            className="fixed z-40 w-full max-w-md"
+            style={{
+              position: 'fixed',
+              bottom: '4.5rem',
+              right: '1.5rem',
+              maxWidth: '400px',
+              width: 'calc(100% - 2rem)',
+              transform: 'none',
+              margin: '0'
+            }}
           >
-            <ChatInterface onClose={toggleChat} />
+            <ChatInterface onClose={toggleChat} propertyId={property._id} />
           </motion.div>
         )}
       </AnimatePresence>

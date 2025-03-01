@@ -25,17 +25,16 @@ import {
   Clock,
   Filter
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import FilterPanel from './FilterPanel';
-import type { PropertyFilters } from '@/types/properties';
+import type { PropertyFilters, Property } from '@/types/properties';
 
 // Separate the inner content to use the context
 function PropertiesContentInner() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [filters, setFilters] = useState<PropertyFilters>({});
   
   const { 
@@ -46,41 +45,102 @@ function PropertiesContentInner() {
     isLoading 
   } = useProperties();
 
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setFilters(prev => ({ ...prev, search: e.target.value || undefined }));
-  };
+  // Apply filters locally to the properties
+  const filteredProperties = useMemo(() => {
+    if (!properties || properties.length === 0) return [];
+    
+    return properties.filter(property => {
+      // Property Type filter
+      if (filters.propertyType && property.propertyType !== filters.propertyType) {
+        return false;
+      }
+      
+      // Operation Type filter
+      if (filters.operationType && property.operationType !== filters.operationType) {
+        return false;
+      }
+      
+      // Price Range filter
+      if (filters.minPrice && property.price < filters.minPrice) {
+        return false;
+      }
+      if (filters.maxPrice && property.price > filters.maxPrice) {
+        return false;
+      }
+      
+      // Bedrooms filter
+      if (filters.minBedrooms && 
+          (property.features.bedrooms === null || 
+           property.features.bedrooms < filters.minBedrooms)) {
+        return false;
+      }
+      if (filters.maxBedrooms && 
+          property.features.bedrooms !== null && 
+          property.features.bedrooms > filters.maxBedrooms) {
+        return false;
+      }
+      
+      // Bathrooms filter
+      if (filters.minBathrooms && 
+          (property.features.bathrooms === null || 
+           property.features.bathrooms < filters.minBathrooms)) {
+        return false;
+      }
+      if (filters.maxBathrooms && 
+          property.features.bathrooms !== null && 
+          property.features.bathrooms > filters.maxBathrooms) {
+        return false;
+      }
+      
+      // Location filters
+      if (filters.state && property.location.state !== filters.state) {
+        return false;
+      }
+      if (filters.city && property.location.city !== filters.city) {
+        return false;
+      }
+      
+      // Amenities filter
+      if (filters.amenities && filters.amenities.length > 0) {
+        // Check if property has all the required amenities
+        for (const amenity of filters.amenities) {
+          if (!property.amenities.includes(amenity)) {
+            return false;
+          }
+        }
+      }
+      
+      return true;
+    });
+  }, [properties, filters]);
 
   // Handle quick filter click
   const handleQuickFilterClick = (filterId: string) => {
-    setActiveFilter(activeFilter === filterId ? null : filterId);
+    setActiveFilter(filterId);
     
     // Apply filter based on the selected quick filter
     let newFilters: PropertyFilters = { ...filters };
     
-    if (activeFilter === filterId) {
-      // If clicking the same filter, remove it
-      delete newFilters.propertyType;
-    } else {
-      // Apply the selected filter
-      switch (filterId) {
-        case 'houses':
-          newFilters.propertyType = 'Casas';
-          break;
-        case 'apartments':
-          newFilters.propertyType = 'Departamentos';
-          break;
-        case 'commercial':
-          newFilters.propertyType = 'Locales Comerciales';
-          break;
-        case 'land':
-          newFilters.propertyType = 'Terrenos';
-          break;
-        case 'all':
-          delete newFilters.propertyType;
-          break;
-      }
+    // Clear property type filter first
+    delete newFilters.propertyType;
+    
+    // Apply the selected filter
+    switch (filterId) {
+      case 'houses':
+        newFilters.propertyType = 'Casas';
+        break;
+      case 'apartments':
+        newFilters.propertyType = 'Departamentos';
+        break;
+      case 'commercial':
+        newFilters.propertyType = 'Locales Comerciales';
+        break;
+      case 'land':
+        newFilters.propertyType = 'Terrenos';
+        break;
+      case 'all':
+        // No filter needed for "all"
+        break;
     }
     
     setFilters(newFilters);
@@ -89,11 +149,6 @@ function PropertiesContentInner() {
   // Handle apply filters from FilterPanel
   const handleApplyFilters = (newFilters: PropertyFilters) => {
     setFilters(newFilters);
-    
-    // Update search query if it's in the filters
-    if (newFilters.search !== undefined) {
-      setSearchQuery(newFilters.search);
-    }
     
     // Update active filter based on property type
     if (newFilters.propertyType) {
@@ -111,7 +166,7 @@ function PropertiesContentInner() {
           setActiveFilter('land');
           break;
         default:
-          setActiveFilter(null);
+          setActiveFilter('all');
       }
     } else {
       setActiveFilter('all');
@@ -194,7 +249,7 @@ function PropertiesContentInner() {
                   </div>
                   <div>
                     <p className="text-foreground/60 text-sm">Total Propiedades</p>
-                    <p className="text-2xl font-bold font-display">{totalProperties}</p>
+                    <p className="text-2xl font-bold font-display">{filteredProperties.length}</p>
                   </div>
                 </div>
               </motion.div>
@@ -326,20 +381,6 @@ function PropertiesContentInner() {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mt-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Buscar por ubicación, tipo de propiedad, características..."
-                className="w-full px-4 py-3 pl-10 bg-background border border-border/40 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 text-foreground/90 text-sm font-body"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/50" size={18} />
-            </div>
-          </div>
-
           {/* Properties Grid */}
           <div className="p-4 sm:p-8">
             <div className="mb-6 flex items-center justify-between text-foreground/60 text-sm sm:text-base font-body">
@@ -353,7 +394,6 @@ function PropertiesContentInner() {
                     onClick={() => {
                       setFilters({});
                       setActiveFilter('all');
-                      setSearchQuery('');
                     }}
                     className="text-accent text-sm hover:underline"
                   >
@@ -368,7 +408,7 @@ function PropertiesContentInner() {
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
                 : 'grid-cols-1'
             } gap-6`}>
-              {properties.map((property) => (
+              {filteredProperties.map((property) => (
                 <div key={property._id}>
                   {viewMode === 'grid' ? (
                     <PropertyCard property={property} />
@@ -377,6 +417,31 @@ function PropertiesContentInner() {
                   )}
                 </div>
               ))}
+            </div>
+            
+            {/* AI Chat Invitation */}
+            <div className="mt-12 mb-8 text-center">
+              <div className="bg-gradient-to-r from-primary/5 via-accent/10 to-primary/5 rounded-xl p-6 shadow-sm">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <Sparkles className="w-8 h-8 text-accent animate-pulse" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-ping"></span>
+                  </div>
+                  <h3 className="text-xl font-display font-medium text-foreground">¿No encuentras lo que buscas?</h3>
+                  <p className="text-foreground/70 max-w-lg">
+                    Pregúntale a Luna, nuestra asistente de IA, y te ayudará a encontrar la propiedad perfecta para ti.
+                  </p>
+                  <motion.button
+                    className="mt-2 px-6 py-3 rounded-full bg-accent text-white shadow-md hover:shadow-accent/20 flex items-center gap-2"
+                    onClick={() => setIsChatOpen(true)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <MessageCircle size={18} />
+                    Hablar con Luna
+                  </motion.button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -392,7 +457,7 @@ function PropertiesContentInner() {
 
       {/* Chat Button */}
       <motion.button
-        className="fixed bottom-8 right-8 z-[100] p-4 rounded-full bg-accent text-white shadow-xl hover:shadow-accent/20 ai-glow"
+        className="fixed bottom-8 right-8 z-[100] p-4 rounded-full bg-accent text-white shadow-xl hover:shadow-accent/20 ai-glow group"
         onClick={() => setIsChatOpen(!isChatOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -400,7 +465,7 @@ function PropertiesContentInner() {
         animate={{ 
           opacity: 1, 
           y: 0,
-          boxShadow: ['0 10px 25px rgba(0, 0, 0, 0.1)', '0 10px 25px rgba(var(--accent), 0.3)', '0 10px 25px rgba(0, 0, 0, 0.1)'],
+          boxShadow: ['0 10px 25px rgba(0, 0, 0, 0.1)', '0 10px 25px rgba(124, 58, 237, 0.3)', '0 10px 25px rgba(0, 0, 0, 0.1)'],
         }}
         transition={{ 
           duration: 0.6,
@@ -419,9 +484,15 @@ function PropertiesContentInner() {
         {isChatOpen ? (
           <X size={24} />
         ) : (
-          <div className="relative">
-            <MessageCircle size={24} />
+          <div className="relative flex items-center">
+            <MessageCircle size={28} />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full animate-ping"></span>
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full animate-pulse"></span>
+            
+            {/* Chat label that appears on hover */}
+            <span className="absolute right-full mr-2 bg-accent text-white text-sm font-medium py-1 px-3 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
+              ¡Chatea con nosotros!
+            </span>
           </div>
         )}
       </motion.button>
@@ -439,15 +510,19 @@ function PropertiesContentInner() {
             />
             
             <motion.div
-              className="fixed bottom-24 right-8 z-[100] w-full max-w-md h-[80vh] max-h-[800px]"
+              className="fixed z-[100] w-full max-w-md"
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               style={{
                 position: 'fixed',
-                bottom: '6rem',
+                bottom: '4.5rem',
                 right: '2rem',
+                maxWidth: '400px',
+                width: 'calc(100% - 2rem)',
+                transform: 'none',
+                margin: '0'
               }}
             >
               <ChatInterface onClose={() => setIsChatOpen(false)} isMobile={false} />
