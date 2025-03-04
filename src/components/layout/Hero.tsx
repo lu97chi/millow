@@ -234,19 +234,19 @@ const Hero = () => {
               variants={floatAnimation}
               initial="initial"
               animate="animate"
-              className="inline-flex items-center text-accent text-xs uppercase tracking-widest mb-4 font-medium bg-accent/10 px-4 py-2 rounded-full gradient-border backdrop-blur-sm"
+              className="inline-flex items-center text-accent text-xs uppercase tracking-widest mb-4 font-medium bg-accent/20 px-4 py-2 rounded-full gradient-border backdrop-blur-sm shadow-lg shadow-accent/20"
             >
               <Sparkles size={14} className="mr-2 animate-pulse-subtle" />
               Inteligencia Artificial a Tu Servicio
             </motion.span>
             
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight text-shadow">
-              Convierte Tu <span className="gradient-text bg-gradient-to-r from-primary-300 via-accent to-primary-300">Sueño</span> en Realidad <br className="hidden md:block" />
-              <span className="text-accent">Con Seguridad y Confianza</span>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight text-shadow-lg">
+              Convierte Tu <span className="gradient-text bg-gradient-to-r from-primary-300 via-accent to-primary-300 drop-shadow-lg">Sueño</span> en Realidad <br className="hidden md:block" />
+              <span className="text-accent drop-shadow-lg">Con Seguridad y Confianza</span>
             </h1>
             
             <motion.p 
-              className="font-body text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto text-pretty"
+              className="font-body text-lg md:text-xl text-white/95 mb-10 max-w-2xl mx-auto text-pretty drop-shadow-md"
               variants={fadeInVariant}
             >
               Descubre espacios que transformarán tu vida con la ayuda de nuestra tecnología de IA, diseñada para entender tus necesidades y encontrar tu hogar ideal
@@ -277,12 +277,12 @@ const Hero = () => {
               ))}
             </div>
             
-            <div className={`relative transition-all duration-300 ${isSearchFocused ? 'transform scale-[1.02]' : ''}`}>
-              <div className="flex items-center px-6 py-4 bg-white/10 rounded-md border border-white/20 shadow-inner shadow-white/5 backdrop-blur-sm">
+            <div className={`relative transition-all duration-300 ${isSearchFocused ? 'transform scale-[1.03]' : ''}`}>
+              <div className="flex items-center px-6 py-4 bg-white/20 rounded-md border border-white/40 shadow-inner shadow-white/15 backdrop-blur-sm transition-all duration-300 hover:bg-white/25">
                 <input
                   type="text"
                   placeholder="Describe tu hogar ideal y nuestra IA te ayudará a encontrarlo..."
-                  className="w-full bg-transparent border-none focus:outline-none text-white placeholder-white/60 text-base"
+                  className="w-full bg-transparent border-none focus:outline-none text-white placeholder-white/80 text-base"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
@@ -303,7 +303,7 @@ const Hero = () => {
               <AnimatePresence>
                 {showAIResponse && (
                   <motion.div 
-                    className="mt-4 px-6 py-4 bg-accent/10 border border-accent/20 rounded-md backdrop-blur-sm shimmer"
+                    className="mt-4 px-6 py-4 bg-accent/20 border border-accent/40 rounded-md backdrop-blur-sm shimmer shadow-lg shadow-accent/20"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
