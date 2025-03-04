@@ -45,6 +45,15 @@ function PropertiesContentInner() {
     isLoading 
   } = useProperties();
 
+  // Quick filter options
+  const quickFilters = [
+    { id: 'all', label: 'Todas', icon: <Home size={16} /> },
+    { id: 'houses', label: 'Casas', icon: <Home size={16} /> },
+    { id: 'apartments', label: 'Departamentos', icon: <Building size={16} /> },
+    { id: 'commercial', label: 'Comercial', icon: <Building2 size={16} /> },
+    { id: 'land', label: 'Terrenos', icon: <MapPin size={16} /> },
+  ];
+
   // Apply filters locally to the properties
   const filteredProperties = useMemo(() => {
     if (!properties || properties.length === 0) return [];
@@ -183,11 +192,189 @@ function PropertiesContentInner() {
 
   if (!properties || properties.length === 0) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background">
-        <div className="text-center">
-          <p className="text-foreground/70 mb-2">No se encontraron propiedades</p>
-          <p className="text-sm text-foreground/50">Intenta ajustar los filtros de búsqueda</p>
+      <div className="min-h-[calc(100vh-4rem)] bg-background relative">
+        {/* Hero Section with Statistics */}
+        <div className="bg-gradient-to-b from-accent/5 to-background pt-8 pb-12 border-b border-border/20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">
+                Propiedades <span className="text-accent">Destacadas</span>
+              </h1>
+              <p className="text-foreground/70 max-w-2xl">
+                {explanation || 'Explora nuestra selección de propiedades destacadas, seleccionadas para ofrecerte las mejores opciones del mercado.'}
+              </p>
+            </div>
+
+            {/* Quick Filters */}
+            <div className="flex flex-wrap gap-2 mt-8">
+              {quickFilters.map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => handleQuickFilterClick(filter.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    activeFilter === filter.id 
+                      ? 'bg-accent text-white shadow-md' 
+                      : 'bg-background border border-border/40 text-foreground/70 hover:border-accent/40'
+                  }`}
+                >
+                  {filter.icon}
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* Content with No Results Message */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button 
+                  className={`p-2 rounded-md ${isFilterOpen ? 'bg-accent/10 text-accent' : 'text-foreground/70 hover:text-accent'} transition-colors`}
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  aria-label="Filtros"
+                >
+                  <SlidersHorizontal size={20} />
+                </button>
+                <div className="h-6 w-px bg-border/40" />
+                <div className="flex items-center gap-2">
+                  <button 
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-accent/10 text-accent' : 'text-foreground/70 hover:text-accent'}`}
+                    onClick={() => setViewMode('grid')}
+                    aria-label="Vista de cuadrícula"
+                  >
+                    <Grid2x2 size={20} />
+                  </button>
+                  <button 
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-accent/10 text-accent' : 'text-foreground/70 hover:text-accent'}`}
+                    onClick={() => setViewMode('list')}
+                    aria-label="Vista de lista"
+                  >
+                    <LayoutList size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* No Results Message */}
+            <div className="mt-8 flex justify-center">
+              <div className="text-center max-w-lg mx-auto p-8 bg-background/50 rounded-xl border border-border/20">
+                <div className="mb-6">
+                  <Search className="w-12 h-12 text-accent/50 mx-auto mb-4" />
+                </div>
+                <h3 className="text-xl font-display font-medium text-foreground mb-3">
+                  No se encontraron propiedades
+                </h3>
+                <p className="text-foreground/70 mb-6">
+                  No encontramos propiedades que coincidan exactamente con tu búsqueda. Puedes:
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      setFilters({});
+                      setActiveFilter('all');
+                    }}
+                    className="w-full px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Filter size={16} />
+                    Limpiar todos los filtros
+                  </button>
+                  <button
+                    onClick={() => setIsChatOpen(true)}
+                    className="w-full px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle size={16} />
+                    Hablar con Luna para ayuda
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Panel */}
+        <FilterPanel 
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          onApplyFilters={handleApplyFilters}
+          initialFilters={filters}
+        />
+
+        {/* Chat Button and Interface */}
+        <motion.button
+          className="fixed bottom-8 right-8 z-[100] p-4 rounded-full bg-accent text-white shadow-xl hover:shadow-accent/20 ai-glow group"
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0,
+            boxShadow: ['0 10px 25px rgba(0, 0, 0, 0.1)', '0 10px 25px rgba(124, 58, 237, 0.3)', '0 10px 25px rgba(0, 0, 0, 0.1)'],
+          }}
+          transition={{ 
+            duration: 0.6,
+            boxShadow: {
+              repeat: Infinity,
+              duration: 2
+            }
+          }}
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            right: '2rem',
+          }}
+          aria-label={isChatOpen ? "Cerrar chat" : "Abrir chat"}
+        >
+          {isChatOpen ? (
+            <X size={24} />
+          ) : (
+            <div className="relative flex items-center">
+              <MessageCircle size={28} />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full animate-ping"></span>
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full animate-pulse"></span>
+              
+              <span className="absolute right-full mr-2 bg-accent text-white text-sm font-medium py-1 px-3 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
+                ¡Chatea con nosotros!
+              </span>
+            </div>
+          )}
+        </motion.button>
+
+        {/* Chat Interface */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <>
+              <motion.div 
+                className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[90] lg:hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsChatOpen(false)}
+              />
+              
+              <motion.div
+                className="fixed z-[100] w-full max-w-md"
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                style={{
+                  position: 'fixed',
+                  bottom: '4.5rem',
+                  right: '2rem',
+                  maxWidth: '400px',
+                  width: 'calc(100% - 2rem)',
+                  transform: 'none',
+                  margin: '0'
+                }}
+              >
+                <ChatInterface onClose={() => setIsChatOpen(false)} isMobile={false} />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -201,15 +388,6 @@ function PropertiesContentInner() {
       maximumFractionDigits: 0,
     }).format(price);
   };
-
-  // Quick filter options
-  const quickFilters = [
-    { id: 'all', label: 'Todas', icon: <Home size={16} /> },
-    { id: 'houses', label: 'Casas', icon: <Home size={16} /> },
-    { id: 'apartments', label: 'Departamentos', icon: <Building size={16} /> },
-    { id: 'commercial', label: 'Comercial', icon: <Building2 size={16} /> },
-    { id: 'land', label: 'Terrenos', icon: <MapPin size={16} /> },
-  ];
 
   // Get statistics from metadata if available
   const statistics = metadata?.statistics || null;

@@ -114,11 +114,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
 
       // Update properties through a custom event if there are search results
-      if (data.searchResults && data.searchResults.data.length > 0) {
+      if (data.searchResults) {
         // Create an AIQueryResponse-like structure
         const aiQueryResponse = {
           results: {
-            data: data.searchResults.data,
+            data: data.searchResults.data || [],
             metadata: {
               executionTime: data.searchResults.metadata.executionTime,
               query: data.mongoQuery,
@@ -144,14 +144,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         )
       );
 
-      // Add AI response
+      // Add AI response with a more specific message for zero results
+      const responseContent = data.searchResults && data.searchResults.data.length === 0
+        ? `${extractMessageFromResponse(data.response)}\n\nNo encontré propiedades que coincidan exactamente con tu búsqueda. ¿Te gustaría que ajustemos algunos criterios para ampliar los resultados?`
+        : extractMessageFromResponse(data.response);
+
       const aiResponse: Message = {
         id: Date.now().toString(),
         type: 'agent',
-        content: extractMessageFromResponse(data.response) || "Lo siento, no pude procesar tu solicitud. ¿Puedes intentarlo de nuevo?",
+        content: responseContent || "Lo siento, no pude procesar tu solicitud. ¿Puedes intentarlo de nuevo?",
         timestamp: new Date(),
         status: 'read',
-        suggestions: quickSuggestions,
+        suggestions: data.searchResults && data.searchResults.data.length === 0 
+          ? [
+              "Mostrar todas las propiedades",
+              "Buscar con criterios más amplios",
+              "Intentar otra ubicación"
+            ]
+          : quickSuggestions,
       };
       
       setMessages(prev => [...prev, aiResponse]);
