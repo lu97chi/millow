@@ -1,92 +1,46 @@
-import type { Metadata } from "next";
-import { Inter as FontSans } from "next/font/google";
-import localFont from "next/font/local";
-import { Providers } from "@/components/providers/providers";
-import { RootLayout } from "@/components/layout/root-layout";
-import { cn } from "@/lib/utils";
-import "@/styles/globals.css";
-import { SearchProvider } from "@/providers/search-provider";
-import { Toaster } from "@/components/providers/toaster";
+import type { Metadata } from 'next'
+import { Montserrat, Cormorant } from 'next/font/google'
+import './globals.css'
+import Navbar from '@/components/layout/Navbar'
+import Footer from '@/components/layout/Footer'
+import { Providers } from './providers'
 
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+// Montserrat for body text - clean, modern, and highly readable
+const montserrat = Montserrat({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+  weight: ['300', '400', '500', '600', '700'],
+})
 
-// Cal Sans
-const fontHeading = localFont({
-  src: "../assets/fonts/CalSans-SemiBold.woff2",
-  variable: "--font-heading",
-});
-
-// JetBrains Mono
-const fontMono = localFont({
-  src: "../assets/fonts/JetBrainsMono-Regular.woff2",
-  variable: "--font-mono",
-});
-
-
+// Cormorant for display text - elegant, sophisticated serif that conveys trust and luxury
+const cormorant = Cormorant({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-heading',
+  weight: ['400', '500', '600', '700'],
+})
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tuhogar.mx"),
-  title:{
-    default:"Tu Hogar - Encuentra tu hogar",
-    template:"%s Tu Hogar - Encuentra tu hogar",
-  },
-  openGraph:{
-    title:"Tu Hogar - Encuentra tu hogar",
-    type:"website",
-    locale:"es",
-    url:"https://tuhogar.mx/:", 
-    siteName:"tuhogar",
-    images:[
-      {
-        url:"https://tuhogar.mx/logo.png",
-        width:32,
-        height:32,
-        alt:"Tu Hogar",
-      }
-    ]
-  },
-  description:
-    "Encuentra tu hogar ideal en México con nuestra plataforma inmobiliaria impulsada por IA.",
-  keywords: [
-    "inmobiliaria",
-    "mexico",
-    "propiedad",
-    "AI",
-    "chat",
-    "buscar",
-    "comprar",
-    "alquilar",
-  ],
-};
-
-interface LayoutProps {
-  children: React.ReactNode;
+  title: 'TuHogar | Encuentra Tu Hogar Soñado',
+  description: 'TuHogar utiliza inteligencia artificial para ayudarte a encontrar la casa perfecta con seguridad y confianza, transformando tus sueños en realidad.',
+  keywords: ['bienes raíces', 'casas', 'propiedades', 'inmuebles', 'apartamentos', 'TuHogar', 'inteligencia artificial', 'seguridad'],
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <head />
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable,
-          fontHeading.variable,
-          fontMono.variable
-        )}
-      >
-        <SearchProvider>
-          <Providers>
-            <RootLayout>
-              {children}
-              <Toaster />
-            </RootLayout>
-          </Providers>
-        </SearchProvider>
+    <html lang="es" className={`${montserrat.variable} ${cormorant.variable}`}>
+      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        <Providers>
+          <Navbar />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
-  );
+  )
 }

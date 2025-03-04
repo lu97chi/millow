@@ -1,6 +1,6 @@
 ---
 description: Determinate keypoints to follow for NextJS, State managment and documentation
-globs: 
+globs: *.ts, *.tsx
 ---
 # Key Conventions
 ## URL & State Management:

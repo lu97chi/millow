@@ -1,6 +1,6 @@
 ---
 description: Determining which codestyle to follow
-globs: 
+globs: *.ts, *.tsx
 ---
 # Code Style and Structure
 ## Concise & Technical Code:

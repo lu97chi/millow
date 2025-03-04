@@ -1,6 +1,6 @@
 ---
 description: Determinates how to name files, directories and variables
-globs: 
+globs: *.ts, *.tsx
 ---
 # Naming Conventions
 

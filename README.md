@@ -1,232 +1,86 @@
-# Millow - AI-Powered Real Estate Platform 🏠
+# TuHogar - Real Estate Website
 
-An intelligent real estate search platform tailored for the Mexican market, combining traditional property search with AI-powered recommendations through natural conversation.
+TuHogar is a modern, responsive real estate website built with Next.js and Tailwind CSS. The website features a clean, sophisticated design with a warm aesthetic that makes users feel at home while browsing properties.
 
-## 🌟 Features
+## Features
 
-- **AI-Powered Search**: Natural language property matching through chat interface
-- **Intelligent Filtering**: Automatic filter application based on user conversations
-- **Real-Time Chat**: Modern ChatGPT-like interface for property inquiries
-- **Context-Aware**: Chat maintains awareness of user's search context
-- **Dual Interface**: Traditional search + AI-powered recommendations
-- **Mexican Market Focus**: Tailored for Mexican real estate specifics
-- **Responsive Design**: Optimized for both desktop and mobile
+- **Modern UI Design**: Clean, sophisticated interface with warm color palette
+- **Responsive Layout**: Fully responsive design that works on all devices
+- **Interactive Components**: Animated sections using Framer Motion
+- **Property Listings**: Featured properties showcase with filtering options
+- **Testimonials**: Client testimonials with auto-rotation
+- **Search Functionality**: Property search with location and type filters
 
-## 🛠 Tech Stack
+## Tech Stack
 
-### Core
-- Next.js 15 (App Router)
-- React & React DOM v19
-- TypeScript
-- Tailwind CSS
-- Shadcn UI
-- Framer Motion
+- **Next.js**: React framework for server-rendered applications
+- **TypeScript**: Type-safe JavaScript
+- **Tailwind CSS**: Utility-first CSS framework
+- **Framer Motion**: Animation library for React
+- **Lucide Icons**: Beautiful, consistent icon set
 
-### Database & Caching
-- PlanetScale (MySQL)
-- Prisma ORM
-- Upstash Redis (Caching Layer)
-
-### AI & Integration
-- OpenAI API
-- Zod (Validation)
-- React Hook Form
-
-## 📁 Project Structure
-
-```
-/src
-├── /app
-│   ├── /api
-│   │   ├── /chat
-│   │   └── /properties
-│   ├── /(auth)
-│   ├── /(marketing)
-│   └── /(dashboard)
-├── /components
-│   ├── /ui
-│   ├── /properties
-│   ├── /chat
-│   ├── /filters
-│   └── /layout
-└── /lib
-    ├── /utils
-    ├── /hooks
-    └── /services
-```
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 20.x or later
-- pnpm (recommended) or npm
-- Git
-- MySQL local instance (optional, can use PlanetScale)
+- Node.js (v14 or later)
+- npm or yarn
 
-### Environment Setup
+### Installation
 
 1. Clone the repository:
-\`\`\`bash
-git clone https://github.com/yourusername/millow.git
-cd millow
-\`\`\`
+   ```bash
+   git clone https://github.com/yourusername/tuhogar.git
+   cd tuhogar
+   ```
 
 2. Install dependencies:
-\`\`\`bash
-pnpm install
-\`\`\`
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-3. Set up environment variables:
-\`\`\`bash
-cp .env.example .env.local
-\`\`\`
+3. Run the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-4. Configure your .env.local with:
-\`\`\`
-# Database
-DATABASE_URL="your-planetscale-connection-string"
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
 
-# Redis
-UPSTASH_REDIS_URL="your-upstash-redis-url"
-UPSTASH_REDIS_TOKEN="your-upstash-redis-token"
+## Project Structure
 
-# OpenAI
-OPENAI_API_KEY="your-openai-api-key"
+```
+tuhogar/
+├── public/            # Static assets
+│   └── images/        # Image assets
+├── src/
+│   ├── app/           # Next.js app directory
+│   ├── components/    # React components
+│   │   ├── layout/    # Layout components
+│   │   └── ui/        # UI components
+│   └── styles/        # Global styles
+├── scripts/           # Utility scripts
+└── ...
+```
 
-# Other configs...
-\`\`\`
+## Customization
 
-5. Initialize the database:
-\`\`\`bash
-pnpm prisma generate
-pnpm prisma db push
-\`\`\`
+### Colors
 
-6. Run the development server:
-\`\`\`bash
-pnpm dev
-\`\`\`
+The color scheme can be customized in the `src/app/globals.css` file. The primary color is a warm orange tone that gives the website a cozy feel.
 
-Visit \`http://localhost:3000\` to see the application.
+### Images
 
-## 🏗 Project Phases
+Replace the placeholder images in the `public/images` directory with your own images. You can use the `scripts/download-images.js` script to download placeholder images for development.
 
-### Phase 1: Foundation (2-3 weeks)
-- Project setup and configuration
-- Core UI components
-- Basic routing structure
-- Database schema design
+## License
 
-### Phase 2: Property Search (2-3 weeks)
-- Property listing features
-- Advanced filter system
-- Search functionality
-- Property detail pages
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-### Phase 3: Chat Integration (2-3 weeks)
-- Chat UI implementation
-- OpenAI API integration
-- Context management
-- Response handling
+## Acknowledgements
 
-### Phase 4: AI Enhancement (2-3 weeks)
-- Advanced AI features
-- Performance optimization
-- Mexican market specifics
-- Final polish
-
-## 🎨 UI/UX Guidelines
-
-### Layout
-- 80% main content area
-- 20% persistent chat interface
-- Responsive design with mobile-first approach
-
-### Design Principles
-- Modern and minimalistic
-- Mexican market cultural elements
-- Smooth animations and transitions
-- High-performance rendering
-
-### Mobile Considerations
-- Bottom sheet for chat
-- Collapsible filters
-- Touch-friendly interfaces
-- Optimized performance
-
-## 🔧 Development Commands
-
-\`\`\`bash
-# Start development server
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Start production server
-pnpm start
-
-# Run tests
-pnpm test
-
-# Run linting
-pnpm lint
-
-# Format code
-pnpm format
-\`\`\`
-
-## 📈 Performance Considerations
-
-- Server-side rendering for main content
-- Client-side chat interface
-- Image optimization
-- Lazy loading for non-critical components
-- Efficient state management
-- Redis caching for frequent queries
-
-## 🔒 Security Measures
-
-- API rate limiting
-- Input sanitization
-- Data encryption
-- Secure chat history storage
-- Authentication flow
-
-## 🌐 SEO Optimization
-
-- Meta tags optimization
-- Structured data for properties
-- Static generation for property pages
-- Sitemap generation
-- Mexican market keywords
-
-## 📱 Mobile-First Approach
-
-The application is designed with a mobile-first approach, ensuring:
-- Responsive design across all devices
-- Touch-friendly interfaces
-- Optimized performance on mobile networks
-- Adaptive chat interface
-- Mobile-optimized images
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (\`git checkout -b feature/AmazingFeature\`)
-3. Commit your changes (\`git commit -m 'Add some AmazingFeature'\`)
-4. Push to the branch (\`git push origin feature/AmazingFeature\`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## 🙏 Acknowledgments
-
-- Next.js team for the amazing framework
-- Shadcn UI for beautiful components
-- OpenAI for AI capabilities
-- PlanetScale for scalable database
-- Upstash for Redis solutions
+- Images from [Unsplash](https://unsplash.com/)
+- Icons from [Lucide](https://lucide.dev/)
