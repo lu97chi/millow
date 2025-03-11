@@ -59,6 +59,7 @@ export const PropertyCard = ({ property }: { property: Property }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Safely format the price
   const formattedPrice = formatPrice(property.price);
@@ -70,10 +71,10 @@ export const PropertyCard = ({ property }: { property: Property }) => {
   // Calculate AI match percentage (random for demo)
   const aiMatch = Math.floor(Math.random() * (99 - 85) + 85);
 
-  // Ensure we have a valid image URL
-  const imageUrl = Array.isArray(property.images) && property.images.length > 0
+  // Ensure we have a valid image URL with error handling
+  const imageUrl = Array.isArray(property.images) && property.images.length > 0 && !imageError
     ? property.images[currentImageIndex]
-    : '/placeholder-property.jpg'; // Make sure to have a placeholder image
+    : '/placeholder-property.jpg';
 
   // Handle image navigation
   const nextImage = (e: React.MouseEvent) => {
@@ -81,6 +82,7 @@ export const PropertyCard = ({ property }: { property: Property }) => {
     e.stopPropagation();
     if (property.images && property.images.length > 0) {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % property.images.length);
+      setImageError(false); // Reset error state when changing image
     }
   };
 
@@ -89,7 +91,12 @@ export const PropertyCard = ({ property }: { property: Property }) => {
     e.stopPropagation();
     if (property.images && property.images.length > 0) {
       setCurrentImageIndex((prevIndex) => (prevIndex - 1 + property.images.length) % property.images.length);
+      setImageError(false); // Reset error state when changing image
     }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
   };
 
   return (
@@ -126,12 +133,13 @@ export const PropertyCard = ({ property }: { property: Property }) => {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transition-transform duration-700 group-hover:scale-110"
               priority
+              onError={handleImageError}
             />
             
             {/* Image Navigation Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
-            {/* Image Navigation Buttons */}
+            {/* Image Navigation Buttons - Only show if there are multiple images */}
             {property.images && property.images.length > 1 && (
               <>
                 <motion.button
@@ -173,7 +181,7 @@ export const PropertyCard = ({ property }: { property: Property }) => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <Heart size={16} className={isLiked ? 'fill-accent' : ''} />
+            <Heart size={16} className={isLiked ? 'fill-accent text-accent' : ''} />
           </motion.button>
         </div>
         
@@ -257,6 +265,7 @@ export const PropertyCard = ({ property }: { property: Property }) => {
 export const PropertyListItem = ({ property }: { property: Property }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
 
   // Safely format the price
   const formattedPrice = formatPrice(property.price);
@@ -268,10 +277,10 @@ export const PropertyListItem = ({ property }: { property: Property }) => {
   // Calculate AI match percentage (random for demo)
   const aiMatch = Math.floor(Math.random() * (99 - 85) + 85);
 
-  // Ensure we have a valid image URL
-  const imageUrl = Array.isArray(property.images) && property.images.length > 0
+  // Ensure we have a valid image URL with error handling
+  const imageUrl = Array.isArray(property.images) && property.images.length > 0 && !imageError
     ? property.images[currentImageIndex]
-    : '/placeholder-property.jpg'; // Make sure to have a placeholder image
+    : '/placeholder-property.jpg';
 
   // Handle image navigation
   const nextImage = (e: React.MouseEvent) => {
@@ -279,6 +288,7 @@ export const PropertyListItem = ({ property }: { property: Property }) => {
     e.stopPropagation();
     if (property.images && property.images.length > 0) {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % property.images.length);
+      setImageError(false); // Reset error state when changing image
     }
   };
 
@@ -287,7 +297,12 @@ export const PropertyListItem = ({ property }: { property: Property }) => {
     e.stopPropagation();
     if (property.images && property.images.length > 0) {
       setCurrentImageIndex((prevIndex) => (prevIndex - 1 + property.images.length) % property.images.length);
+      setImageError(false); // Reset error state when changing image
     }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
   };
 
   return (
@@ -379,6 +394,7 @@ export const PropertyListItem = ({ property }: { property: Property }) => {
               alt={property.title || 'Property Image'}
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-110"
+              onError={handleImageError}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>

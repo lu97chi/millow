@@ -37,7 +37,8 @@
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.4",
-    "zustand": "^4.5.1"
+    "zustand": "^4.5.1",
+    "@react-google-maps/api": "^2.20.6"
   },
   "devDependencies": {
     "@types/google.maps": "^3.55.3",

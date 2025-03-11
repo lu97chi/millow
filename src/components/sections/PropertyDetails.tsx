@@ -31,12 +31,18 @@ import {
   Map,
   Star,
   MessageCircle,
-  X
+  X,
+  User,
+  Car,
+  Calculator
 } from 'lucide-react';
 import type { Property } from '@/types/properties';
 import { api } from '@/lib/api-client';
 import ChatInterface from '@/components/chat/ChatInterface';
 import ChatButton from '@/components/chat/ChatButton';
+import { PropertyCard } from '@/components/PropertyCard';
+import PropertyMap from '@/components/maps/PropertyMap';
+import { useRouter } from 'next/navigation';
 
 // Helper function to safely access nested properties
 const safeGetFeatures = (property: Property) => {
@@ -75,87 +81,114 @@ const formatPrice = (price: number) => {
 const PropertyGallery = ({ images }: { images: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const nextImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    setImageError(false);
   };
 
   const prevImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+    setImageError(false);
   };
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Ensure we have a valid image URL with error handling
+  const imageUrl = images && images.length > 0 && !imageError
+    ? images[currentIndex]
+    : '/placeholder-property.jpg';
+
   return (
-    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'h-[500px] md:h-[600px] rounded-xl overflow-hidden'}`}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative w-full h-full"
-        >
-          <Image
-            src={images[currentIndex]}
-            alt={`Property image ${currentIndex + 1}`}
-            fill
-            className="object-cover"
-            priority={currentIndex === 0}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Navigation Controls */}
-      <button
-        onClick={prevImage}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-background/80 hover:bg-background p-2 rounded-full transition-colors z-10"
-        aria-label="Previous image"
-      >
-        <ChevronLeft className="w-6 h-6 text-foreground" />
-      </button>
-      <button
-        onClick={nextImage}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-background/80 hover:bg-background p-2 rounded-full transition-colors z-10"
-        aria-label="Next image"
-      >
-        <ChevronRight className="w-6 h-6 text-foreground" />
-      </button>
-
-      {/* Fullscreen Toggle */}
-      <button
-        onClick={toggleFullscreen}
-        className="absolute top-4 right-4 bg-background/80 hover:bg-background p-2 rounded-full transition-colors z-10"
-        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-      >
-        {isFullscreen ? (
-          <Minimize className="w-5 h-5 text-foreground" />
-        ) : (
-          <Maximize className="w-5 h-5 text-foreground" />
-        )}
-      </button>
-
-      {/* Image Counter */}
-      <div className="absolute bottom-4 left-4 bg-background/80 px-3 py-1.5 rounded-full text-sm font-medium text-foreground z-10">
-        {currentIndex + 1} / {images.length}
+    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
+      {/* Main Image */}
+      <div className={`relative ${isFullscreen ? 'h-screen' : 'aspect-[16/9] md:aspect-[21/9]'} overflow-hidden rounded-xl`}>
+        <Image
+          src={imageUrl}
+          alt="Property Image"
+          fill
+          priority
+          className="object-cover"
+          onError={handleImageError}
+        />
+        
+        {/* Navigation Controls */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
+          {/* Fullscreen Toggle */}
+          <button
+            onClick={toggleFullscreen}
+            className="absolute top-4 right-4 p-2 bg-background/80 rounded-full hover:bg-background transition-colors z-10"
+          >
+            {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+          </button>
+          
+          {/* Close Fullscreen Button */}
+          {isFullscreen && (
+            <button
+              onClick={toggleFullscreen}
+              className="absolute top-4 left-4 p-2 bg-background/80 rounded-full hover:bg-background transition-colors z-10"
+            >
+              <X size={20} />
+            </button>
+          )}
+          
+          {/* Navigation Buttons - Only show if there are multiple images */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-background/80 rounded-full hover:bg-background transition-colors"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-background/80 rounded-full hover:bg-background transition-colors"
+              >
+                <ChevronRight size={24} />
+              </button>
+              
+              {/* Image Counter */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-background/80 text-foreground text-sm font-medium px-3 py-1 rounded-full">
+                {currentIndex + 1} / {images.length}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-
-      {/* Thumbnail Navigation (only in fullscreen) */}
-      {isFullscreen && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-          {images.map((_, index) => (
+      
+      {/* Thumbnail Gallery - Only show if there are multiple images and not in fullscreen */}
+      {!isFullscreen && images.length > 1 && (
+        <div className="grid grid-cols-6 gap-2 mt-2">
+          {images.slice(0, 6).map((image, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full ${
-                index === currentIndex ? 'bg-accent' : 'bg-foreground/30'
+              onClick={() => {
+                setCurrentIndex(index);
+                setImageError(false);
+              }}
+              className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                index === currentIndex ? 'border-accent' : 'border-transparent hover:border-accent/50'
               }`}
-              aria-label={`Go to image ${index + 1}`}
-            />
+            >
+              <Image
+                src={image}
+                alt={`Thumbnail ${index + 1}`}
+                fill
+                className="object-cover"
+                onError={(e) => {
+                  // Hide this thumbnail if it fails to load
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </button>
           ))}
         </div>
       )}
@@ -165,78 +198,93 @@ const PropertyGallery = ({ images }: { images: string[] }) => {
 
 // Agent Card Component
 const AgentCard = ({ agent }: { agent: Property['agent'] }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  // Handle missing agent data
+  if (!agent) {
+    return (
+      <div className="bg-background border border-border/40 rounded-xl p-6 soft-shadow">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-muted/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <User size={32} className="text-muted-foreground/50" />
+          </div>
+          <h3 className="font-medium text-lg mb-1">Información no disponible</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            No hay información del agente para esta propiedad.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Handle image error
+  const handleImageError = () => {
+    setImageError(true);
+  };
+  
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-background border border-border/40 rounded-xl p-6 sticky top-24 soft-shadow"
-    >
-      <div className="flex items-center gap-4 mb-4">
-        <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-accent">
-          <Image
-            src={agent.image || '/placeholder-agent.jpg'}
-            alt={agent.name}
-            fill
-            className="object-cover"
-          />
+    <div className="bg-background border border-border/40 rounded-xl p-6 soft-shadow">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-accent/20">
+          {agent.image && !imageError ? (
+            <Image
+              src={agent.image}
+              alt={agent.name}
+              fill
+              className="object-cover"
+              onError={handleImageError}
+            />
+          ) : (
+            <div className="w-full h-full bg-muted/30 flex items-center justify-center">
+              <User size={32} className="text-muted-foreground/50" />
+            </div>
+          )}
         </div>
-        <div>
-          <h3 className="font-display font-medium text-lg text-foreground">{agent.name}</h3>
-          <p className="text-foreground/60 text-sm">{agent.title || 'Agente Inmobiliario'}</p>
-          <p className="text-accent text-sm font-medium">{agent.company}</p>
+        
+        <h3 className="font-medium text-lg mb-1">{agent.name}</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {agent.title || 'Agente Inmobiliario'} {agent.company ? `· ${agent.company}` : ''}
+        </p>
+        
+        <div className="grid grid-cols-2 gap-4 w-full mb-6">
+          {agent.experience !== null && (
+            <div className="flex flex-col items-center p-3 bg-muted/10 rounded-lg">
+              <span className="text-lg font-medium">{agent.experience}</span>
+              <span className="text-xs text-muted-foreground">Años de experiencia</span>
+            </div>
+          )}
+          
+          {agent.activeListings !== null && (
+            <div className="flex flex-col items-center p-3 bg-muted/10 rounded-lg">
+              <span className="text-lg font-medium">{agent.activeListings}</span>
+              <span className="text-xs text-muted-foreground">Propiedades activas</span>
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Agent Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {agent.experience !== null && (
-          <div className="bg-muted/20 rounded-lg p-3 text-center">
-            <p className="text-foreground/60 text-xs mb-1">Experiencia</p>
-            <p className="text-foreground font-medium">{agent.experience} años</p>
-          </div>
-        )}
-        {agent.activeListings !== null && (
-          <div className="bg-muted/20 rounded-lg p-3 text-center">
-            <p className="text-foreground/60 text-xs mb-1">Propiedades</p>
-            <p className="text-foreground font-medium">{agent.activeListings}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Contact Buttons */}
-      <div className="space-y-3">
-        <a
-          href={`tel:${agent.phone}`}
-          className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <Phone className="w-4 h-4" />
-          <span>Llamar</span>
-        </a>
-        <a
-          href={`mailto:${agent.email}`}
-          className="flex items-center justify-center gap-2 w-full py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-        >
-          <Mail className="w-4 h-4" />
-          <span>Enviar Email</span>
-        </a>
-        <button
-          className="flex items-center justify-center gap-2 w-full py-3 bg-muted/20 text-foreground rounded-lg hover:bg-muted/30 transition-colors"
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Agendar Visita</span>
-        </button>
-      </div>
-
-      {/* Safety Badge */}
-      <div className="mt-6 flex items-center gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-        <Shield className="w-5 h-5 text-green-500" />
-        <div>
-          <p className="text-foreground text-sm font-medium">Agente Verificado</p>
-          <p className="text-foreground/60 text-xs">Identidad y licencia verificadas</p>
+        
+        <div className="flex flex-col space-y-3 w-full">
+          {agent.phone && (
+            <a 
+              href={`tel:${agent.phone}`}
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+            >
+              <Phone size={16} />
+              <span>Llamar</span>
+            </a>
+          )}
+          
+          {agent.email && (
+            <a 
+              href={`mailto:${agent.email}`}
+              className="flex items-center justify-center gap-2 w-full py-2.5 border border-border bg-background hover:bg-muted/10 rounded-md transition-colors"
+            >
+              <Mail size={16} />
+              <span>Enviar Email</span>
+            </a>
+          )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -265,487 +313,284 @@ const PropertyAmenities = ({ amenities }: { amenities: string[] }) => {
 // Similar Properties Component
 const SimilarProperties = ({ property }: { property: Property }) => {
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSimilarProperties = async () => {
       try {
-        // Fetch properties with similar characteristics
+        setLoading(true);
+        // Fetch similar properties based on location and property type
         const response = await api.getProperties({
           propertyType: property.propertyType,
           operationType: property.operationType,
-          minPrice: property.price * 0.7, // 70% of the current property price
-          maxPrice: property.price * 1.3, // 130% of the current property price
-          state: property.location.state,
-          city: property.location.city,
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
         });
         
-        // Filter out the current property and limit to 4 properties
+        // Filter out the current property and limit to 3 properties
         const filtered = response.properties
           .filter(p => p._id !== property._id)
-          .slice(0, 4);
+          .slice(0, 3);
           
         setSimilarProperties(filtered);
-      } catch (error) {
-        console.error('Error fetching similar properties:', error);
-      } finally {
-        setIsLoading(false);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching similar properties:', err);
+        setError('Failed to load similar properties');
+        setLoading(false);
       }
     };
 
-    fetchSimilarProperties();
-  }, [property]);
+    if (property._id) {
+      fetchSimilarProperties();
+    }
+  }, [property._id, property.propertyType, property.operationType]);
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-        {[...Array(4)].map((_, index) => (
-          <div key={index} className="bg-muted/20 rounded-xl h-64"></div>
-        ))}
-      </div>
-    );
-  }
-
-  if (similarProperties.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-foreground/70">No se encontraron propiedades similares.</p>
-      </div>
-    );
+  // If there are no similar properties, don't render the section
+  if (!loading && (similarProperties.length === 0 || error)) {
+    return null;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {similarProperties.map((prop) => (
-        <motion.div
-          key={prop._id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-card hover:bg-card/90 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group"
-        >
-          <Link href={`/properties/${prop._id}`} className="block">
-            <div className="relative h-48 overflow-hidden">
-              {prop.images && prop.images.length > 0 ? (
-                <Image
-                  src={prop.images[0]}
-                  alt={prop.title}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                />
-              ) : (
-                <div className="w-full h-full bg-muted/30 flex items-center justify-center">
-                  <Home className="w-12 h-12 text-muted/50" />
-                </div>
-              )}
-              <div className="absolute top-2 left-2">
-                <span className={`${prop.operationType === 'Renta' ? 'bg-primary/90' : 'bg-accent/90'} text-white text-xs font-medium px-2 py-1 rounded-full`}>
-                  {prop.operationType === 'Renta' ? 'Renta' : 'Venta'}
-                </span>
+    <div className="mt-16">
+      <h3 className="text-2xl font-display font-bold mb-6">Propiedades Similares</h3>
+      
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-background border border-border/40 rounded-xl overflow-hidden animate-pulse">
+              <div className="aspect-[4/3] bg-muted/30"></div>
+              <div className="p-4">
+                <div className="h-6 bg-muted/30 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted/30 rounded w-1/2 mb-4"></div>
+                <div className="h-10 bg-muted/30 rounded w-full"></div>
               </div>
             </div>
-            <div className="p-4">
-              <h3 className="font-medium text-foreground line-clamp-1">{prop.title}</h3>
-              <p className="text-sm text-foreground/70 mb-2 line-clamp-1">
-                <MapPin size={14} className="inline mr-1" />
-                {prop.location.city}, {prop.location.state}
-              </p>
-              <p className="text-accent font-bold">{formatPrice(prop.price)}</p>
-              <div className="flex items-center gap-3 mt-2 text-xs text-foreground/70">
-                {prop.features?.bedrooms && (
-                  <span className="flex items-center gap-1">
-                    <Bed size={14} /> {prop.features.bedrooms}
-                  </span>
-                )}
-                {prop.features?.bathrooms && (
-                  <span className="flex items-center gap-1">
-                    <Bath size={14} /> {prop.features.bathrooms}
-                  </span>
-                )}
-                {prop.features?.constructionSize && (
-                  <span className="flex items-center gap-1">
-                    <Square size={14} /> {prop.features.constructionSize} m²
-                  </span>
-                )}
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-      ))}
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {similarProperties.map((similarProperty) => (
+            <PropertyCard key={similarProperty._id} property={similarProperty} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
 // Main Property Details Component
 export default function PropertyDetails({ property }: { property: Property }) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
-  // Safely format the price
-  const formattedPrice = formatPrice(property.price);
+  const [isLiked, setIsLiked] = useState(false);
+  const router = useRouter();
   
   // Safely get features
   const features = safeGetFeatures(property);
   
-  // Format dates
-  const createdDate = formatDate(property.createdAt);
-  const updatedDate = formatDate(property.updatedAt);
-
+  // Format price
+  const formattedPrice = formatPrice(property.price);
+  
+  // Toggle chat interface
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
 
+  // Navigate to properties page with chat open
+  const navigateToPropertiesWithChat = () => {
+    router.push('/properties?chat=open');
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <nav className="flex items-center text-sm text-foreground/60">
-          <Link href="/" className="hover:text-accent transition-colors">
-            Inicio
-          </Link>
-          <span className="mx-2">/</span>
-          <Link href="/properties" className="hover:text-accent transition-colors">
-            Propiedades
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-foreground/90 truncate max-w-[200px]">{property.title}</span>
-        </nav>
-      </div>
-
       {/* Back Button */}
-      <Link href="/properties" className="inline-flex items-center gap-2 text-foreground/70 hover:text-accent transition-colors mb-6">
-        <ArrowLeft className="w-4 h-4" />
-        <span>Volver a propiedades</span>
-      </Link>
-
+      <div className="mb-6">
+        <Link 
+          href="/properties" 
+          className="inline-flex items-center text-foreground/70 hover:text-foreground transition-colors"
+        >
+          <ArrowLeft size={18} className="mr-2" />
+          <span>Volver a propiedades</span>
+        </Link>
+      </div>
+      
+      {/* Property Title and Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
+            {property.title}
+          </h1>
+          <div className="flex items-center text-foreground/70">
+            <MapPin size={16} className="mr-1" />
+            <span>
+              {property.location?.address}, {property.location?.area}, {property.location?.city}, {property.location?.state}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center mt-4 md:mt-0 space-x-3">
+          <button 
+            onClick={() => setIsLiked(!isLiked)}
+            className="flex items-center justify-center p-2 bg-background border border-border rounded-full hover:border-accent/50 transition-colors"
+            aria-label="Like property"
+          >
+            <Heart size={20} className={isLiked ? 'fill-accent text-accent' : 'text-foreground/70'} />
+          </button>
+          
+          <button 
+            className="flex items-center justify-center p-2 bg-background border border-border rounded-full hover:border-accent/50 transition-colors"
+            aria-label="Share property"
+          >
+            <Share2 size={20} className="text-foreground/70" />
+          </button>
+        </div>
+      </div>
+      
       {/* Property Gallery */}
-      <PropertyGallery images={property.images} />
-
-      {/* Property Content */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
+      {property.images && property.images.length > 0 && (
+        <PropertyGallery images={property.images} />
+      )}
+      
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        {/* Left Column - Property Details */}
         <div className="lg:col-span-2">
-          {/* Property Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
-          >
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className={`${property.operationType === 'Renta' ? 'bg-primary/90' : 'bg-accent/90'} text-white text-xs font-medium px-3 py-1.5 rounded-full`}>
-                {property.operationType === 'Renta' ? 'En Renta' : 'En Venta'}
-              </span>
-              <span className="bg-muted/20 text-foreground/90 text-xs font-medium px-3 py-1.5 rounded-full">
-                {property.propertyType}
-              </span>
-              <span className={`
-                text-xs font-medium px-3 py-1.5 rounded-full
-                ${property.status === 'available' ? 'bg-green-500/90 text-white' : 
-                  property.status === 'sold' ? 'bg-red-500/90 text-white' : 
-                  'bg-yellow-500/90 text-white'}
-              `}>
-                {property.status === 'available' ? 'Disponible' : 
-                 property.status === 'sold' ? 'Vendido' : 'Rentado'}
-              </span>
-            </div>
-
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">
-              {property.title}
-            </h1>
-
-            <div className="flex items-center text-foreground/70 mb-4">
-              <MapPin size={18} className="mr-1 text-accent" />
-              <span>
-                {property.location.address}, {property.location.area}, {property.location.city}, {property.location.state}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-accent font-bold text-3xl font-display">
-                  {formattedPrice}
-                  {property.operationType === 'Renta' && '/mes'}
-                </p>
-                {property.maintenanceFee !== null && property.maintenanceFee > 0 && (
-                  <p className="text-foreground/60 text-sm">
-                    Mantenimiento: {formatPrice(property.maintenanceFee)}/mes
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => setIsLiked(!isLiked)}
-                  className={`p-2 rounded-full transition-colors flex items-center justify-center ${isLiked ? 'bg-red-100 text-red-500' : 'bg-muted/20 text-foreground/60 hover:bg-muted/30'}`}
-                  aria-label={isLiked ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-                >
-                  <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-                </button>
-                <button 
-                  className="p-2 rounded-full bg-muted/20 text-foreground/60 hover:bg-muted/30 transition-colors"
-                  aria-label="Compartir propiedad"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Property Features */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8"
-          >
-            {features.bedrooms !== null && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Bed className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{features.bedrooms}</span>
-                <span className="text-foreground/60 text-sm">Recámaras</span>
-              </div>
-            )}
-            
-            {features.bathrooms !== null && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Bath className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{features.bathrooms}</span>
-                <span className="text-foreground/60 text-sm">Baños</span>
-              </div>
-            )}
-            
-            {features.constructionSize !== null && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Square className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{features.constructionSize} m²</span>
-                <span className="text-foreground/60 text-sm">Construcción</span>
-              </div>
-            )}
-            
-            {features.lotSize !== null && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Map className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{features.lotSize} m²</span>
-                <span className="text-foreground/60 text-sm">Terreno</span>
-              </div>
-            )}
-            
-            {features.parking !== null && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Home className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{features.parking}</span>
-                <span className="text-foreground/60 text-sm">Estacionamientos</span>
-              </div>
-            )}
-            
-            {features.floors !== null && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Building className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{features.floors}</span>
-                <span className="text-foreground/60 text-sm">Pisos</span>
-              </div>
-            )}
-            
-            {property.propertyAge !== null && property.propertyAge > 0 && (
-              <div className="bg-card p-4 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                <Clock className="w-6 h-6 text-accent mb-2" />
-                <span className="text-foreground font-medium">{property.propertyAge} años</span>
-                <span className="text-foreground/60 text-sm">Antigüedad</span>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Tabs Navigation */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-6 border-b border-border/50"
-          >
-            <div className="flex overflow-x-auto hide-scrollbar">
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === 'details'
-                    ? 'text-accent border-b-2 border-accent'
-                    : 'text-foreground/60 hover:text-foreground'
-                }`}
-              >
-                Detalles
-              </button>
-              <button
-                onClick={() => setActiveTab('amenities')}
-                className={`px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === 'amenities'
-                    ? 'text-accent border-b-2 border-accent'
-                    : 'text-foreground/60 hover:text-foreground'
-                }`}
-              >
-                Amenidades
-              </button>
-              <button
-                onClick={() => setActiveTab('location')}
-                className={`px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === 'location'
-                    ? 'text-accent border-b-2 border-accent'
-                    : 'text-foreground/60 hover:text-foreground'
-                }`}
-              >
-                Ubicación
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Tab Content */}
-          <AnimatePresence mode="wait">
-            {activeTab === 'details' && (
-              <motion.div
-                key="details"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6">Descripción</h2>
-                <div className="prose prose-lg prose-neutral dark:prose-invert max-w-none mb-8">
-                  <p className="text-foreground/80 leading-relaxed whitespace-pre-line">
-                    {property.description}
-                  </p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-muted/10 rounded-xl mb-8">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-accent" />
-                    <div>
-                      <p className="text-foreground/70 text-sm">Publicado el {createdDate}</p>
-                      <p className="text-foreground/50 text-xs">Actualizado el {updatedDate}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Tag className="w-5 h-5 text-accent" />
-                    <span className="text-foreground/70 text-sm">ID: {property._id.substring(0, 8)}</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'amenities' && (
-              <motion.div
-                key="amenities"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6">Amenidades</h2>
-                
-                {property.amenities && property.amenities.length > 0 ? (
-                  <PropertyAmenities amenities={property.amenities} />
-                ) : (
-                  <p className="text-foreground/70">No se han especificado amenidades para esta propiedad.</p>
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === 'location' && (
-              <motion.div
-                key="location"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6">Ubicación</h2>
-                
-                {/* Location Details */}
-                <div className="mb-6">
-                  <div className="flex items-start gap-3 mb-4">
-                    <MapPin className="w-5 h-5 text-accent mt-0.5" />
-                    <div>
-                      <p className="text-foreground font-medium">{property.location.address}</p>
-                      <p className="text-foreground/70">
-                        {property.location.area}, {property.location.city}, {property.location.state}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Map Placeholder */}
-                <div className="bg-muted/20 rounded-xl h-[400px] flex items-center justify-center">
-                  <div className="text-center">
-                    <Map className="w-12 h-12 text-foreground/30 mx-auto mb-3" />
-                    <p className="text-foreground/70">Mapa no disponible</p>
-                    <p className="text-foreground/50 text-sm">Contacta al agente para obtener la ubicación exacta</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Similar Properties Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-12"
-          >
-            <h2 className="text-2xl font-display font-bold text-foreground mb-6">Propiedades Similares</h2>
-            <SimilarProperties property={property} />
-          </motion.div>
-
-          {/* AI Safety Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-12 p-4 bg-primary/10 rounded-xl border border-primary/20 flex items-center gap-4"
-          >
-            <div className="p-3 bg-primary/20 rounded-full">
-              <Sparkles className="w-6 h-6 text-primary" />
-            </div>
+          {/* Price and Type */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 p-4 bg-background border border-border/40 rounded-xl soft-shadow">
             <div>
-              <h3 className="text-foreground font-medium mb-1">Propiedad Verificada por IA</h3>
-              <p className="text-foreground/70 text-sm">
-                Esta propiedad ha sido verificada por nuestro sistema de inteligencia artificial para garantizar la precisión de la información.
+              <div className="text-2xl md:text-3xl font-bold text-foreground">{formattedPrice}</div>
+              <div className="text-foreground/70">{property.operationType || 'Venta'}</div>
+            </div>
+            
+            <div className="flex items-center mt-4 md:mt-0">
+              <div className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                property.operationType === 'Renta' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'
+              }`}>
+                {property.operationType === 'Renta' ? 'Renta' : 'Venta'}
+              </div>
+              <div className="ml-2 px-3 py-1.5 bg-background/80 text-foreground/80 text-sm font-medium rounded-md border border-border/50">
+                {property.propertyType || 'Casa'}
+              </div>
+            </div>
+          </div>
+          
+          {/* Home Loan Button */}
+          <div className="mb-6">
+            <motion.button
+              className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-medium flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Calculator className="mr-2" />
+              <span className="text-lg">Simular crédito hipotecario</span>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></div>
+            </motion.button>
+          </div>
+          
+          {/* Features */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            {features.bedrooms && (
+              <div className="flex flex-col items-center justify-center p-4 bg-background border border-border/40 rounded-xl">
+                <Bed size={24} className="text-primary/70 mb-2" />
+                <span className="text-lg font-medium">{features.bedrooms}</span>
+                <span className="text-sm text-foreground/70">{features.bedrooms === 1 ? 'Habitación' : 'Habitaciones'}</span>
+              </div>
+            )}
+            
+            {features.bathrooms && (
+              <div className="flex flex-col items-center justify-center p-4 bg-background border border-border/40 rounded-xl">
+                <Bath size={24} className="text-primary/70 mb-2" />
+                <span className="text-lg font-medium">{features.bathrooms}</span>
+                <span className="text-sm text-foreground/70">{features.bathrooms === 1 ? 'Baño' : 'Baños'}</span>
+              </div>
+            )}
+            
+            {features.constructionSize && (
+              <div className="flex flex-col items-center justify-center p-4 bg-background border border-border/40 rounded-xl">
+                <Square size={24} className="text-primary/70 mb-2" />
+                <span className="text-lg font-medium">{features.constructionSize} m²</span>
+                <span className="text-sm text-foreground/70">Construcción</span>
+              </div>
+            )}
+            
+            {features.lotSize && (
+              <div className="flex flex-col items-center justify-center p-4 bg-background border border-border/40 rounded-xl">
+                <Map size={24} className="text-primary/70 mb-2" />
+                <span className="text-lg font-medium">{features.lotSize} m²</span>
+                <span className="text-sm text-foreground/70">Terreno</span>
+              </div>
+            )}
+            
+            {features.parking && (
+              <div className="flex flex-col items-center justify-center p-4 bg-background border border-border/40 rounded-xl">
+                <Car size={24} className="text-primary/70 mb-2" />
+                <span className="text-lg font-medium">{features.parking}</span>
+                <span className="text-sm text-foreground/70">{features.parking === 1 ? 'Estacionamiento' : 'Estacionamientos'}</span>
+              </div>
+            )}
+            
+            {features.floors && (
+              <div className="flex flex-col items-center justify-center p-4 bg-background border border-border/40 rounded-xl">
+                <Building size={24} className="text-primary/70 mb-2" />
+                <span className="text-lg font-medium">{features.floors}</span>
+                <span className="text-sm text-foreground/70">{features.floors === 1 ? 'Piso' : 'Pisos'}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Description */}
+          <div className="mb-8">
+            <h2 className="text-xl font-display font-bold text-foreground mb-4">Descripción</h2>
+            <div className="bg-background border border-border/40 rounded-xl p-6 soft-shadow">
+              <p className="text-foreground/80 whitespace-pre-line">
+                {property.description || 'No hay descripción disponible para esta propiedad.'}
               </p>
             </div>
-          </motion.div>
+          </div>
+          
+          {/* Amenities */}
+          {property.amenities && property.amenities.length > 0 && (
+            <PropertyAmenities amenities={property.amenities} />
+          )}
         </div>
-
-        {/* Sidebar */}
-        <div>
-          <AgentCard agent={property.agent} />
+        
+        {/* Right Column - Agent Info and Contact */}
+        <div className="lg:col-span-1">
+          {/* Agent Card */}
+          <div className="sticky top-24">
+            <AgentCard agent={property.agent} />
+            
+            {/* Contact Buttons */}
+            <div className="mt-4 space-y-3">
+              <a 
+                href={`tel:${property.agent?.phone || '123456789'}`}
+                className="flex items-center justify-center w-full py-3 px-4 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors"
+              >
+                <Phone size={18} className="mr-2" />
+                <span>Llamar al agente</span>
+              </a>
+              
+              <button 
+                onClick={navigateToPropertiesWithChat}
+                className="flex items-center justify-center w-full py-3 px-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors"
+              >
+                <MessageCircle size={18} className="mr-2" />
+                <span>Chatear con IA</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Chat Button */}
-      <ChatButton onClick={toggleChat} />
       
-      {/* Chat Interface */}
-      <AnimatePresence>
-        {isChatOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed z-40 w-full max-w-md"
-            style={{
-              position: 'fixed',
-              bottom: '4.5rem',
-              right: '1.5rem',
-              maxWidth: '400px',
-              width: 'calc(100% - 2rem)',
-              transform: 'none',
-              margin: '0'
-            }}
-          >
-            <ChatInterface onClose={toggleChat} propertyId={property._id} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Google Maps - Full Width */}
+      <div className="mt-8 mb-8">
+        <h2 className="text-xl font-display font-bold text-foreground mb-4">Ubicación y Alrededores</h2>
+        <PropertyMap property={property} />
+      </div>
+      
+      {/* Similar Properties Section */}
+      <SimilarProperties property={property} />
     </div>
   );
 } 
