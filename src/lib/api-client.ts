@@ -1,3 +1,4 @@
+import { ChatHeliosInterface } from '@/types/helios';
 import { HomepageResponse } from '@/types/home';
 import { PropertiesResponse, PropertyFilters, AIQueryResponse, Property, ChatQueryResponse } from '@/types/properties';
 
@@ -149,6 +150,9 @@ export const endpoints = {
   chat: {
     query: '/query',
     propertyQuery: '/property-query'
+  },
+  chatHelios:{
+    query:"/chat/helios"
   }
 } as const;
 
@@ -171,6 +175,13 @@ export const api = {
       apiClient.post<ChatQueryResponse>(endpoints.chat.propertyQuery, {
         message,
         propertyId,
+        sessionId
+      })
+  },
+  chatHelios:{
+    query:(message:string, sessionId?:string)=>
+      apiClient.post<ChatHeliosInterface>(endpoints.chatHelios.query,{
+        message,
         sessionId
       })
   }
