@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ChatSelector from "../chatSelector/ChatSelector";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -82,9 +83,11 @@ const formatPrice = (price: number) => {
 const PropertyGallery = ({ images }: { images: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const nextImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    setImageError(false);
   };
 
   const prevImage = () => {
@@ -96,6 +99,15 @@ const PropertyGallery = ({ images }: { images: string[] }) => {
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Ensure we have a valid image URL with error handling
+  const imageUrl = images && images.length > 0 && !imageError
+    ? images[currentIndex]
+    : '/placeholder-property.jpg';
 
   return (
     <div
@@ -115,11 +127,12 @@ const PropertyGallery = ({ images }: { images: string[] }) => {
           className="relative w-full h-full"
         >
           <Image
-            src={images[currentIndex]}
+            src={imageUrl}
             alt={`Property image ${currentIndex + 1}`}
             fill
             className="object-cover"
             priority={currentIndex === 0}
+            onError={handleImageError}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
         </motion.div>
@@ -158,19 +171,20 @@ const PropertyGallery = ({ images }: { images: string[] }) => {
       <div className="absolute bottom-4 left-4 bg-background/80 px-3 py-1.5 rounded-full text-sm font-medium text-foreground z-10">
         {currentIndex + 1} / {images.length}
       </div>
-
-      {/* Thumbnail Navigation (only in fullscreen) */}
-      {isFullscreen && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-          {images.map((_, index) => (
+      
+      {/* Thumbnail Gallery - Only show if there are multiple images and not in fullscreen */}
+      {!isFullscreen && images.length > 1 && (
+        <div className="grid grid-cols-6 gap-2 mt-2">
+          {images.slice(0, 6).map((image, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
               className={`w-3 h-3 rounded-full ${
                 index === currentIndex ? "bg-accent" : "bg-foreground/30"
               }`}
-              aria-label={`Go to image ${index + 1}`}
-            />
+            >
+              <span className="sr-only">Image {index + 1}</span>
+            </button>
           ))}
         </div>
       )}
@@ -291,18 +305,18 @@ const PropertyAmenities = ({ amenities }: { amenities: string[] }) => {
 const SimilarProperties = ({ property }: { property: Property }) => {
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSimilarProperties = async () => {
       try {
-        // Fetch properties with similar characteristics
+        setIsLoading(true);
+        // Fetch similar properties based on location and property type
         const response = await api.getProperties({
           propertyType: property.propertyType,
           operationType: property.operationType,
-          minPrice: property.price * 0.7, // 70% of the current property price
-          maxPrice: property.price * 1.3, // 130% of the current property price
-          state: property.location.state,
-          city: property.location.city,
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
         });
 
         // Filter out the current property and limit to 4 properties
@@ -313,6 +327,7 @@ const SimilarProperties = ({ property }: { property: Property }) => {
         setSimilarProperties(filtered);
       } catch (error) {
         console.error("Error fetching similar properties:", error);
+        setError("Error al cargar propiedades similares");
       } finally {
         setIsLoading(false);
       }
@@ -417,6 +432,7 @@ export default function PropertyDetails({ property }: { property: Property }) {
   const [isLiked, setIsLiked] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const router = useRouter();
 
   // Safely format the price
   const formattedPrice = formatPrice(property.price);
@@ -432,9 +448,14 @@ export default function PropertyDetails({ property }: { property: Property }) {
     setIsChatOpen(!isChatOpen);
   };
 
+  // Navigate to properties page with chat open
+  const navigateToPropertiesWithChat = () => {
+    router.push('/properties?chat=open');
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb Navigation */}
+      {/* Back Button */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-foreground/60">
           <Link href="/" className="hover:text-accent transition-colors">
@@ -464,11 +485,13 @@ export default function PropertyDetails({ property }: { property: Property }) {
       </Link>
 
       {/* Property Gallery */}
-      <PropertyGallery images={property.images} />
-
-      {/* Property Content */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
+      {property.images && property.images.length > 0 && (
+        <PropertyGallery images={property.images} />
+      )}
+      
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        {/* Left Column - Property Details */}
         <div className="lg:col-span-2">
           {/* Property Header */}
           <motion.div
@@ -738,7 +761,7 @@ export default function PropertyDetails({ property }: { property: Property }) {
                 {property.amenities && property.amenities.length > 0 ? (
                   <PropertyAmenities amenities={property.amenities} />
                 ) : (
-                  <p className="text-foreground/70">
+                  <p className="text-foreground">
                     No se han especificado amenidades para esta propiedad.
                   </p>
                 )}
@@ -820,14 +843,10 @@ export default function PropertyDetails({ property }: { property: Property }) {
                 información.
               </p>
             </div>
-          </motion.div>
-        </div>
-
-        {/* Sidebar */}
-        <div>
-          <AgentCard agent={property.agent} />
+            </motion.div>
         </div>
       </div>
+      
 
       {/* Chat Button */}
       <ChatButton onClick={toggleChat} />  
@@ -835,5 +854,6 @@ export default function PropertyDetails({ property }: { property: Property }) {
       {/* Chat Interface */}
       <ChatSelector />
     </div>
+
   );
 }

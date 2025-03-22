@@ -25,9 +25,10 @@ import {
   Clock,
   Filter
 } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import FilterPanel from './FilterPanel';
 import type { PropertyFilters, Property } from '@/types/properties';
+import { useSearchParams } from 'next/navigation';
 
 // Separate the inner content to use the context
 function PropertiesContentInner() {
@@ -36,6 +37,7 @@ function PropertiesContentInner() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [filters, setFilters] = useState<PropertyFilters>({});
+  const searchParams = useSearchParams();
   
   const { 
     properties, 
@@ -44,6 +46,14 @@ function PropertiesContentInner() {
     metadata,
     isLoading 
   } = useProperties();
+
+  // Check for chat parameter in URL
+  useEffect(() => {
+    const chatParam = searchParams.get('chat');
+    if (chatParam === 'open') {
+      setIsChatOpen(true);
+    }
+  }, [searchParams]);
 
   // Quick filter options
   const quickFilters = [

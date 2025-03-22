@@ -1,145 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, Sparkles, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-// Sample data for featured properties
-const featuredProperties = [
-  {
-    id: 1,
-    title: 'Residencia Palmera',
-    location: 'Polanco, CDMX',
-    price: '$4,500,000',
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2800,
-    image: '/images/property-1.jpg',
-    aiMatch: 98,
-  },
-  {
-    id: 2,
-    title: 'Ático Exclusivo',
-    location: 'Condesa, CDMX',
-    price: '$3,200,000',
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1950,
-    image: '/images/property-2.jpg',
-    aiMatch: 95,
-  },
-  {
-    id: 3,
-    title: 'Villa Moderna',
-    location: 'San Ángel, CDMX',
-    price: '$5,800,000',
-    bedrooms: 5,
-    bathrooms: 4,
-    sqft: 3600,
-    image: '/images/property-3.jpg',
-    aiMatch: 92,
-  },
-];
-
-const PropertyCard = ({ property }: { property: typeof featuredProperties[0] }) => {
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: property.id * 0.1 }}
-      className="group overflow-hidden bg-background border border-border/40 rounded-lg shadow-luxury hover:shadow-luxury-hover transition-all duration-300 illusion-card soft-shadow"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={property.image}
-          alt={property.title}
-          fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <button
-          onClick={() => setIsFavorite(!isFavorite)}
-          className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-md hover:bg-accent/10 transition-colors z-10 ai-glow flex items-center justify-center"
-        >
-          <Heart
-            size={18}
-            className={`${
-              isFavorite ? 'fill-accent text-accent' : 'text-foreground/70'
-            } transition-colors`}
-          />
-        </button>
-        <div className="absolute bottom-4 left-4 bg-accent/90 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center">
-          <Sparkles size={12} className="mr-1" />
-          Destacado
-        </div>
-      </div>
-
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-display text-lg font-medium text-foreground line-clamp-1">
-            {property.title}
-          </h3>
-          <span className="text-accent font-medium">{property.price}</span>
-        </div>
-        
-        <div className="flex items-center text-foreground/60 text-sm mb-4">
-          <span className="inline-block w-4 h-4 mr-1">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-          </span>
-          {property.location}
-        </div>
-        
-        <div className="grid grid-cols-3 gap-2 py-4 border-t border-border/40">
-          <div className="flex flex-col items-center">
-            <span className="text-foreground/60 text-xs mb-1">Habitaciones</span>
-            <span className="font-medium">{property.bedrooms}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-foreground/60 text-xs mb-1">Baños</span>
-            <span className="font-medium">{property.bathrooms}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-foreground/60 text-xs mb-1">Área</span>
-            <span className="font-medium">{property.sqft} m²</span>
-          </div>
-        </div>
-        
-        <div className="mt-4 mb-4 flex items-center justify-between bg-secondary/50 rounded-md p-2 safety-border">
-          <div className="flex items-center">
-            <Sparkles size={14} className="text-accent mr-1" />
-            <span className="text-xs font-medium">Coincidencia IA</span>
-          </div>
-          <div className="flex items-center">
-            <span className="text-accent font-bold">{property.aiMatch}%</span>
-            <div className="ml-2 w-16 h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-accent" 
-                style={{ width: `${property.aiMatch}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-        
-        <Link 
-          href={`/properties/${property.id}`}
-          className="block w-full text-center py-3 border border-accent text-accent hover:bg-accent hover:text-white transition-colors duration-300 rounded-md font-medium text-sm btn-dream"
-        >
-          Ver Detalles
-        </Link>
-      </div>
-    </motion.div>
-  );
-};
+import { api } from '@/lib/api-client';
+import type { Property } from '@/types/properties';
+import { PropertyCard } from '@/components/PropertyCard';
 
 const FeaturedProperties = () => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFeaturedProperties = async () => {
+      try {
+        setLoading(true);
+        // Fetch featured properties with a limit of 3
+        const response = await api.getProperties({
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
+        });
+        // Take only the first 3 properties
+        setProperties(response.properties.slice(0, 3));
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching featured properties:', err);
+        setError('Failed to load featured properties');
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedProperties();
+  }, []);
+
+  // Loading skeleton
+  const PropertySkeleton = () => (
+    <div className="bg-background border border-border/40 rounded-xl overflow-hidden animate-pulse">
+      <div className="aspect-[4/3] bg-muted/30"></div>
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="h-6 bg-muted/30 rounded w-2/3"></div>
+          <div className="h-6 bg-muted/30 rounded w-1/4"></div>
+        </div>
+        <div className="h-4 bg-muted/30 rounded w-full mb-4"></div>
+        <div className="grid grid-cols-3 gap-2 py-4 border-t border-border/40">
+          <div className="flex flex-col items-center">
+            <div className="h-3 bg-muted/30 rounded w-2/3 mb-2"></div>
+            <div className="h-4 bg-muted/30 rounded w-1/3"></div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-3 bg-muted/30 rounded w-2/3 mb-2"></div>
+            <div className="h-4 bg-muted/30 rounded w-1/3"></div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-3 bg-muted/30 rounded w-2/3 mb-2"></div>
+            <div className="h-4 bg-muted/30 rounded w-1/3"></div>
+          </div>
+        </div>
+        <div className="mt-4 h-10 bg-muted/30 rounded w-full"></div>
+      </div>
+    </div>
+  );
+
   return (
     <section className="py-24 bg-background relative overflow-hidden">
       {/* Decorative elements */}
@@ -172,9 +97,35 @@ const FeaturedProperties = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
+          {loading ? (
+            // Show skeletons while loading
+            <>
+              <PropertySkeleton />
+              <PropertySkeleton />
+              <PropertySkeleton />
+            </>
+          ) : error ? (
+            // Show error message
+            <div className="col-span-3 text-center py-10">
+              <p className="text-red-500">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : properties.length === 0 ? (
+            // Show message when no properties are found
+            <div className="col-span-3 text-center py-10">
+              <p className="text-foreground/70">No se encontraron propiedades destacadas.</p>
+            </div>
+          ) : (
+            // Show actual properties
+            properties.map((property) => (
+              <PropertyCard key={property._id} property={property} />
+            ))
+          )}
         </div>
 
         <motion.div 
