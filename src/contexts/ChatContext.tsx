@@ -41,7 +41,7 @@ export const quickSuggestions = [
 export const getInitialMessage = () => ({
   id: Date.now().toString(),
   type: 'agent' as const,
-  content: '¡Hola! Soy b, tu asistente virtual. ¿En qué puedo ayudarte hoy con tu búsqueda de propiedades?',
+  content: '¡Hola! Soy b, tu asistente virtual. ¿En qué puedo ayudarte hoy con tu búsqueda de propiedades?.',
   timestamp: new Date(),
   status: 'read' as const,
   suggestions: quickSuggestions,
